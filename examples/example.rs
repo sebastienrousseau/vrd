@@ -24,8 +24,8 @@ fn main() {
     // Seed the PRNG with a given value
     let seed_value = 12345;
     let mut rng = Random::new();
-    let seed = rng.seed(seed_value);
-    println!("🦀 Random::seed():      ✅ {seed:?}");
+    rng.seed(seed_value); // Seed the RNG
+    println!("🦀 Random::seed():      ✅ {}", seed_value); // Print the seed value
 
     // Generate a vector of random bytes with a given length
     let bytes = Random::bytes(&mut rng, 1000);

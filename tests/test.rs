@@ -36,7 +36,7 @@ fn test_bytes() {
 fn test_char() {
     let mut rng = Random::new();
     let c = Random::char(&mut rng);
-    assert!(('a'..='z').contains(&c));
+    assert!(c.is_ascii_lowercase());
 }
 #[test]
 fn test_choose() {
@@ -151,7 +151,7 @@ fn test_rand_bool_macro() {
     let mut rng = Random::new();
     let p = 0.5;
     let b = rand_bool!(rng, p);
-    assert!(b == true || b == false);
+    assert!(b);
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn test_rand_bytes_macro() {
 fn test_rand_char_macro() {
     let mut rng = Random::new();
     let c = rand_char!(rng);
-    assert!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'));
+    assert!(c.is_ascii_lowercase() || c.is_ascii_uppercase() || c.is_ascii_digit());
 }
 
 #[test]
@@ -181,7 +181,7 @@ fn test_rand_choose_macro() {
 fn test_rand_float_macro() {
     let mut rng = Random::new();
     let f = rand_float!(rng);
-    assert!(f >= 0.0 && f < 1.0);
+    assert!((0.0..1.0).contains(&f));
 }
 
 #[test]
