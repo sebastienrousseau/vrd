@@ -194,6 +194,10 @@ help and support.
 A special thank you goes to the [Rust Reddit][12] community for
 providing a lot of useful suggestions on how to improve this project.
 
+## Changelog 📚
+
+-
+
 [0]: https://minifunctions.com/vrd
 [1]: https://vrdlib.one
 [2]: https://opensource.org/license/apache-2-0/
