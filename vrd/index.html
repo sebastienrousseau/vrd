@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`Random (VRD)` 🦀"><title>vrd - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-f3501f0f5ae15dfb.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="vrd" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (74c482104 2023-05-04)" data-search-js="search-4926e5fc22a5646a.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-6f6ffb5395b17c6e.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f0540c1d82cde29b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="icon" href="https://kura.pro/vrd/images/favicon.ico"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../vrd/index.html"><img src="https://kura.pro/vrd/images/logos/vrd.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../vrd/index.html"><img src="https://kura.pro/vrd/images/logos/vrd.svg" alt="logo"></a><h2 class="location"><a href="#">Crate vrd</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.0.2</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li><li><a href="#structs">Structs</a></li><li><a href="#functions">Functions</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">vrd</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/vrd/lib.rs.html#3-315">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="random-vrd-"><a href="#random-vrd-"><code>Random (VRD)</code> 🦀</a></h2>
+<p><a href="https://vrdlib.one" title="Random (VRD) - A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm"><img src="https://kura.pro/vrd/images/banners/banner-vrd.svg" alt="vrd" /></a></p>
+<p>A Rust library for generating high-quality random numbers based on
+the Mersenne Twister algorithm.</p>
+<p><em>Part of the <a href="https://minifunctions.com/vrd">Mini Functions</a> family of libraries.</em></p>
+<p><a href="https://crates.io/crates/vrd" title="Crates.io"><img src="https://img.shields.io/crates/v/vrd.svg?style=for-the-badge&amp;color=success&amp;labelColor=27A006" alt="Crates.io" /></a>
+<a href="https://lib.rs/crates/vrd" title="Lib.rs"><img src="https://img.shields.io/badge/lib.rs-v0.0.2-success.svg?style=for-the-badge&amp;color=8A48FF&amp;labelColor=6F36E4" alt="Lib.rs" /></a>
+<a href="https://opensource.org/license/MIT/" title="MIT or Apache License, Version 2.0"><img src="https://img.shields.io/crates/l/vrd.svg?style=for-the-badge&amp;color=007EC6&amp;labelColor=03589B" alt="License" /></a>
+<a href="https://www.rust-lang.org" title="Rust"><img src="https://img.shields.io/badge/rust-f04041?style=for-the-badge&amp;labelColor=c0282d&amp;logo=rust" alt="Rust" /></a></p>
+<h3 id="overview"><a href="#overview">Overview</a></h3>
+<p>The Mersenne Twister is a pseudorandom number generator (PRNG) that
+is often used in computer simulations and games. It is a fast and
+reliable PRNG.</p>
+<p><code>Random (VRD)</code> can be used to generate random numbers based on the
+Mersenne Twister algorithm. The library generates pseudorandom
+integers uniformly distributed in 0..(2^32 - 1) starting from any
+odd seed in 0..(2^32 - 1). The index is incremented after each
+random number is generated. When the index reaches 624, the array is
+reinitialized and the index is reset to 0.</p>
+<h3 id="features-"><a href="#features-">Features ✨</a></h3>
+<ul>
+<li>Create new random number generator and seed it with a value.</li>
+<li>Design for speed and efficiency in mind.</li>
+<li>Generate random 32-bit unsigned integer within a given range.</li>
+<li>Provide random numbers of different types, including booleans, bytes, chars, doubles, floats, integers, and unsigned integers.</li>
+<li>Mutate the state of the random number generator.</li>
+<li>Produce pseudo-random number sequences that are different from each other.</li>
+<li>Regulate the randomness of the generated numbers, including the seed value and the number of bits used.</li>
+<li>Select a random element from a slice of values.</li>
+</ul>
+<h3 id="usage"><a href="#usage">Usage</a></h3>
+<p>Add the following to your <code>Cargo.toml</code> file:</p>
+<div class="example-wrap"><pre class="language-toml"><code>[dependencies]
+vrd = &quot;0.0.2&quot;
+serde = { version = &quot;1.0.160&quot;, features = [&quot;derive&quot;] }
+</code></pre></div><h3 id="examples"><a href="#examples">Examples</a></h3>
+<p>Check out the examples folder for helpful snippets of code that
+demonstrate how to use the <code>Random (VRD)</code> library. You can also
+check out the <a href="https://docs.rs/vrd">documentation</a> for more
+information on how to use the library.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>vrd::Random;
+
+<span class="kw">let </span><span class="kw-2">mut </span>rng = Random::new();
+<span class="kw">let </span>rand_int = rng.int(<span class="number">1</span>, <span class="number">10</span>);
+<span class="macro">println!</span>(<span class="string">&quot;Random integer between 1 and 10: {}&quot;</span>, rand_int);
+
+<span class="kw">let </span>rand_float = rng.float();
+<span class="macro">println!</span>(<span class="string">&quot;Random float: {}&quot;</span>, rand_float);
+
+<span class="kw">let </span>rand_bytes = rng.bytes(<span class="number">10</span>);
+<span class="macro">println!</span>(<span class="string">&quot;Random bytes: {:?}&quot;</span>, rand_bytes);
+</code></pre></div>
+<h2 id="errors"><a href="#errors">Errors</a></h2>
+<p>The <code>Random</code> struct methods do not currently return errors, but in
+the future they may return <code>Result</code> types to handle situations where
+the Mersenne Twister algorithm fails to generate a random number or
+a range of numbers.</p>
+<h3 id="license"><a href="#license">License</a></h3>
+<p>The project is licensed under the terms of both the MIT license and
+the Apache License (Version 2.0).</p>
+<ul>
+<li><a href="LICENSE-APACHE.md">Apache License, Version 2.0</a></li>
+<li><a href="LICENSE-MIT.md">MIT license</a></li>
+</ul>
+</div></details><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="macros/index.html" title="mod vrd::macros">macros</a></div><div class="desc docblock-short">The <code>macros</code> module contains functions for generating macros.</div></li></ul><h2 id="macros" class="small-section-header"><a href="#macros">Macros</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.rand_bool.html" title="macro vrd::rand_bool">rand_bool</a></div><div class="desc docblock-short">Generate a random boolean with the provided probability using the
+provided <code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_bytes.html" title="macro vrd::rand_bytes">rand_bytes</a></div><div class="desc docblock-short">Generate a vector of random bytes with the provided length using the
+provided <code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_char.html" title="macro vrd::rand_char">rand_char</a></div><div class="desc docblock-short">Generate a random char within the range ‘a’..=‘z’ using the provided
+<code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_choose.html" title="macro vrd::rand_choose">rand_choose</a></div><div class="desc docblock-short">Generate a random element from a slice of values using the provided
+<code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_double.html" title="macro vrd::rand_double">rand_double</a></div><div class="desc docblock-short">Generate a random double using the provided <code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_float.html" title="macro vrd::rand_float">rand_float</a></div><div class="desc docblock-short">Generate a random float using the provided <code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_int.html" title="macro vrd::rand_int">rand_int</a></div><div class="desc docblock-short">Generate a random integer within the given range using the provided
+<code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_new.html" title="macro vrd::rand_new">rand_new</a></div><div class="desc docblock-short">Generate a new random number</div></li><li><div class="item-name"><a class="macro" href="macro.rand_pseudo.html" title="macro vrd::rand_pseudo">rand_pseudo</a></div><div class="desc docblock-short">Generate a random 32-bit unsigned integer using the provided
+<code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_range.html" title="macro vrd::rand_range">rand_range</a></div><div class="desc docblock-short">Generate a random number within the given range using the provided
+<code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_seed.html" title="macro vrd::rand_seed">rand_seed</a></div><div class="desc docblock-short">Seed the provided <code>Random (VRD)</code> struct with the given value</div></li><li><div class="item-name"><a class="macro" href="macro.rand_twist.html" title="macro vrd::rand_twist">rand_twist</a></div><div class="desc docblock-short">Twist the state of the provided <code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.rand_uint.html" title="macro vrd::rand_uint">rand_uint</a></div><div class="desc docblock-short">Generate a random 32-bit unsigned integer within the given range
+using the provided <code>Random (VRD)</code> struct</div></li><li><div class="item-name"><a class="macro" href="macro.random_range.html" title="macro vrd::random_range">random_range</a></div><div class="desc docblock-short">Generate a random 32-bit unsigned integer within the given range
+using the provided <code>Random (VRD)</code> struct</div></li></ul><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Random.html" title="struct vrd::Random">Random</a></div><div class="desc docblock-short">The <code>Random</code> struct is used to generate random numbers using the
+Mersenne Twister algorithm.</div></li></ul><h2 id="functions" class="small-section-header"><a href="#functions">Functions</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.run.html" title="fn vrd::run">run</a></div><div class="desc docblock-short">This is the main entry point for the <code>Random (VRD)</code> library.</div></li></ul></section></div></main></body></html>
