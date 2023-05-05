@@ -149,7 +149,7 @@ fn test_random_range_macro() {
 #[test]
 fn test_rand_bool_macro() {
     let mut rng = Random::new();
-    let p = 0.5;
+    let p = 1.0; // Set p to 1.0 to always generate true
     let b = rand_bool!(rng, p);
     assert!(b);
 }
