@@ -12,7 +12,7 @@ exclude = [
     "/.vscode/*"
     ]
 homepage = "https://vrdlib.one"
-keywords = ["['rand', 'random','entropy','random-number','vrd']"]
+keywords = ["entropy", "rand", "random-number", "random", "vrd"]
 license = "MIT OR Apache-2.0"
 name = "vrd"
 readme = "README.md"
