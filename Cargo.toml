@@ -46,7 +46,7 @@ debug = true
 
 [dependencies]
 rand = "0.8.5"
-serde = { version = "1.0.160", features = ["derive"] }
+serde = { version = "1.0.162", features = ["derive"] }
 
 
 [dev-dependencies]
