@@ -201,7 +201,9 @@ jobs:
       - name: Package the binary
         id: package-binary
         run: |
-          mkdir -p target/package
+          if [ ! -d "target/package" ]; then
+            mkdir -p target/package
+          fi
           tar czf target/package/${{ env.TARGET }}.tar.gz -C target/${{ env.TARGET }}/release .
           echo "${{ env.TARGET }}.tar.gz=target/package/${{ env.TARGET }}.tar.gz" >> $GITHUB_ENV
 
@@ -226,7 +228,7 @@ jobs:
 
       # Install the stable Rust toolchain
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.6
         with:
           toolchain: stable
           override: true
@@ -253,7 +255,6 @@ jobs:
             echo "Downloading $target artifact"
             name="${target}.tar.gz"
             echo "Artifact name: $name"
-            mkdir -p target/package
             curl -sSL -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" -L "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runs/${BUILD_ID}/artifacts/${name}" -o "target/package/${name}"
           done
 
@@ -323,7 +324,7 @@ jobs:
       # Install the stable Rust toolchain
       - name: Install stable toolchain
         id: install-toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.6
         with:
           toolchain: stable
           override: true
@@ -353,7 +354,7 @@ jobs:
       # Publish the Rust library to Crate.io
       - name: Publish Library to Crate.io
         id: publish-library
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/cargo@v1.0.1
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
         with:
