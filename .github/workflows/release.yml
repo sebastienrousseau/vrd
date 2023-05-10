@@ -160,15 +160,6 @@ jobs:
           toolchain: stable
           override: true
 
-      # Cache dependencies to speed up subsequent builds.
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
       # Install the targets for the cross-compilation toolchain
       - name: Install target
         id: install-target
@@ -182,6 +173,20 @@ jobs:
           # Clean the build artifacts
           cargo clean --verbose
         shell: bash
+
+      # Cache dependencies to speed up subsequent builds.
+      - name: Cache dependencies
+        id: cache-dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: release-${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
 
       # Build the targets
       - name: Build targets
@@ -212,7 +217,7 @@ jobs:
   release:
     name: ❯ Release 🚀
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: build
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       # Check out the repository code
@@ -307,7 +312,7 @@ jobs:
   crate:
     name: ❯ Crate.io 🦀
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: release
+    needs: [release]
     runs-on: ubuntu-latest
 
     steps:
