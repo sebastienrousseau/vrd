@@ -201,7 +201,7 @@ jobs:
       - name: Package the binary
         id: package-binary
         run: |
-          if [ ! -d "target/package" ]; then
+          if [[ ! -d "target/package" ]]; then
             mkdir -p target/package
           fi
           tar czf target/package/${{ env.TARGET }}.tar.gz -C target/${{ env.TARGET }}/release .
