@@ -1,3 +1,5 @@
+// Copyright © 2023 Random (VRD) library. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
 extern crate criterion;
 extern crate vrd;
 use self::vrd::Random;
