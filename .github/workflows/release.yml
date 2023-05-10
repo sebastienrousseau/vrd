@@ -206,6 +206,7 @@ jobs:
           fi
           tar czf target/package/${{ env.TARGET }}.tar.gz -C target/${{ env.TARGET }}/release .
           echo "${{ env.TARGET }}.tar.gz=target/package/${{ env.TARGET }}.tar.gz" >> $GITHUB_ENV
+        shell: bash
 
       # Upload the binary for each target
       - name: Upload the binary
