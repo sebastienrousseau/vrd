@@ -11,7 +11,7 @@
 //! *Part of the [Mini Functions][0] family of libraries.*
 //!
 //! [![Crates.io](https://img.shields.io/crates/v/vrd.svg?style=for-the-badge&color=success&labelColor=27A006)](https://crates.io/crates/vrd "Crates.io")
-//! [![Lib.rs](https://img.shields.io/badge/lib.rs-v0.0.2-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4)](https://lib.rs/crates/vrd "Lib.rs")
+//! [![Lib.rs](https://img.shields.io/badge/lib.rs-v0.0.3-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4)](https://lib.rs/crates/vrd "Lib.rs")
 //! [![License](https://img.shields.io/crates/l/vrd.svg?style=for-the-badge&color=007EC6&labelColor=03589B)](https://opensource.org/license/MIT/ "MIT or Apache License, Version 2.0")
 //! [![Rust](https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust)](https://www.rust-lang.org "Rust")
 //!
@@ -45,7 +45,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! vrd = "0.0.2"
+//! vrd = "0.0.3"
 //! serde = { version = "1.0.160", features = ["derive"] }
 //! ```
 //!
