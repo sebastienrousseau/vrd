@@ -1,5 +1,24 @@
 // Copyright © 2023 Random (VRD) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
+//! Example code using the `vrd` crate.
+//!
+//! This example demonstrates the usage of the `vrd` crate.
+//! It imports the `Random` trait and other items from the `vrd` crate.
+//! The example code showcases the generation of random numbers.
+//!
+//! # Example
+//!
+//! ```
+//! extern crate vrd;
+//!
+//! use self::vrd::Random;
+//! use vrd::*;
+//!
+//! fn main() {
+//!     let random_number = u32::random();
+//!     println!("Random number: {}", random_number);
+//! }
+//! ```
 extern crate vrd;
 use self::vrd::Random;
 use vrd::*;
@@ -52,7 +71,8 @@ fn main() {
     );
 
     // Generate a random number within a range
-    let rand_range = rand_float!(rng) * (max as f32 - min as f32) + min as f32;
+    let rand_range =
+        rand_float!(rng) * (max as f32 - min as f32) + min as f32;
     println!("🦀 Random number between 0 and 1: {}", rand_range);
 
     // Generate a random 32-bit unsigned integer within a range
@@ -77,7 +97,10 @@ fn main() {
     // Generate a random element from a slice of values
     let values = &[1, 2, 3, 4, 5];
     let rand_choose = rand_choose!(rng, values);
-    println!("🦀 Random element from [1, 2, 3, 4, 5]: {:?}", rand_choose);
+    println!(
+        "🦀 Random element from [1, 2, 3, 4, 5]: {:?}",
+        rand_choose
+    );
 
     // Generate a random float
     let rand_float = rand_float!(rng);

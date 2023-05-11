@@ -104,7 +104,6 @@
 
 use rand::thread_rng;
 use rand::Rng;
-use std::error::Error;
 
 /// The `macros` module contains functions for generating macros.
 pub mod macros;
@@ -209,6 +208,16 @@ impl Random {
         thread_rng().gen::<f64>()
     }
 
+    /// Return the value of the `mti` field
+    pub fn mti(&self) -> usize {
+        self.mti
+    }
+
+    /// Set the value of the `mti` field
+    pub fn set_mti(&mut self, value: usize) {
+        self.mti = value;
+    }
+
     /// Returns new random number generator
     pub fn new() -> Self {
         let mut rng = Random {
@@ -267,10 +276,9 @@ impl Random {
     pub fn seed(&mut self, seed: u32) {
         self.mt[0] = seed;
         for i in 1..N {
-            self.mt[i] = match 1812433253u32.checked_mul(self.mt[i - 1] ^ (self.mt[i - 1] >> 30)) {
-                Some(val) => val + i as u32,
-                None => return,
-            };
+            self.mt[i] = 1812433253u32
+                .checked_mul(self.mt[i - 1] ^ (self.mt[i - 1] >> 30))
+                .map_or(u32::MAX, |val| val + i as u32);
         }
         self.mti = N;
     }
@@ -278,7 +286,8 @@ impl Random {
     /// Twists the state of the random number generator.
     pub fn twist(&mut self) {
         for i in 0..N {
-            let x = (self.mt[i] & UPPER_MASK) + (self.mt[(i + 1) % N] & LOWER_MASK);
+            let x = (self.mt[i] & UPPER_MASK)
+                + (self.mt[(i + 1) % N] & LOWER_MASK);
             let x_a = x >> 1;
             if x % 2 != 0 {
                 self.mt[i] = self.mt[(i + M) % N] ^ x_a ^ MATRIX_A;
@@ -305,7 +314,10 @@ impl Default for Random {
 }
 
 /// This is the main entry point for the `Random (VRD)` library.
-pub fn run() -> Result<(), Box<dyn Error>> {
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
+    if std::env::var("VRD_TEST_MODE").unwrap_or_default() == "1" {
+        return Err("Simulated error".into());
+    }
     let name = "vrd";
     println!("Welcome to `{}` 👋!", { name }.to_uppercase());
     println!(

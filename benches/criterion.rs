@@ -1,10 +1,49 @@
 // Copyright © 2023 Random (VRD) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
+//! Benchmarks using the `criterion` crate.
+//!
+//! This file contains benchmarks that use the `criterion` crate for performance testing.
+//! It imports the `Random` trait from the `vrd` crate and uses the `criterion` macros and types.
+//! The benchmarks showcase the performance of various functions in the `Random` trait.
+//!
+//! # Example
+//!
+//! ```
+//! extern crate criterion;
+//! extern crate vrd;
+//!
+//! use self::vrd::Random;
+//! use criterion::{black_box, criterion_group, criterion_main, Criterion};
+//!
+//! /// Benchmarks the random number generation functions provided by the `Random` trait.
+//! ///
+//! /// This function measures the performance of various functions in the `Random` trait,
+//! /// such as `bool`, `bytes`, `char`, `choose`, `float`, `int`, `new`, `pseudo`,
+//! /// `rand`, and `range`.
+//! fn benchmark_random(c: &mut Criterion) {
+//!     // Benchmark implementation goes here
+//! }
+//!
+//! criterion_group!(benches, benchmark_random);
+//! criterion_main!(benches);
+//! ```
 extern crate criterion;
 extern crate vrd;
 use self::vrd::Random;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{
+    black_box, criterion_group, criterion_main, Criterion,
+};
 
+/// Benchmarks the random number generation functions provided by the `Random` trait.
+///
+/// This function measures the performance of various functions in the `Random` trait,
+/// such as `bool`, `bytes`, `char`, `choose`, `float`, `int`, `new`, `pseudo`,
+/// `rand`, and `range`.
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the `Criterion` struct used for benchmarking.
+///
 fn benchmark_random(c: &mut Criterion) {
     // Benchmark the random bool function
     c.bench_function("Random bool", |b| {
@@ -37,7 +76,13 @@ fn benchmark_random(c: &mut Criterion) {
 
     // Benchmark the random int function
     c.bench_function("Random int", |b| {
-        b.iter(|| Random::int(&mut Random::new(), black_box(0), black_box(100)))
+        b.iter(|| {
+            Random::int(
+                &mut Random::new(),
+                black_box(0),
+                black_box(100),
+            )
+        })
     });
 
     // Benchmark the random new function
@@ -62,5 +107,6 @@ fn benchmark_random(c: &mut Criterion) {
     });
 }
 
+// Groups the benchmarks and runs them using the `criterion_group` macro.
 criterion_group!(benches, benchmark_random);
 criterion_main!(benches);
