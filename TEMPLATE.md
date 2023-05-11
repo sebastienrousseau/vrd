@@ -5,7 +5,7 @@ alt="Random (VRD) logo" height="261" width="261" align="right" />
 
 <!-- markdownlint-enable MD033 MD041 -->
 
-# Random (VRD) v0.0.3 🦀
+# Random (VRD) v0.0.4 🦀
 
 A Rust library for generating high-quality random numbers based on the
 Mersenne Twister algorithm.
@@ -65,6 +65,6 @@ The index is incremented after each random number is generated. When the index r
 [crates-badge]: https://img.shields.io/crates/v/vrd.svg?style=for-the-badge 'Crates.io badge'
 [divider]: https://kura.pro/common/images/elements/divider.svg "divider"
 [docs-badge]: https://img.shields.io/docsrs/vrd.svg?style=for-the-badge 'Docs.rs badge'
-[libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.3-orange.svg?style=for-the-badge 'Lib.rs badge'
+[libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.4-orange.svg?style=for-the-badge 'Lib.rs badge'
 [license-badge]: https://img.shields.io/crates/l/vrd.svg?style=for-the-badge 'License badge'
 [made-with-rust-badge]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust 'Made With Rust badge'
