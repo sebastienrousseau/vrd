@@ -126,7 +126,7 @@ To use the `Random (VRD)` library in your project, add the following to your `Ca
 
 ```toml
 [dependencies]
-vrd = "0.0.4"
+vrd = "0.0.5"
 ```
 
 Add the following to your `main.rs` file:
