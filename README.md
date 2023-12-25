@@ -32,7 +32,7 @@ Mersenne Twister algorithm.
 
 `Random (VRD)` is a Rust library for generating high-quality random numbers based on the Mersenne Twister algorithm.
 
-The Mersenne Twister is a pseudorandom number generator (PRNG) that is often used in computer simulations and games. It is a fast and reliable PRNG.
+The `Random` struct in this library provides a robust interface for generating a variety of random numbers using the Mersenne Twister algorithm. Additionally, the `MersenneTwisterConfig` struct allows for advanced configuration of the algorithm.
 
 The Random (VRD) is used to generate random numbers using the Mersenne Twister algorithm. It generates pseudorandom integers uniformly distributed in 0..(2^32 - 1) starting from any odd seed in 0..(2^32 - 1).
 
