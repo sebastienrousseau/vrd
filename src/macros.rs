@@ -1,5 +1,8 @@
-// Copyright © 2023 Random (VRD) library. All rights reserved.
+// Copyright © 2023-2024 Random (VRD) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
+// This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
+// See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
+
 //! # Macros for the `Random (VRD)` crate.
 //!
 //! This module contains macros that simplify working with the
@@ -39,12 +42,35 @@ macro_rules! random_range {
     };
 }
 
-/// Generate a random boolean with the provided probability using the
-/// provided `Random (VRD)` struct
+/// Generate a random boolean with a provided probability.
+///
+/// # Examples
+///
+/// ```
+/// #[macro_use] extern crate vrd;
+/// # use vrd::Random;
+/// # use vrd::rand_bool;
+/// # fn main() {
+/// # let mut rng = Random::new();
+/// // Generates a boolean with 50% probability of being true
+/// # let value = rand_bool!(rng, 0.5);
+/// # }
+/// ```
+///
+/// # Panics
+///
+/// Panics if probability is not between 0.0 and 1.0.
 #[macro_export]
 macro_rules! rand_bool {
     ($rng:expr, $probability:expr) => {
-        $rng.bool($probability)
+        {
+            let valid_range = 0.0..=1.0;
+            assert!(
+                valid_range.contains(&$probability),
+                "Probability must be between 0.0 and 1.0"
+            );
+            $rng.bool($probability)
+        }
     };
 }
 
@@ -150,3 +176,4 @@ macro_rules! rand_twist {
         $rng.twist()
     };
 }
+
