@@ -64,7 +64,11 @@ macro_rules! random_range {
 macro_rules! rand_bool {
     ($rng:expr, $probability:expr) => {
         {
-            assert!($probability >= 0.0 && $probability <= 1.0, "Probability must be between 0.0 and 1.0");
+            let valid_range = 0.0..=1.0;
+            assert!(
+                valid_range.contains(&$probability),
+                "Probability must be between 0.0 and 1.0"
+            );
             $rng.bool($probability)
         }
     };

@@ -57,7 +57,7 @@ mod tests {
         let mut rng = Random::new();
         let values = vec![1, 2, 3, 4, 5];
         let chosen = rand_choose!(rng, &values).unwrap();
-        assert!(values.contains(&chosen), "Chosen value should be in the provided slice.");
+        assert!(values.contains(chosen), "Chosen value should be in the provided slice.");
     }
 
     #[test]
