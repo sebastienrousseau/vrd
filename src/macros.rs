@@ -42,12 +42,31 @@ macro_rules! random_range {
     };
 }
 
-/// Generate a random boolean with the provided probability using the
-/// provided `Random (VRD)` struct
+/// Generate a random boolean with a provided probability.
+///
+/// # Examples
+///
+/// ```
+/// #[macro_use] extern crate vrd;
+/// # use vrd::Random;
+/// # use vrd::rand_bool;
+/// # fn main() {
+/// # let mut rng = Random::new();
+/// // Generates a boolean with 50% probability of being true
+/// # let value = rand_bool!(rng, 0.5);
+/// # }
+/// ```
+///
+/// # Panics
+///
+/// Panics if probability is not between 0.0 and 1.0.
 #[macro_export]
 macro_rules! rand_bool {
     ($rng:expr, $probability:expr) => {
-        $rng.bool($probability)
+        {
+            assert!($probability >= 0.0 && $probability <= 1.0, "Probability must be between 0.0 and 1.0");
+            $rng.bool($probability)
+        }
     };
 }
 
@@ -153,3 +172,4 @@ macro_rules! rand_twist {
         $rng.twist()
     };
 }
+
