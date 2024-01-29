@@ -46,7 +46,7 @@ debug = true
 
 [dependencies]
 rand = "0.8.5"
-serde = { version = "1.0.193", features = ["derive"] }
+serde = { version = "1.0.196", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
