@@ -163,14 +163,14 @@ mod tests {
     fn test_i64() {
         let mut rng = Random::new();
         let i = rng.i64();
-        assert!(i64::MIN <= i && i <= i64::MAX);
+        assert!((i64::MIN..=i64::MAX).contains(&i));
     }
 
     #[test]
     fn test_u64() {
         let mut rng = Random::new();
         let u = rng.u64();
-        assert!(u64::MIN <= u && u <= u64::MAX);
+        assert!((u64::MIN..=u64::MAX).contains(&u));
     }
 
     #[test]
