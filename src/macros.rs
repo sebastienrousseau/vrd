@@ -62,16 +62,14 @@ macro_rules! random_range {
 /// Panics if probability is not between 0.0 and 1.0.
 #[macro_export]
 macro_rules! rand_bool {
-    ($rng:expr, $probability:expr) => {
-        {
-            let valid_range = 0.0..=1.0;
-            assert!(
-                valid_range.contains(&$probability),
-                "Probability must be between 0.0 and 1.0"
-            );
-            $rng.bool($probability)
-        }
-    };
+    ($rng:expr, $probability:expr) => {{
+        let valid_range = 0.0..=1.0;
+        assert!(
+            valid_range.contains(&$probability),
+            "Probability must be between 0.0 and 1.0"
+        );
+        $rng.bool($probability)
+    }};
 }
 
 /// Generate a vector of random bytes with the provided length using the
@@ -176,4 +174,189 @@ macro_rules! rand_twist {
         $rng.twist()
     };
 }
+
+/// Generates a random alphanumeric character (a-z, A-Z, 0-9).
+///
+/// # Examples
+///
+/// ```
+/// use vrd::rand_alphanumeric;
+/// let mut rng = vrd::random::Random::new();
+/// let alphanumeric = rand_alphanumeric!(rng);
+/// println!("Random alphanumeric character: {}", alphanumeric);
+/// ```
+///
+/// # Returns
+/// A randomly generated alphanumeric character as a `char`.
+#[macro_export]
+macro_rules! rand_alphanumeric {
+    ($rng:expr) => {
+        {
+            const CHARS: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let index = $rng.random_range(0, CHARS.len() as u32) as usize;
+            CHARS[index] as char
+        }
+    };
+}
+
+/// Generates a random string of the specified length.
+///
+/// The generated string can contain lowercase letters (a-z), uppercase letters (A-Z),
+/// and digits (0-9).
+///
+/// # Examples
+///
+/// ```
+/// use vrd::rand_string;
+/// let mut rng = vrd::random::Random::new();
+/// let random_string = rand_string!(rng, 10);
+/// println!("Random string: {}", random_string);
+/// ```
+///
+/// # Arguments
+/// * `rng` - A mutable reference to a `Random` instance.
+/// * `length` - The desired length of the random string.
+///
+/// # Returns
+/// A randomly generated string of the specified length.
+#[macro_export]
+macro_rules! rand_string {
+    ($rng:expr, $length:expr) => {
+        {
+            const CHARS: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let mut result = String::with_capacity($length);
+            for _ in 0..$length {
+                let index = $rng.random_range(0, CHARS.len() as u32) as usize;
+                result.push(CHARS[index] as char);
+            }
+            result
+        }
+    };
+}
+
+/// Shuffles a mutable slice randomly.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::rand_shuffle;
+/// let mut rng = vrd::random::Random::new();
+/// let mut numbers = [1, 2, 3, 4, 5];
+/// rand_shuffle!(rng, &mut numbers);
+/// println!("Shuffled numbers: {:?}", numbers);
+/// ```
+///
+/// # Arguments
+/// * `rng` - A mutable reference to a `Random` instance.
+/// * `slice` - A mutable reference to the slice to be shuffled.
+#[macro_export]
+macro_rules! rand_shuffle {
+    ($rng:expr, $slice:expr) => {
+        {
+            let len = $slice.len();
+            for i in (1..len).rev() {
+                let j = $rng.random_range(0, (i + 1) as u32) as usize;
+                $slice.swap(i, j);
+            }
+        }
+    };
+}
+
+/// Selects a random element from a slice based on the provided weights.
+///
+/// The weights determine the probability of each element being selected.
+/// The probability of an element being selected is proportional to its weight
+/// relative to the sum of all weights.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::rand_weighted_choice;
+/// let mut rng = vrd::random::Random::new();
+/// let choices = ["A", "B", "C"];
+/// let weights = [2, 3, 5];
+/// let selected = rand_weighted_choice!(rng, &choices, &weights);
+/// println!("Selected element: {}", selected);
+/// ```
+///
+/// # Arguments
+/// * `rng` - A mutable reference to a `Random` instance.
+/// * `choices` - A reference to the slice of elements to choose from.
+/// * `weights` - A reference to the slice of weights corresponding to each element.
+///
+/// # Panics
+/// Panics if `choices` and `weights` have different lengths.
+///
+/// # Returns
+/// A reference to the randomly selected element from `choices`.
+#[macro_export]
+macro_rules! rand_weighted_choice {
+    ($rng:expr, $choices:expr, $weights:expr) => {{
+        assert_eq!($choices.len(), $weights.len(), "Choices and weights must have the same length");
+        let total_weight: u32 = $weights.iter().sum();
+        let mut rnd = $rng.random_range(0, total_weight);
+        let mut selected_choice = None;
+        for (index, &weight) in $weights.iter().enumerate() {
+            if rnd < weight {
+                selected_choice = Some(&$choices[index]);
+                break; // Exit the loop once the choice is made.
+            }
+            rnd -= weight;
+        }
+        selected_choice.expect("Invalid weighted choice")
+    }};
+}
+
+/// Generate a normally distributed random number with the given mean and standard deviation.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::rand_normal;
+/// let mut rng = vrd::random::Random::new();
+/// let normal_number = rand_normal!(rng, 0.0, 1.0);
+/// println!("Normal number: {}", normal_number);
+/// ```
+///
+/// # Arguments
+/// * `rng` - A mutable reference to a `Random` instance.
+/// * `mu` - The mean of the normal distribution.
+/// * `sigma` - The standard deviation of the normal distribution.
+///
+/// # Returns
+/// A randomly generated normal distributed number.
+#[macro_export]
+macro_rules! rand_normal {
+    ($rng:expr, $mu:expr, $sigma:expr) => {{
+        let u1: f64 = $rng.f64(); // Ensuring f64() method is called on the RNG
+        let u2: f64 = $rng.f64(); // Ensuring f64() method is called on the RNG
+        let z0 = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+        $mu + $sigma * z0
+    }};
+}
+
+/// Generate a random number from the exponential distribution with the given rate parameter.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::rand_exponential;
+/// let mut rng = vrd::random::Random::new();
+/// let exponential_number = rand_exponential!(rng, 2.0);
+/// println!("Exponential number: {}", exponential_number);
+/// ```
+///
+#[macro_export]
+macro_rules! rand_exponential {
+    ($rng:expr, $rate:expr) => {{
+        // Ensure the rate parameter is positive.
+        if $rate <= 0.0 {
+            panic!("The rate parameter must be positive.");
+        }
+
+        // Implementation of the inverse CDF method for exponential distribution.
+        -1.0 / $rate * (1.0 - $rng.f64()).ln()
+    }};
+}
+
 
