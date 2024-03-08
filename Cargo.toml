@@ -31,7 +31,7 @@ name = "vrd"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/vrd"
 rust-version = "1.71.1"
-version = "0.0.5"
+version = "0.0.6"
 
 [workspace]
 members = ["xtask"]
@@ -46,7 +46,7 @@ debug = true
 
 [dependencies]
 rand = "0.8.5"
-serde = { version = "1.0.193", features = ["derive"] }
+serde = { version = "1.0.197", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.12"

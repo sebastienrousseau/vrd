@@ -48,7 +48,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! vrd = "0.0.5"
+//! vrd = "0.0.6"
 //! serde = { version = "1.0.160", features = ["derive"] }
 //! ```
 //!
