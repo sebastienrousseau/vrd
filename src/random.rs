@@ -471,6 +471,90 @@ impl Random {
         }
         self.mti = 0;
     }
+
+    /// Generates a random 64-bit signed integer.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let random_i64 = rng.i64();
+    /// println!("Random i64: {}", random_i64);
+    /// ```
+    ///
+    /// # Returns
+    /// An `i64` representing a randomly generated 64-bit signed integer.
+    pub fn i64(&mut self) -> i64 {
+        let high = self.rand() as i64;
+        let low = self.rand() as i64;
+        (high << 32) | low
+    }
+
+    /// Generates a random 64-bit unsigned integer.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let random_u64 = rng.u64();
+    /// println!("Random u64: {}", random_u64);
+    /// ```
+    ///
+    /// # Returns
+    /// A `u64` representing a randomly generated 64-bit unsigned integer.
+    pub fn u64(&mut self) -> u64 {
+        let high = self.rand() as u64;
+        let low = self.rand() as u64;
+        (high << 32) | low
+    }
+
+    /// Generates a random 64-bit floating-point number in the range [0.0, 1.0).
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let random_f64 = rng.f64();
+    /// println!("Random f64: {}", random_f64);
+    /// ```
+    ///
+    /// # Returns
+    /// An `f64` representing a randomly generated 64-bit floating-point number.
+    pub fn f64(&mut self) -> f64 {
+        let value = self.u64();
+        value as f64 / (u64::MAX as f64)
+    }
+
+    /// Generates a random string of the specified length.
+    ///
+    /// # Arguments
+    /// * `length` - The desired length of the random string.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let random_string = rng.string(10);
+    /// println!("Random string: {}", random_string);
+    /// ```
+    ///
+    /// # Returns
+    /// A `String` representing a randomly generated string of the specified length.
+    pub fn string(&mut self, length: usize) -> String {
+        let chars: Vec<char> = (0..length)
+            .map(|_| {
+                let value = self.rand() % 62;
+                if value < 10 {
+                    (b'0' + value as u8) as char
+                } else if value < 36 {
+                    (b'a' + value as u8 - 10) as char
+                } else {
+                    (b'A' + value as u8 - 36) as char
+                }
+            })
+            .collect();
+        chars.into_iter().collect()
+    }
 }
 
 impl std::fmt::Display for Random {

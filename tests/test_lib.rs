@@ -159,4 +159,39 @@ mod tests {
         let mut vrd = Random::new();
         assert!(vrd.rand() < 4294967295);
     }
+    #[test]
+    fn test_i64() {
+        let mut rng = Random::new();
+        let i = rng.i64();
+        assert!(i64::MIN <= i && i <= i64::MAX);
+    }
+
+    #[test]
+    fn test_u64() {
+        let mut rng = Random::new();
+        let u = rng.u64();
+        assert!(u64::MIN <= u && u <= u64::MAX);
+    }
+
+    #[test]
+    fn test_f64() {
+        let mut rng = Random::new();
+        let f = rng.f64();
+        assert!((0.0..=1.0).contains(&f));
+    }
+
+    #[test]
+    fn test_string() {
+        let mut rng = Random::new();
+        let s1 = rng.string(0);
+        assert_eq!(s1.len(), 0);
+
+        let s2 = rng.string(10);
+        assert_eq!(s2.len(), 10);
+        assert!(s2.chars().all(|c| c.is_ascii_alphanumeric()));
+
+        let s3 = rng.string(100);
+        assert_eq!(s3.len(), 100);
+        assert!(s3.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
 }
