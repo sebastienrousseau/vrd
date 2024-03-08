@@ -7,8 +7,8 @@
 mod tests {
 
     extern crate vrd;
-    use vrd::random::Random;
     use std::convert::TryInto;
+    use vrd::random::Random;
 
     const N: usize = 624;
 
@@ -193,5 +193,87 @@ mod tests {
         let s3 = rng.string(100);
         assert_eq!(s3.len(), 100);
         assert!(s3.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
+
+    #[test]
+    fn test_normal() {
+        let mut rng = Random::new();
+        let n = 1000000;
+        let mut samples = Vec::with_capacity(n);
+
+        let mu = 0.0;
+        let sigma = 1.0;
+
+        for _ in 0..n {
+            samples.push(rng.normal(mu, sigma));
+        }
+
+        let mean = samples.iter().sum::<f64>() / n as f64;
+        let variance =
+            samples.iter().map(|x| (x - mean).powi(2)).sum::<f64>()
+                / (n - 1) as f64;
+        let stddev = variance.sqrt();
+
+        assert!((mean - mu).abs() < 0.01, "Mean: {}", mean);
+        assert!(
+            (stddev - sigma).abs() < 0.01,
+            "Standard deviation: {}",
+            stddev
+        );
+    }
+
+    #[test]
+    fn test_exponential() {
+        let mut rng = Random::new();
+        let n = 1000000;
+        let mut samples = Vec::with_capacity(n);
+
+        let rate = 1.5;
+
+        for _ in 0..n {
+            samples.push(rng.exponential(rate));
+        }
+
+        let mean = samples.iter().sum::<f64>() / n as f64;
+        let expected_mean = 1.0 / rate;
+
+        assert!(
+            (mean - expected_mean).abs() < 0.01,
+            "Mean: {}, Expected mean: {}",
+            mean,
+            expected_mean
+        );
+    }
+
+    #[test]
+    fn test_poisson() {
+        let mut rng = Random::new();
+        let n = 1000000;
+        let mut counts = [0; 10];
+
+        let mean = 3.0;
+
+        for _ in 0..n {
+            let x = rng.poisson(mean);
+            if x < 10 {
+                counts[x as usize] += 1;
+            }
+        }
+
+        let expected_probs = [
+            0.0498, 0.1494, 0.2240, 0.2240, 0.1680, 0.1008, 0.0504,
+            0.0216, 0.0081, 0.0027,
+        ];
+
+        for (i, &count) in counts.iter().enumerate() {
+            let prob = count as f64 / n as f64;
+            assert!(
+                (prob - expected_probs[i]).abs() < 0.005,
+                "Probability at index {}: {}, Expected: {}",
+                i,
+                prob,
+                expected_probs[i]
+            );
+        }
     }
 }

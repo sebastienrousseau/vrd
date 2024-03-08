@@ -10,7 +10,17 @@ use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+)]
 /// The `Random` struct is used to generate random numbers using the Mersenne Twister algorithm.
 ///
 /// This struct maintains an internal state for random number generation and provides methods to generate various types of random numbers.
@@ -464,7 +474,9 @@ impl Random {
                 + (self.mt[(i + 1) % config.n] & config.lower_mask);
             let x_a = x >> 1;
             if x % 2 != 0 {
-                self.mt[i] = self.mt[(i + config.m) % config.n] ^ x_a ^ config.matrix_a;
+                self.mt[i] = self.mt[(i + config.m) % config.n]
+                    ^ x_a
+                    ^ config.matrix_a;
             } else {
                 self.mt[i] = self.mt[(i + config.m) % config.n] ^ x_a;
             }
@@ -521,8 +533,7 @@ impl Random {
     /// # Returns
     /// An `f64` representing a randomly generated 64-bit floating-point number.
     pub fn f64(&mut self) -> f64 {
-        let value = self.u64();
-        value as f64 / (u64::MAX as f64)
+        thread_rng().gen::<f64>()
     }
 
     /// Generates a random string of the specified length.
@@ -554,6 +565,79 @@ impl Random {
             })
             .collect();
         chars.into_iter().collect()
+    }
+
+    /// Generates a random number from a standard normal distribution (mean = 0, stddev = 1).
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let mu = 0.0; // Mean of the standard normal distribution
+    /// let sigma = 1.0; // Standard deviation of the standard normal distribution
+    /// let normal = rng.normal(mu, sigma);
+    /// println!("Random number from standard normal distribution: {}", normal);
+    /// ```
+    ///
+    /// # Returns
+    /// An `f64` representing a random number from a standard normal distribution.
+    pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
+        let u1 = self.f64();
+        let u2 = self.f64();
+        println!("u1: {}", u1);
+        println!("u2: {}", u2);
+        let z0 = (-2.0 * u1.ln()).sqrt()
+            * (2.0 * std::f64::consts::PI * u2).cos();
+        mu + sigma * z0
+    }
+
+    /// Generates a random number from an exponential distribution with the specified rate parameter.
+    ///
+    /// # Arguments
+    /// * `rate` - The rate parameter (lambda) of the exponential distribution.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let exponential = rng.exponential(1.5);
+    /// println!("Random number from exponential distribution with rate 1.5: {}", exponential);
+    /// ```
+    ///
+    /// # Returns
+    /// An `f64` representing a random number from an exponential distribution.
+    pub fn exponential(&mut self, rate: f64) -> f64 {
+        // Implementation of the inverse CDF method
+        -1.0 / rate * (1.0 - self.f64()).ln()
+    }
+
+    /// Generates a random number from a Poisson distribution with the specified mean parameter.
+    ///
+    /// # Arguments
+    /// * `mean` - The mean parameter (lambda) of the Poisson distribution.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let poisson = rng.poisson(3.0);
+    /// println!("Random number from Poisson distribution with mean 3.0: {}", poisson);
+    /// ```
+    ///
+    /// # Returns
+    /// An `u64` representing a random number from a Poisson distribution.
+    pub fn poisson(&mut self, mean: f64) -> u64 {
+        let mut k = 0;
+        let mut p = 1.0;
+        let l = (-mean).exp();
+        loop {
+            k += 1;
+            p *= self.f64();
+            if p < l {
+                break;
+            }
+        }
+        k - 1
     }
 }
 
