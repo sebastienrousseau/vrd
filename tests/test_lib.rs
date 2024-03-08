@@ -7,7 +7,7 @@
 mod tests {
 
     extern crate vrd;
-    use vrd::Random;
+    use vrd::random::Random;
     use std::convert::TryInto;
 
     const N: usize = 624;

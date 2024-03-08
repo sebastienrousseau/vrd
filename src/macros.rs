@@ -48,7 +48,7 @@ macro_rules! random_range {
 ///
 /// ```
 /// #[macro_use] extern crate vrd;
-/// # use vrd::Random;
+/// # use vrd::random::Random;
 /// # use vrd::rand_bool;
 /// # fn main() {
 /// # let mut rng = Random::new();

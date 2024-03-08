@@ -11,7 +11,7 @@
 //! and state manipulation of the random number generator (RNG).
 
 extern crate vrd;
-use self::vrd::Random;
+use self::vrd::random::Random;
 use vrd::*;
 
 fn main() {
