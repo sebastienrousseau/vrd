@@ -124,4 +124,11 @@ fn main() {
     let vrd_rng_number = rng.rand();
     println!("🦀 Default RNG number: {}, `vrd` RNG number: {}", default_rng_number, vrd_rng_number);
 
+    // Serialize the random number generator to JSON
+    let serialized_rng = serde_json::to_string(&rng).unwrap();
+    println!("🦀 Serialized RNG: {}", serialized_rng);
+
+    // Deserialize the random number generator from JSON
+    let deserialized_rng: Random = serde_json::from_str(&serialized_rng).unwrap();
+    println!("🦀 Deserialized RNG: {:?}", deserialized_rng);
 }

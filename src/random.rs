@@ -6,9 +6,11 @@
 use crate::MersenneTwisterConfig;
 use rand::thread_rng;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
+use serde_big_array::BigArray;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 /// The `Random` struct is used to generate random numbers using the Mersenne Twister algorithm.
 ///
 /// This struct maintains an internal state for random number generation and provides methods to generate various types of random numbers.
@@ -22,8 +24,8 @@ use rand::Rng;
 
 /// # Random Number Generation
 pub struct Random {
-    /// The array of unsigned 32-bit integers used to generate random
-    /// numbers
+    /// The array of unsigned 32-bit integers used to generate random numbers.
+    #[serde(with = "BigArray")]
     pub mt: [u32; 624],
     /// The current index of the array used in the generation of random
     /// numbers
@@ -33,8 +35,8 @@ pub struct Random {
 impl Random {
     /// Returns a random bool with a specified probability.
     ///
-    /// The `bool` method returns a random boolean value. The probability of returning `true` is determined 
-    /// by the `probability` parameter. This method is useful for generating random boolean outcomes, like 
+    /// The `bool` method returns a random boolean value. The probability of returning `true` is determined
+    /// by the `probability` parameter. This method is useful for generating random boolean outcomes, like
     /// simulating a coin flip.
     ///
     /// # Arguments
