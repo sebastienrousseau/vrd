@@ -6,7 +6,7 @@
 //!
 //! # `Random (VRD)` 🦀
 //!
-//! [![vrd](https://kura.pro/vrd/images/banners/banner-vrd.svg)](https://vrdlib.one "Random (VRD) - A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm")
+//! [![vrd](https://kura.pro/vrd/images/banners/banner-vrd.svg)](https://vrdlib.com "Random (VRD) - A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm")
 //!
 //! A Rust library for generating high-quality random numbers based on
 //! the Mersenne Twister algorithm.

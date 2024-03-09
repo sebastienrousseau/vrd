@@ -1,5 +1,5 @@
 [package]
-authors = ["The vrd contributors <contact@vrdlib.one>"]
+authors = ["The vrd contributors <contact@vrdlib.com>"]
 build = "build.rs"
 categories = ['Algorithms', 'Encoding','Parser implementations','Data structures']
 description = "A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm"
@@ -11,7 +11,7 @@ exclude = [
     "/.gitignore",
     "/.vscode/*"
 ]
-homepage = "https://vrdlib.one"
+homepage = "https://vrdlib.com"
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
