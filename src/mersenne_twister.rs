@@ -3,9 +3,21 @@
 // This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
 /// Configuration for the Mersenne Twister algorithm.
 pub struct MersenneTwisterConfig {
     /// The number of elements in the array used for the Mersenne Twister algorithm.

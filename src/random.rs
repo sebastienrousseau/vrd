@@ -385,7 +385,10 @@ impl Random {
     /// # Notes
     /// - This method offers a convenient way to specify the range for random number generation.
     pub fn random_range(&mut self, min: u32, max: u32) -> u32 {
-        assert!(max > min, "max must be greater than min for random_range");
+        assert!(
+            max > min,
+            "max must be greater than min for random_range"
+        );
         let mut rng = rand::thread_rng(); // Get a thread-local RNG
         rng.gen_range(min..max) // Use the gen_range method for uniform distribution
     }

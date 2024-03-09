@@ -251,15 +251,13 @@ macro_rules! rand_string {
 /// * `slice` - A mutable reference to the slice to be shuffled.
 #[macro_export]
 macro_rules! rand_shuffle {
-    ($rng:expr, $slice:expr) => {
-        {
-            let len = $slice.len();
-            for i in (1..len).rev() {
-                let j = $rng.random_range(0, (i + 1) as u32) as usize;
-                $slice.swap(i, j);
-            }
+    ($rng:expr, $slice:expr) => {{
+        let len = $slice.len();
+        for i in (1..len).rev() {
+            let j = $rng.random_range(0, (i + 1) as u32) as usize;
+            $slice.swap(i, j);
         }
-    };
+    }};
 }
 
 /// Selects a random element from a slice based on the provided weights.
@@ -292,7 +290,11 @@ macro_rules! rand_shuffle {
 #[macro_export]
 macro_rules! rand_weighted_choice {
     ($rng:expr, $choices:expr, $weights:expr) => {{
-        assert_eq!($choices.len(), $weights.len(), "Choices and weights must have the same length");
+        assert_eq!(
+            $choices.len(),
+            $weights.len(),
+            "Choices and weights must have the same length"
+        );
         let total_weight: u32 = $weights.iter().sum();
         let mut rnd = $rng.random_range(0, total_weight);
         let mut selected_choice = None;
@@ -378,19 +380,17 @@ macro_rules! rand_exponential {
 /// An `u64` representing a random number from a Poisson distribution.
 #[macro_export]
 macro_rules! rand_poisson {
-    ($rng:expr, $mean:expr) => {
-        {
-            let mut k = 0;
-            let mut p = 1.0;
-            let l = f64::exp(-$mean);
-            loop {
-                k += 1;
-                p *= $rng.f64();
-                if p < l {
-                    break;
-                }
+    ($rng:expr, $mean:expr) => {{
+        let mut k = 0;
+        let mut p = 1.0;
+        let l = f64::exp(-$mean);
+        loop {
+            k += 1;
+            p *= $rng.f64();
+            if p < l {
+                break;
             }
-            k - 1
         }
-    };
+        k - 1
+    }};
 }
