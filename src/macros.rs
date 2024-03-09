@@ -359,4 +359,38 @@ macro_rules! rand_exponential {
     }};
 }
 
-
+/// Generates a random number from a Poisson distribution with the specified mean parameter.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::rand_poisson;
+/// let mut rng = vrd::random::Random::new();
+/// let poisson = rand_poisson!(rng, 3.0);
+/// println!("Random number from Poisson distribution with mean 3.0: {}", poisson);
+/// ```
+///
+/// # Arguments
+/// * `rng` - A mutable reference to a `Random` instance.
+/// * `mean` - The mean parameter (lambda) of the Poisson distribution.
+///
+/// # Returns
+/// An `u64` representing a random number from a Poisson distribution.
+#[macro_export]
+macro_rules! rand_poisson {
+    ($rng:expr, $mean:expr) => {
+        {
+            let mut k = 0;
+            let mut p = 1.0;
+            let l = f64::exp(-$mean);
+            loop {
+                k += 1;
+                p *= $rng.f64();
+                if p < l {
+                    break;
+                }
+            }
+            k - 1
+        }
+    };
+}

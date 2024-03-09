@@ -274,6 +274,22 @@ fn test_rand_weighted_choice() {
         );
     }
 
+    #[test]
+    fn test_rand_poisson() {
+        let mut rng = Random::new();
+        let mean = 3.0;
+        let num_samples = 10000;
 
+        let mut sum = 0;
+        for _ in 0..num_samples {
+            let poisson = rand_poisson!(rng, mean);
+            sum += poisson;
+        }
+
+        let sample_mean = sum as f64 / num_samples as f64;
+        let expected_mean = mean;
+
+        assert!((sample_mean - expected_mean).abs() < 0.1);
+    }
 }
 
