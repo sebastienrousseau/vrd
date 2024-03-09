@@ -18,9 +18,12 @@ Twister algorithm.
 
 ![Random (VRD) Banner][banner]
 
-[![Made With Rust][made-with-rust-badge]][14] [![Crates.io][crates-badge]][08] [![Lib.rs][libs-badge]][10] [![Docs.rs][docs-badge]][09] [![License][license-badge]][02] [![Codecov][codecov-badge]][15]
+[![Made With Rust][made-with-rust-badge]][14] [![Crates.io][crates-badge]][08]
+[![Lib.rs][libs-badge]][10] [![Docs.rs][docs-badge]][09]
+[![License][license-badge]][02] [![Codecov][codecov-badge]][15]
 
-• [Website][01] • [Documentation][09] • [Report Bug][04] • [Request Feature][04] • [Contributing Guidelines][05]
+• [Website][01] • [Documentation][09] • [Report Bug][04]
+• [Request Feature][04] • [Contributing Guidelines][05]
 
 <!-- markdownlint-disable MD033 MD041 -->
 </center>
