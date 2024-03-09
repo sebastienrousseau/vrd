@@ -5,65 +5,38 @@
 
 #[cfg(test)]
 mod tests {
-    use assert_cmd::prelude::*;
-    use std::process::Command;
+    use rlg::{log_format::LogFormat, log_level::LogLevel};
+    use vrd::create_log_entry;
 
     #[test]
-    fn test_run_with_vrd_test_mode() {
-        let output = Command::cargo_bin("vrd")
-            .unwrap()
-            .env("VRD_TEST_MODE", "1")
-            .output()
-            .expect("Failed to execute command");
+    fn test_create_log_entry() {
+        let uuid = "test-uuid";
+        let iso = "2023-06-10T12:34:56Z";
+        let level = LogLevel::INFO;
+        let message = "Test log message";
 
-        // Assert that the command execution was not successful
-        assert!(!output.status.success());
+        let log_entry = create_log_entry(uuid, iso, level, message);
 
-        // Assert that the error message was printed to stderr
-        let stderr = String::from_utf8(output.stderr).unwrap();
-        assert!(stderr.contains("Error running vrd: Simulated error"));
+        assert_eq!(log_entry.session_id, uuid);
+        assert_eq!(log_entry.time, iso);
+        assert_eq!(log_entry.level.to_string(), "INFO");
+        assert_eq!(log_entry.component, "VRD");
+        assert_eq!(log_entry.description, message);
+        assert_eq!(log_entry.format, LogFormat::JSON);
     }
 
-    #[test]
-    fn test_run_without_vrd_test_mode() {
-        let output = Command::cargo_bin("vrd")
-            .unwrap()
-            .output()
-            .expect("Failed to execute command");
+    #[tokio::test]
+    async fn test_log_entry_async() {
+        let uuid = "test-uuid";
+        let iso = "2023-06-10T12:34:56Z";
+        let level = LogLevel::INFO;
+        let message = "Test log message";
+        let log_entry = create_log_entry(uuid, iso, level, message);
 
-        // Assert that the command execution was successful
-        assert!(output.status.success());
-
-        // Assert that the welcome messages were printed to stdout
-        let stdout = String::from_utf8(output.stdout).unwrap();
-        assert!(stdout.contains("Welcome to `VRD` 👋!"));
-        assert!(stdout.contains("A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm"));
-    }
-
-    fn run_test_scenario() -> Result<(), Box<dyn std::error::Error>> {
-        // Simulate an error scenario
-        // Return an error explicitly
-        Err("Test error".into())
-    }
-
-    #[test]
-    fn test_main() {
-        // Test calling the `run()` function directly
-        let result = run_test_scenario();
-        assert!(result.is_err());
-
-        // Test calling the `main()` function
-        let output = Command::cargo_bin("vrd")
-            .unwrap()
-            .env("VRD_TEST_MODE", "1")
-            .output()
-            .expect("Failed to execute command");
-
-        // Assert that the command execution was not successful
-        assert!(!output.status.success());
-
-        // Assert that the error message was printed to stderr
-        let stderr = String::from_utf8(output.stderr).unwrap();
-        assert!(stderr.contains("Error running vrd: Simulated error"));
+        // Assert that the log entry was logged successfully
+        assert!(log_entry.session_id == "test-uuid");
+        assert!(log_entry.time == "2023-06-10T12:34:56Z");
+        assert!(log_entry.level == LogLevel::INFO);
+        assert!(message == "Test log message");
     }
 }

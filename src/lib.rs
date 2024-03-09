@@ -104,6 +104,7 @@
 )]
 #![crate_name = "vrd"]
 #![crate_type = "lib"]
+use rlg::{log::Log, log_format::LogFormat, log_level::LogLevel};
 
 /// The `mersenne_twister` module contains the implementation of the Mersenne Twister algorithm.
 pub mod mersenne_twister;
@@ -149,4 +150,22 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         "A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm"
     );
     Ok(())
+}
+
+/// Create a new log entry.
+pub fn create_log_entry(
+    uuid: &str,
+    iso: &str,
+    level: LogLevel,
+    message: &str,
+) -> Log {
+    Log::new(uuid, iso, &level, "VRD", message, &LogFormat::JSON)
+}
+
+/// Log an entry asynchronously.
+pub async fn log_entry_async(entry: Log) {
+    entry
+        .log()
+        .await
+        .unwrap_or_else(|e| eprintln!("Failed to log entry: {}", e));
 }
