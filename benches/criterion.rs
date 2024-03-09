@@ -32,7 +32,7 @@
 //! ```
 extern crate criterion;
 extern crate vrd;
-use self::vrd::Random;
+use self::vrd::random::Random;
 use criterion::{
     black_box, criterion_group, criterion_main, Criterion,
 };

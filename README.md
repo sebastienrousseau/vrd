@@ -7,10 +7,10 @@ alt="Random (VRD) logo" height="261" width="261" align="right" />
 
 # Random (VRD)
 
-A Rust library for generating high-quality random numbers based on the
-Mersenne Twister algorithm.
+A Rust library for generating high-quality random numbers based on the Mersenne
+Twister algorithm.
 
-*Part of the [Mini Functions][0] family of libraries.*
+*Part of the [Mini Functions][00] family of libraries.*
 
 <!-- markdownlint-disable MD033 MD041 -->
 <center>
@@ -18,9 +18,12 @@ Mersenne Twister algorithm.
 
 ![Random (VRD) Banner][banner]
 
-[![Made With Rust][made-with-rust-badge]][14] [![Crates.io][crates-badge]][8] [![Lib.rs][libs-badge]][10] [![Docs.rs][docs-badge]][9] [![License][license-badge]][2] [![Codecov][codecov-badge]][15]
+[![Made With Rust][made-with-rust-badge]][14] [![Crates.io][crates-badge]][08]
+[![Lib.rs][libs-badge]][10] [![Docs.rs][docs-badge]][09]
+[![License][license-badge]][02] [![Codecov][codecov-badge]][15]
 
-• [Website][1] • [Documentation][9] • [Report Bug][4] • [Request Feature][4] • [Contributing Guidelines][5]
+• [Website][01] • [Documentation][09] • [Report Bug][04]
+• [Request Feature][04] • [Contributing Guidelines][05]
 
 <!-- markdownlint-disable MD033 MD041 -->
 </center>
@@ -30,24 +33,35 @@ Mersenne Twister algorithm.
 
 ## Overview 📖
 
-`Random (VRD)` is a Rust library for generating high-quality random numbers based on the Mersenne Twister algorithm.
+`Random (VRD)` is a Rust library for generating high-quality random numbers
+based on the Mersenne Twister algorithm.
 
-The `Random` struct in this library provides a robust interface for generating a variety of random numbers using the Mersenne Twister algorithm. Additionally, the `MersenneTwisterConfig` struct allows for advanced configuration of the algorithm.
+The `Random` struct in this library provides a robust interface for generating
+a variety of random numbers using the Mersenne Twister algorithm. Additionally,
+the `MersenneTwisterConfig` struct allows for advanced configuration of the
+algorithm.
 
-The Random (VRD) is used to generate random numbers using the Mersenne Twister algorithm. It generates pseudorandom integers uniformly distributed in 0..(2^32 - 1) starting from any odd seed in 0..(2^32 - 1).
+The Random (VRD) is used to generate random numbers using the Mersenne Twister
+algorithm. It generates pseudorandom integers uniformly distributed in
+0..(2^32 - 1) starting from any odd seed in 0..(2^32 - 1).
 
-The index is incremented after each random number is generated. When the index reaches 624, the array is reinitialized and the index is reset to 0.
+The index is incremented after each random number is generated. When the index
+reaches 624, the array is reinitialized and the index is reset to 0.
 
 ## Features ✨
 
-- Create new random number generator and seed it with a value.
-- Design for speed and efficiency in mind.
-- Generate random 32-bit unsigned integer within a given range.
-- Provide random numbers of different types, including booleans, bytes, chars, doubles, floats, integers, and unsigned integers.
-- Mutate the state of the random number generator.
-- Produce pseudo-random number sequences that are different from each other.
-- Regulate the randomness of the generated numbers, including the seed value and the number of bits used.
-- Select a random element from a slice of values.
+- Create new random number generator and seed it with a value
+- Designed for speed and efficiency
+- Generate random 32-bit unsigned integers within a given range
+- Provide random numbers of different types, including booleans, bytes, chars,
+  doubles, floats, integers, and unsigned integers
+- Mutate the state of the random number generator
+- Produce pseudo-random number sequences that are different from each other
+- Regulate the randomness of the generated numbers, including the seed value
+  and the number of bits used
+- Select a random element from a slice of values
+- Generate random numbers from various probability distributions, including
+  uniform, normal, exponential, and Poisson
 
 ## Getting Started 🚀
 
@@ -55,23 +69,86 @@ It takes just a few minutes to get up and running with `Random (VRD)`.
 
 ### Installation
 
-To install `Random (VRD)`, you need to have the Rust toolchain installed on your machine. You can install the Rust toolchain by following the instructions on the [Rust website][14].
+To install `Random (VRD)`, you need to have the Rust toolchain installed on
+your machine. You can install the Rust toolchain by following the instructions
+on the [Rust website][14].
 
-Once you have the Rust toolchain installed, you can install `Random (VRD)` using the following command:
+Once you have the Rust toolchain installed, you can install `Random (VRD)`
+using the following command:
 
 ```shell
 cargo install vrd
 ```
 
-You can then run the help command to see the available options:
+Add the following to your `Cargo.toml` file:
 
-```shell
-vrd --help
+```toml
+[dependencies]
+vrd = "0.0.6"
+serde = { version = "1.0.160", features = ["derive"] }
 ```
 
-### Requirements
+### Usage
 
-The minimum supported Rust toolchain version is currently Rust **1.69.0** or later (stable). It is recommended that you install the latest stable version of Rust.
+```rust
+use vrd::random::Random;
+
+let mut rng = Random::new();
+let rand_int = rng.int(1, 10);
+println!("Random integer between 1 and 10: {}", rand_int);
+
+let rand_float = rng.float();
+println!("Random float: {}", rand_float);
+
+let rand_bytes = rng.bytes(10);
+println!("Random bytes: {:?}", rand_bytes);
+```
+
+### Examples
+
+To get started with `Random (VRD)`, you can use the examples provided in the
+`examples` directory of the project.
+
+To run the examples, clone the repository and run the following command in your
+terminal from the project root directory.
+
+```shell
+cargo run --example vrd
+```
+
+## Macros 🦀
+
+The `Random (VRD)` library provides a set of macros that simplify the usage of
+the library. These macros offer a convenient way to generate random numbers of
+different types and distributions.
+
+Here are some of the available macros:
+
+- `rand_bool!(rng, probability)`: Generate a random boolean with the provided
+  probability.
+- `rand_bytes!(rng, length)`: Generate a vector of random bytes with the
+  specified length.
+- `rand_char!(rng)`: Generate a random character within the range 'a'..='z'.
+- `rand_choose!(rng, values)`: Generate a random element from a slice of values.
+- `rand_float!(rng)`: Generate a random float.
+- `rand_int!(rng, min, max)`: Generate a random integer within the given range.
+- `rand_uint!(rng, min, max)`: Generate a random 32-bit unsigned integer within
+  the given range.
+- `rand_double!(rng)`: Generate a random double.
+- `rand_string!(rng, length)`: Generate a random string of the specified length.
+- `rand_alphanumeric!(rng)`: Generate a random alphanumeric character.
+- `rand_shuffle!(rng, slice)`: Shuffle a mutable slice randomly.
+- `rand_weighted_choice!(rng, choices, weights)`: Select a random element from
+  a slice based on the provided weights.
+- `rand_normal!(rng, mu, sigma)`: Generate a normally distributed random number
+  with the given mean and standard deviation.
+- `rand_exponential!(rng, rate)`: Generate a random number from the exponential
+  distribution with the given rate parameter.
+- `rand_poisson!(rng, mean)`: Generate a random number from a Poisson
+  distribution with the specified mean parameter.
+
+For more details on how to use these macros, please refer to the
+[documentation](https://docs.rs/vrd).
 
 ### Platform support
 
@@ -113,76 +190,63 @@ The minimum supported Rust toolchain version is currently Rust **1.69.0** or lat
 | RISC-V Linux | riscv64gc-unknown-linux-gnu | RISC-V Linux (kernel 3.2, glibc 2.17) |
 | S390x Linux | s390x-unknown-linux-gnu | s390x Linux (kernel 3.2, glibc 2.17) |
 
-The [GitHub Actions][11] shows the platforms in which the `Random (VRD)` library tests are run.
+The [GitHub Actions][11] shows the platforms in which the `Random (VRD)`
+library tests are run.
 
-### Documentation
+## Documentation 📚
 
-> ℹ️ **Info:** Please check out our [website][1] for more information.
-You can find our documentation on [docs.rs][9], [lib.rs][10] and [crates.io][8].
+For detailed documentation, please visit:
 
-## Usage 📖
-
-To use the `Random (VRD)` library in your project, add the following to your `Cargo.toml` file:
-
-```toml
-[dependencies]
-vrd = "0.0.5"
-```
-
-Add the following to your `main.rs` file:
-
-```rust
-extern crate vrd;
-use vrd::*;
-```
-
-then you can use the functions in your application code.
-
-### Examples
-
-To get started with `Random (VRD)`, you can use the examples provided in the `examples` directory of the project.
-
-To run the examples, clone the repository and run the following command in your terminal from the project root directory.
-
-```shell
-cargo run --example vrd
-```
+- [Website](https://vrdlib.com)
+- [Docs.rs](https://docs.rs/vrd)
+- [Lib.rs](https://lib.rs/crates/vrd)
+- [Crates.io](https://crates.io/crates/vrd)
 
 ## Semantic Versioning Policy 🚥
 
-For transparency into our release cycle and in striving to maintain backward compatibility, `Random (VRD)` follows [semantic versioning][7].
+For transparency into our release cycle and in striving to maintain backward
+compatibility, `Random (VRD)` follows [semantic versioning][07].
 
 ## License 📝
 
-The project is licensed under the terms of both the MIT license and the Apache License (Version 2.0).
+The project is licensed under the terms of both the MIT license and the Apache
+License (Version 2.0).
 
-- [Apache License, Version 2.0][2]
-- [MIT license][3]
+- [Apache License, Version 2.0][02]
+- [MIT license][03]
 
 ## Contribution 🤝
 
-We welcome all people who want to contribute. Please see the [contributing instructions][5] for more information.
+We welcome all people who want to contribute. Please see the
+[contributing instructions][05] for more information.
 
-Contributions in any form (issues, pull requests, etc.) to this project must adhere to the [Rust's Code of Conduct][12].
+Contributions in any form (issues, pull requests, etc.) to this project must
+adhere to the [Rust's Code of Conduct][12].
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## Acknowledgements 💙
 
-A big thank you to all the awesome contributors of [vrd][6] for their help and support.
+A big thank you to all the awesome contributors of [vrd][06] for their help and
+support.
 
-A special thank you goes to the [Rust Reddit][13] community for providing a lot of useful suggestions on how to improve this project.
+A special thank you goes to the [Rust Reddit][13] community for providing a
+lot of useful suggestions on how to improve this project.
 
-[0]: https://minifunctions.com/ "MiniFunctions"
-[1]: https://vrdlib.one "Random (VRD)"
-[2]: https://opensource.org/license/apache-2-0/ "Apache License, Version 2.0"
-[3]: https://opensource.org/licenses/MIT "MIT license"
-[4]: https://github.com/sebastienrousseau/vrd/issues "Issues"
-[5]: https://github.com/sebastienrousseau/vrd/blob/main/CONTRIBUTING.md "Contributing Instructions"
-[6]: https://github.com/sebastienrousseau/vrd/graphs/contributors "Contributors"
-[7]: http://semver.org/ "Semantic Versioning"
-[8]: https://crates.io/crates/vrd "Crates.io"
-[9]: https://docs.rs/vrd "Docs.rs"
+*Made with ❤️ by [Sébastien Rousseau](https://sebastienrousseau.com)*
+
+[00]: https://minifunctions.com/ "MiniFunctions"
+[01]: https://vrdlib.com "Random (VRD)"
+[02]: https://opensource.org/license/apache-2-0/ "Apache License, Version 2.0"
+[03]: https://opensource.org/licenses/MIT "MIT license"
+[04]: https://github.com/sebastienrousseau/vrd/issues "Issues"
+[05]: https://github.com/sebastienrousseau/vrd/blob/main/CONTRIBUTING.md "Contributing Instructions"
+[06]: https://github.com/sebastienrousseau/vrd/graphs/contributors "Contributors"
+[07]: http://semver.org/ "Semantic Versioning"
+[08]: https://crates.io/crates/vrd "Crates.io"
+[09]: https://docs.rs/vrd "Docs.rs"
 [10]: https://lib.rs/crates/vrd "Lib.rs"
 [11]: https://github.com/sebastienrousseau/vrd/actions "GitHub Actions"
 [12]: https://www.rust-lang.org/policies/code-of-conduct "Rust's Code of Conduct"

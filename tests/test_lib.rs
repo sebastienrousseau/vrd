@@ -7,8 +7,8 @@
 mod tests {
 
     extern crate vrd;
-    use vrd::Random;
     use std::convert::TryInto;
+    use vrd::random::Random;
 
     const N: usize = 624;
 
@@ -158,5 +158,122 @@ mod tests {
     fn test_vrd() {
         let mut vrd = Random::new();
         assert!(vrd.rand() < 4294967295);
+    }
+    #[test]
+    fn test_i64() {
+        let mut rng = Random::new();
+        let i = rng.i64();
+        assert!((i64::MIN..=i64::MAX).contains(&i));
+    }
+
+    #[test]
+    fn test_u64() {
+        let mut rng = Random::new();
+        let u = rng.u64();
+        assert!((u64::MIN..=u64::MAX).contains(&u));
+    }
+
+    #[test]
+    fn test_f64() {
+        let mut rng = Random::new();
+        let f = rng.f64();
+        assert!((0.0..=1.0).contains(&f));
+    }
+
+    #[test]
+    fn test_string() {
+        let mut rng = Random::new();
+        let s1 = rng.string(0);
+        assert_eq!(s1.len(), 0);
+
+        let s2 = rng.string(10);
+        assert_eq!(s2.len(), 10);
+        assert!(s2.chars().all(|c| c.is_ascii_alphanumeric()));
+
+        let s3 = rng.string(100);
+        assert_eq!(s3.len(), 100);
+        assert!(s3.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
+
+    #[test]
+    fn test_normal() {
+        let mut rng = Random::new();
+        let n = 1000000;
+        let mut samples = Vec::with_capacity(n);
+
+        let mu = 0.0;
+        let sigma = 1.0;
+
+        for _ in 0..n {
+            samples.push(rng.normal(mu, sigma));
+        }
+
+        let mean = samples.iter().sum::<f64>() / n as f64;
+        let variance =
+            samples.iter().map(|x| (x - mean).powi(2)).sum::<f64>()
+                / (n - 1) as f64;
+        let stddev = variance.sqrt();
+
+        assert!((mean - mu).abs() < 0.01, "Mean: {}", mean);
+        assert!(
+            (stddev - sigma).abs() < 0.01,
+            "Standard deviation: {}",
+            stddev
+        );
+    }
+
+    #[test]
+    fn test_exponential() {
+        let mut rng = Random::new();
+        let n = 1000000;
+        let mut samples = Vec::with_capacity(n);
+
+        let rate = 1.5;
+
+        for _ in 0..n {
+            samples.push(rng.exponential(rate));
+        }
+
+        let mean = samples.iter().sum::<f64>() / n as f64;
+        let expected_mean = 1.0 / rate;
+
+        assert!(
+            (mean - expected_mean).abs() < 0.01,
+            "Mean: {}, Expected mean: {}",
+            mean,
+            expected_mean
+        );
+    }
+
+    #[test]
+    fn test_poisson() {
+        let mut rng = Random::new();
+        let n = 1000000;
+        let mut counts = [0; 10];
+
+        let mean = 3.0;
+
+        for _ in 0..n {
+            let x = rng.poisson(mean);
+            if x < 10 {
+                counts[x as usize] += 1;
+            }
+        }
+
+        let expected_probs = [
+            0.0498, 0.1494, 0.2240, 0.2240, 0.1680, 0.1008, 0.0504,
+            0.0216, 0.0081, 0.0027,
+        ];
+
+        for (i, &count) in counts.iter().enumerate() {
+            let prob = count as f64 / n as f64;
+            assert!(
+                (prob - expected_probs[i]).abs() < 0.005,
+                "Probability at index {}: {}, Expected: {}",
+                i,
+                prob,
+                expected_probs[i]
+            );
+        }
     }
 }

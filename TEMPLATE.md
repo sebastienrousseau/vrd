@@ -52,7 +52,7 @@ The index is incremented after each random number is generated. When the index r
 ## Changelog 📚
 
 [0]: https://minifunctions.com/ "MiniFunctions"
-[1]: https://vrdlib.one "Random (VRD)"
+[1]: https://vrdlib.com "Random (VRD)"
 [2]: https://opensource.org/license/apache-2-0/ "Apache License, Version 2.0"
 [4]: https://github.com/sebastienrousseau/vrd/issues "Issues"
 [5]: https://github.com/sebastienrousseau/vrd/blob/main/CONTRIBUTING.md "Contributing Instructions"

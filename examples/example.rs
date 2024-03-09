@@ -11,7 +11,7 @@
 //! and state manipulation of the random number generator (RNG).
 
 extern crate vrd;
-use self::vrd::Random;
+use self::vrd::random::Random;
 use vrd::*;
 
 fn main() {
@@ -124,4 +124,27 @@ fn main() {
     let vrd_rng_number = rng.rand();
     println!("🦀 Default RNG number: {}, `vrd` RNG number: {}", default_rng_number, vrd_rng_number);
 
+    // Serialize the random number generator to JSON
+    let serialized_rng = serde_json::to_string(&rng).unwrap();
+    println!("🦀 Serialized RNG: {}", serialized_rng);
+
+    // Deserialize the random number generator from JSON
+    let deserialized_rng: Random = serde_json::from_str(&serialized_rng).unwrap();
+    println!("🦀 Deserialized RNG: {:?}", deserialized_rng);
+
+    // Generating a random 64-bit signed integer.
+    let random_i64 = rng.i64();
+    println!("🦀 Random i64: {}", random_i64);
+
+    // Generating a random 64-bit unsigned integer.
+    let random_u64 = rng.u64();
+    println!("🦀 Random u64: {}", random_u64);
+
+    // Generating a random 64-bit floating-point number.
+    let random_f64 = rng.f64();
+    println!("🦀 Random f64: {}", random_f64);
+
+    // Generating a random string of length 10.
+    let random_string = rng.string(10);
+    println!("🦀 Random string: {}", random_string);
 }
