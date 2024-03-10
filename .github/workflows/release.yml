@@ -147,7 +147,7 @@ jobs:
           cargo install cross
 
           # Clean the build artifacts
-          cargo clean --locked
+          cargo clean --verbose
         shell: bash
 
       # Cache dependencies to speed up subsequent builds.
