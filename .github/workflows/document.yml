@@ -3,12 +3,10 @@ name: 🧪 Document
 on:
   push:
     branches:
-      - feat/vrd
+      - main
   pull_request:
     branches:
-      - feat/vrd
-  release:
-    types: [created]
+      - main
 
 jobs:
   all:
@@ -18,11 +16,11 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
-      - uses: hecrj/setup-rust-action@v1
+      - uses: hecrj/setup-rust-action@v2
         with:
           rust-version: nightly
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Update libssl
         run: |
@@ -34,10 +32,10 @@ jobs:
           RUSTDOCFLAGS="--cfg docsrs" \
             cargo doc --no-deps --all-features --workspace
             # Write index.html with redirect
-            echo '<html><head><meta http-equiv="refresh" content="0; url=/vrd/"></head><body></body></html>' > ./target/doc/index.html
+            echo '<html><head><meta http-equiv="refresh" content="0; url=/rlg/"></head><body></body></html>' > ./target/doc/index.html
 
       - name: Deploy
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: documentation
           path: target/doc
@@ -50,11 +48,10 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./target/doc
-          publish_branch: gh-pages
           cname: true
-          clean: true
           commit_message: Deploy documentation at ${{ github.sha }}
-          commit_user_name: github-actions
-          commit_user_email: actions@users.noreply.github.com
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./target/doc
+          user_email: actions@users.noreply.github.com
+          user_name: github-actions

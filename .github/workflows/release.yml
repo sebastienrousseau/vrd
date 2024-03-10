@@ -2,10 +2,6 @@ name: 🧪 Release
 
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   # Build the project for all the targets and generate artifacts.
   build:
@@ -133,15 +129,12 @@ jobs:
       # Check out the repository code.
       - name: Checkout sources
         id: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Install the stable Rust toolchain.
       - name: Install stable toolchain
         id: install-toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       # Install the targets for the cross-compilation toolchain
       - name: Install target
@@ -160,7 +153,7 @@ jobs:
       # Cache dependencies to speed up subsequent builds.
       - name: Cache dependencies
         id: cache-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -194,7 +187,7 @@ jobs:
       # Upload the binary for each target
       - name: Upload the binary
         id: upload-binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.TARGET }}.tar.gz
           path: target/package/${{ env.TARGET }}.tar.gz
@@ -208,14 +201,11 @@ jobs:
     steps:
       # Check out the repository code
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Install the stable Rust toolchain
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1.0.6
-        with:
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       # Update the version number based on the Cargo.toml file
       - name: Update version number
@@ -226,7 +216,7 @@ jobs:
 
       # Cache dependencies to speed up subsequent builds
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cargo
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
@@ -253,7 +243,7 @@ jobs:
         env:
           BUILD_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_URL: https://github.com/sebastienrousseau/vrd/releases
+          RELEASE_URL: https://github.com/sebastienrousseau/rlg/releases
           TARGET: ${{ env.TARGET }}
 
         run: |
@@ -288,7 +278,7 @@ jobs:
           VERSION: ${{ env.VERSION }}
         with:
           tag_name: v${{ env.VERSION }}
-          release_name: Random (VRD) 🦀 v${{ env.VERSION }}
+          release_name: Random (VRD) v${{ env.VERSION }}
           body_path: ${{ github.workspace }}/CHANGELOG.md
           draft: true
           prerelease: false
@@ -303,20 +293,17 @@ jobs:
     steps:
       # Check out the repository code
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Install the stable Rust toolchain
       - name: Install stable toolchain
         id: install-toolchain
-        uses: actions-rs/toolchain@v1.0.6
-        with:
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       # Cache dependencies to speed up subsequent builds
       - name: Cache dependencies
         id: cache-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /home/runner/.cargo/registry/index/
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
