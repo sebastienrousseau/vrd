@@ -134,7 +134,7 @@ jobs:
       # Install the stable Rust toolchain.
       - name: Install stable toolchain
         id: install-toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@stable
 
       # Install the targets for the cross-compilation toolchain
       - name: Install target
