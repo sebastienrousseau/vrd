@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"vrd":[["impl Freeze for <a class=\"struct\" href=\"vrd/mersenne_twister/struct.MersenneTwisterConfig.html\" title=\"struct vrd::mersenne_twister::MersenneTwisterConfig\">MersenneTwisterConfig</a>",1,["vrd::mersenne_twister::MersenneTwisterConfig"]],["impl Freeze for <a class=\"struct\" href=\"vrd/random/struct.Random.html\" title=\"struct vrd::random::Random\">Random</a>",1,["vrd::random::Random"]]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

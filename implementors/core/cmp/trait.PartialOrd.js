@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"vrd":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a>&lt;<a class=\"struct\" href=\"vrd/struct.Random.html\" title=\"struct vrd::Random\">Random</a>&gt; for <a class=\"struct\" href=\"vrd/struct.Random.html\" title=\"struct vrd::Random\">Random</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

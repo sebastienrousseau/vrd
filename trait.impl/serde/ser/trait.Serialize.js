@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"vrd":[["impl <a class=\"trait\" href=\"https://docs.rs/serde/1.0.197/serde/ser/trait.Serialize.html\" title=\"trait serde::ser::Serialize\">Serialize</a> for <a class=\"struct\" href=\"vrd/mersenne_twister/struct.MersenneTwisterConfig.html\" title=\"struct vrd::mersenne_twister::MersenneTwisterConfig\">MersenneTwisterConfig</a>"],["impl <a class=\"trait\" href=\"https://docs.rs/serde/1.0.197/serde/ser/trait.Serialize.html\" title=\"trait serde::ser::Serialize\">Serialize</a> for <a class=\"struct\" href=\"vrd/random/struct.Random.html\" title=\"struct vrd::random::Random\">Random</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
