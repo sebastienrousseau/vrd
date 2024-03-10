@@ -139,7 +139,7 @@ jobs:
       # Install the targets for the cross-compilation toolchain
       - name: Install target
         id: install-target
-        run: rustup target add ${{ env.TARGET }}
+        run: rustup update && rustup target add ${{ env.TARGET }}
 
       - name: Install Cross and clean artifacts
         run: |
