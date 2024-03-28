@@ -51,7 +51,7 @@ rlg = "0.0.3"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
 serde-big-array =  "0.5.1"
-tokio = { version = "1.36.0", features = ["full"] }
+tokio = { version = "1.37.0", features = ["full"] }
 uuid ={ version = "1.7.0", features = ["v4"] }
 
 [dev-dependencies]
