@@ -59,105 +59,105 @@ use vrd::{
 fn main() {
     // ... Basic Number Generation Examples ...
 
-        // Initializing a new random number generator (RNG) instance.
-        let mut rng = Random::from_entropy();
-        println!("🦀 Random::new():         ✅ {rng}");
+    // Initializing a new random number generator (RNG) instance.
+    let mut rng = Random::from_entropy();
+    println!("🦀 Random::new():         ✅ {rng}");
 
-        // Accessing the default RNG provided by the `vrd` crate.
-        let default = Random::default();
-        println!("🦀 Random::default():     ✅ {default}");
+    // Accessing the default RNG provided by the `vrd` crate.
+    let default = Random::default();
+    println!("🦀 Random::default():     ✅ {default}");
 
-        // Seeding the RNG with a specific value to ensure reproducible results.
-        let seed_value = 12345;
-        rng.seed(seed_value);
-        println!("🦀 Random::seed():        ✅ {}", seed_value);
+    // Seeding the RNG with a specific value to ensure reproducible results.
+    let seed_value = 12345;
+    rng.seed(seed_value);
+    println!("🦀 Random::seed():        ✅ {}", seed_value);
 
-        // Generating a random integer between 0 and the maximum value a u32 can hold.
-        let random = rng.rand();
-        println!("🦀 Random::random():      ✅ {random}");
+    // Generating a random integer between 0 and the maximum value a u32 can hold.
+    let random = rng.rand();
+    println!("🦀 Random::random():      ✅ {random}");
 
-        // Generating a random double-precision floating-point number.
-        let random_double = Random::double(&mut rng);
-        println!("🦀 Random::double():      ✅ {}", random_double);
+    // Generating a random double-precision floating-point number.
+    let random_double = Random::double(&mut rng);
+    println!("🦀 Random::double():      ✅ {}", random_double);
 
-        // Generating a random 64-bit signed integer.
-        let random_i64 = rng.i64();
-        println!("🦀 Random::i64():         ✅ {}", random_i64);
+    // Generating a random 64-bit signed integer.
+    let random_i64 = rng.i64();
+    println!("🦀 Random::i64():         ✅ {}", random_i64);
 
-        // Generating a random 64-bit unsigned integer.
-        let random_u64 = rng.u64();
-        println!("🦀 Random::u64():         ✅ {}", random_u64);
+    // Generating a random 64-bit unsigned integer.
+    let random_u64 = rng.u64();
+    println!("🦀 Random::u64():         ✅ {}", random_u64);
 
-        // Generating a random 64-bit floating-point number.
-        let random_f64 = rng.f64();
-        println!("🦀 Random::f64():         ✅ {}", random_f64);
+    // Generating a random 64-bit floating-point number.
+    let random_f64 = rng.f64();
+    println!("🦀 Random::f64():         ✅ {}", random_f64);
 
-        // Generating a random floating-point number between 0 and 1.
-        let float = rng.rand() as f32 / 0x7FFF as f32;
-        println!("🦀 Random::float():       ✅ {float}");
+    // Generating a random floating-point number between 0 and 1.
+    let float = rng.rand() as f32 / 0x7FFF as f32;
+    println!("🦀 Random::float():       ✅ {float}");
 
-        // Producing a random usize value.
-        let int = rng.rand() as usize;
-        println!("🦀 Random::int():         ✅ {int}");
+    // Producing a random usize value.
+    let int = rng.rand() as usize;
+    println!("🦀 Random::int():         ✅ {int}");
 
-        // Generating a random integer within the specified range (0 to 100).
-        let min = 0;
-        let max = 100;
-        let rand_int = rand_int!(rng, min, max);
-        println!(
-            "🦀 Random integer between {} and {}: {}",
-            min, max, rand_int
-        );
+    // Generating a random integer within the specified range (0 to 100).
+    let min = 0;
+    let max = 100;
+    let rand_int = rand_int!(rng, min, max);
+    println!(
+        "🦀 Random integer between {} and {}: {}",
+        min, max, rand_int
+    );
 
-        // Generating a random number within a specified range using the `rand_range` macro.
-        let rand_range_macro = rand_range!(rng, 10, 20);
-        println!(
-            "🦀 Random number between 10 and 20: {}",
-            rand_range_macro
-        );
+    // Generating a random number within a specified range using the `rand_range` macro.
+    let rand_range_macro = rand_range!(rng, 10, 20);
+    println!(
+        "🦀 Random number between 10 and 20: {}",
+        rand_range_macro
+    );
 
-        // Generating a random floating-point number within a specified range.
-        let rand_range =
-            rand_float!(rng) * (max as f32 - min as f32) + min as f32;
-        println!(
-            "🦀 Random number between {} and {}: {}",
-            min, max, rand_range
-        );
+    // Generating a random floating-point number within a specified range.
+    let rand_range =
+        rand_float!(rng) * (max as f32 - min as f32) + min as f32;
+    println!(
+        "🦀 Random number between {} and {}: {}",
+        min, max, rand_range
+    );
 
-        // Creating a random 32-bit unsigned integer within a specified range.
-        let rand_uint = random_range!(rng, 0, u32::MAX);
-        println!(
-            "🦀 Random u32 between 0 and u32::max_value(): {}",
-            rand_uint
-        );
+    // Creating a random 32-bit unsigned integer within a specified range.
+    let rand_uint = random_range!(rng, 0, u32::MAX);
+    println!(
+        "🦀 Random u32 between 0 and u32::max_value(): {}",
+        rand_uint
+    );
 
-        // Generating a random boolean with a 50% probability.
-        let rand_bool = rand_bool!(rng, 0.5);
-        println!("🦀 Random boolean with 50% probability: {}", rand_bool);
+    // Generating a random boolean with a 50% probability.
+    let rand_bool = rand_bool!(rng, 0.5);
+    println!("🦀 Random boolean with 50% probability: {}", rand_bool);
 
-        // Creating a vector of 10 random bytes.
-        let rand_bytes = rand_bytes!(rng, 10);
-        println!("🦀 Random bytes: {:?}", rand_bytes);
+    // Creating a vector of 10 random bytes.
+    let rand_bytes = rand_bytes!(rng, 10);
+    println!("🦀 Random bytes: {:?}", rand_bytes);
 
-        // Creating a vector of 1000 random bytes.
-        let bytes = Random::bytes(&mut rng, 1000);
-        println!("🦀 Random::bytes():       ✅ {bytes:?}");
+    // Creating a vector of 1000 random bytes.
+    let bytes = Random::bytes(&mut rng, 1000);
+    println!("🦀 Random::bytes():       ✅ {bytes:?}");
 
-        // Generating a random character within the range 'a' to 'z'.
-        let rand_char = rand_char!(rng);
-        println!("🦀 Random char between 'a' and 'z': {}", rand_char);
+    // Generating a random character within the range 'a' to 'z'.
+    let rand_char = rand_char!(rng);
+    println!("🦀 Random char between 'a' and 'z': {}", rand_char);
 
-        // Generating a random string of length 10.
-        let random_string = rng.string(10);
-        println!("🦀 Random string: {}", random_string);
+    // Generating a random string of length 10.
+    let random_string = rng.string(10);
+    println!("🦀 Random string: {}", random_string);
 
-        // Picking a random element from a predefined slice of integers.
-        let values = &[1, 2, 3, 4, 5];
-        let rand_choose = rand_choose!(rng, values);
-        println!(
-            "🦀 Random element from [1, 2, 3, 4, 5]: {:?}",
-            rand_choose
-        );
+    // Picking a random element from a predefined slice of integers.
+    let values = &[1, 2, 3, 4, 5];
+    let rand_choose = rand_choose!(rng, values);
+    println!(
+        "🦀 Random element from [1, 2, 3, 4, 5]: {:?}",
+        rand_choose
+    );
 
     // ... Shuffling and Sampling Examples ...
     // Example of using the `rand_slice` function to generate a random subslice from a given slice.
@@ -189,100 +189,100 @@ fn main() {
 
     // ... PRNG Examples ...
 
-        // Creating a random 32-bit unsigned integer using a pseudo-random number generator (PRNG).
-        let rand_pseudo = rand_pseudo!(rng);
-        println!("🦀 Random u32 using the PRNG: {}", rand_pseudo);
+    // Creating a random 32-bit unsigned integer using a pseudo-random number generator (PRNG).
+    let rand_pseudo = rand_pseudo!(rng);
+    println!("🦀 Random u32 using the PRNG: {}", rand_pseudo);
 
-        // Seeding the PRNG with a specific value to get deterministic outputs.
-        rand_seed!(rng, 42);
-        let rand_seed = rand_pseudo!(rng);
-        println!("🦀 Random u32 using the seeded PRNG: {}", rand_seed);
+    // Seeding the PRNG with a specific value to get deterministic outputs.
+    rand_seed!(rng, 42);
+    let rand_seed = rand_pseudo!(rng);
+    println!("🦀 Random u32 using the seeded PRNG: {}", rand_seed);
 
-        // Altering the state of the PRNG to vary its output.
-        rand_twist!(rng);
-        let rand_twist = rand_pseudo!(rng);
-        println!(
-            "🦀 Random u32 after twisting the PRNG state: {}",
-            rand_twist
-        );
+    // Altering the state of the PRNG to vary its output.
+    rand_twist!(rng);
+    let rand_twist = rand_pseudo!(rng);
+    println!(
+        "🦀 Random u32 after twisting the PRNG state: {}",
+        rand_twist
+    );
 
-        // Retrieving the current state index (MTI) of the Mersenne Twister RNG.
-        let mti_value = Random::mti(&rng);
-        println!("🦀 MTI value: {}", mti_value);
+    // Retrieving the current state index (MTI) of the Mersenne Twister RNG.
+    let mti_value = Random::mti(&rng);
+    println!("🦀 MTI value: {}", mti_value);
 
-        // Generate a random even number.
-        let even_number =
-            (0..).map(|_| rng.rand()).find(|&n| n % 2 == 0).unwrap();
-        println!("🦀 Random even number: {}", even_number);
+    // Generate a random even number.
+    let even_number =
+        (0..).map(|_| rng.rand()).find(|&n| n % 2 == 0).unwrap();
+    println!("🦀 Random even number: {}", even_number);
 
-        // Pre-generating a large number of random values for performance.
-        let mut pre_generated_numbers = Vec::new();
-        for _ in 0..1000 {
-            pre_generated_numbers.push(rng.rand());
-        }
-        println!(
-            "🦀 Pre-generated random numbers: {:?}",
-            pre_generated_numbers
-        );
+    // Pre-generating a large number of random values for performance.
+    let mut pre_generated_numbers = Vec::new();
+    for _ in 0..1000 {
+        pre_generated_numbers.push(rng.rand());
+    }
+    println!(
+        "🦀 Pre-generated random numbers: {:?}",
+        pre_generated_numbers
+    );
 
-        // Comparing `vrd` RNG with Rust's default RNG.
-        let default_rng_number = rand::random::<u32>();
-        let vrd_rng_number = rng.rand();
-        println!(
-            "🦀 Default RNG number: {}, `vrd` RNG number: {}",
-            default_rng_number, vrd_rng_number
-        );
+    // Comparing `vrd` RNG with Rust's default RNG.
+    let default_rng_number = rand::random::<u32>();
+    let vrd_rng_number = rng.rand();
+    println!(
+        "🦀 Default RNG number: {}, `vrd` RNG number: {}",
+        default_rng_number, vrd_rng_number
+    );
 
     // ... Serialization Examples ...
-        // Serialize the random number generator to JSON.
-        let serialized_rng = serde_json::to_string(&rng);
-        match serialized_rng {
-            Ok(ref serialized) => {
-                println!("🦀 Serialized RNG: {}", serialized)
-            }
-            Err(ref e) => eprintln!("🔴 Serialization error: {}", e),
+    // Serialize the random number generator to JSON.
+    let serialized_rng = serde_json::to_string(&rng);
+    match serialized_rng {
+        Ok(ref serialized) => {
+            println!("🦀 Serialized RNG: {}", serialized)
         }
+        Err(ref e) => eprintln!("🔴 Serialization error: {}", e),
+    }
 
-        // Deserialize the random number generator from JSON.
-        let deserialized_rng: Result<Random, _> =
-            serde_json::from_str(&serialized_rng.unwrap());
-        match deserialized_rng {
-            Ok(deserialized) => {
-                println!("🦀 Deserialized RNG: {:?}", deserialized)
-            }
-            Err(e) => eprintln!("🔴 Deserialization error: {}", e),
+    // Deserialize the random number generator from JSON.
+    let deserialized_rng: Result<Random, _> =
+        serde_json::from_str(&serialized_rng.unwrap());
+    match deserialized_rng {
+        Ok(deserialized) => {
+            println!("🦀 Deserialized RNG: {:?}", deserialized)
         }
+        Err(e) => eprintln!("🔴 Deserialization error: {}", e),
+    }
 
-        // Creating a custom Mersenne Twister configuration.
-        let params = MersenneTwisterParams {
-            matrix_a: 0x9908b0df,
-            upper_mask: 0x80000000,
-            lower_mask: 0x7fffffff,
-            tempering_mask_b: 0x9d2c5680,
-            tempering_mask_c: 0xefc60000,
-        };
+    // Creating a custom Mersenne Twister configuration.
+    let params = MersenneTwisterParams {
+        matrix_a: 0x9908b0df,
+        upper_mask: 0x80000000,
+        lower_mask: 0x7fffffff,
+        tempering_mask_b: 0x9d2c5680,
+        tempering_mask_c: 0xefc60000,
+    };
 
-        // Creating a custom Mersenne Twister configuration.
-        let config = MersenneTwisterConfig::new_custom(624, 397, params);
-        println!("🦀 Custom MersenneTwisterConfig: {}", config);
+    // Creating a custom Mersenne Twister configuration.
+    let config = MersenneTwisterConfig::new_custom(624, 397, params);
+    println!("🦀 Custom MersenneTwisterConfig: {}", config);
 
-        // Serialize to a file
-        if let Err(e) =
-            MersenneTwisterConfig::serialize_to_file(&config, "config.json")
-        {
-            eprintln!("🔴 Error serializing to file: {}", e);
-        } else {
-            println!("🦀 Serialized MersenneTwisterConfig to file");
-        }
+    // Serialize to a file
+    if let Err(e) =
+        MersenneTwisterConfig::serialize_to_file(&config, "config.json")
+    {
+        eprintln!("🔴 Error serializing to file: {}", e);
+    } else {
+        println!("🦀 Serialized MersenneTwisterConfig to file");
+    }
 
-        // Deserialize from a file
-        let deserialized_config =
-            MersenneTwisterConfig::deserialize_from_file("config.json");
-        match deserialized_config {
-            Ok(deserialized) => println!(
-                "🦀 Deserialized MersenneTwisterConfig from file: {:?}",
-                deserialized
-            ),
-            Err(e) => eprintln!("🔴 Deserialization error: {}", e),
-        }
+    // Deserialize from a file
+    let deserialized_config =
+        MersenneTwisterConfig::deserialize_from_file("config.json");
+    match deserialized_config {
+        Ok(deserialized) => println!(
+            "🦀 Deserialized MersenneTwisterConfig from file: {:?}",
+            deserialized
+        ),
+        Err(e) => eprintln!("🔴 Deserialization error: {}", e),
+    }
 }
