@@ -10,9 +10,12 @@
 //! random booleans, integers, floating-point numbers, and more complex operations like seeding
 //! and state manipulation of the random number generator (RNG).
 
-extern crate vrd;
-use self::vrd::random::Random;
-use vrd::*;
+use vrd::rand_int;
+use vrd::random::Random;
+use vrd::{
+    rand_bool, rand_bytes, rand_char, rand_choose, rand_float,
+    rand_pseudo, rand_seed, rand_twist, random_range,
+};
 
 fn main() {
     // Generating a random boolean with a 50% chance of being true.
@@ -55,15 +58,22 @@ fn main() {
     let min = 0;
     let max = 100;
     let rand_int = rand_int!(rng, min, max);
-    println!("🦀 Random integer between {} and {}: {}", min, max, rand_int);
+    println!(
+        "🦀 Random integer between {} and {}: {}",
+        min, max, rand_int
+    );
 
     // Generating a random floating-point number within a specified range.
-    let rand_range = rand_float!(rng) * (max as f32 - min as f32) + min as f32;
+    let rand_range =
+        rand_float!(rng) * (max as f32 - min as f32) + min as f32;
     println!("🦀 Random number between 0 and 1: {}", rand_range);
 
     // Creating a random 32-bit unsigned integer within a specified range.
-    let rand_uint = random_range!(rng, 0, u32::max_value());
-    println!("🦀 Random u32 between 0 and u32::max_value(): {}", rand_uint);
+    let rand_uint = random_range!(rng, 0, u32::MAX);
+    println!(
+        "🦀 Random u32 between 0 and u32::max_value(): {}",
+        rand_uint
+    );
 
     // Generating a random boolean with a 50% probability.
     let rand_bool = rand_bool!(rng, 0.5);
@@ -80,7 +90,10 @@ fn main() {
     // Picking a random element from a predefined slice of integers.
     let values = &[1, 2, 3, 4, 5];
     let rand_choose = rand_choose!(rng, values);
-    println!("🦀 Random element from [1, 2, 3, 4, 5]: {:?}", rand_choose);
+    println!(
+        "🦀 Random element from [1, 2, 3, 4, 5]: {:?}",
+        rand_choose
+    );
 
     // Generating a random floating-point number.
     let rand_float = rand_float!(rng);
@@ -98,7 +111,10 @@ fn main() {
     // Altering the state of the PRNG to vary its output.
     rand_twist!(rng);
     let rand_twist = rand_pseudo!(rng);
-    println!("🦀 Random u32 after twisting the PRNG state: {}", rand_twist);
+    println!(
+        "🦀 Random u32 after twisting the PRNG state: {}",
+        rand_twist
+    );
 
     // Generating a random double-precision floating-point number.
     let random_double = Random::double(&mut rng);
@@ -109,7 +125,8 @@ fn main() {
     println!("🦀 MTI value: {}", mti_value);
 
     // Generate a random even number.
-    let even_number = (0..).map(|_| rng.rand()).find(|&n| n % 2 == 0).unwrap();
+    let even_number =
+        (0..).map(|_| rng.rand()).find(|&n| n % 2 == 0).unwrap();
     println!("🦀 Random even number: {}", even_number);
 
     // Pre-generating a large number of random values for performance.
@@ -117,19 +134,26 @@ fn main() {
     for _ in 0..1000 {
         pre_generated_numbers.push(rng.rand());
     }
-    println!("🦀 Pre-generated random numbers: {:?}", pre_generated_numbers);
+    println!(
+        "🦀 Pre-generated random numbers: {:?}",
+        pre_generated_numbers
+    );
 
     // Comparing `vrd` RNG with Rust's default RNG.
     let default_rng_number = rand::random::<u32>();
     let vrd_rng_number = rng.rand();
-    println!("🦀 Default RNG number: {}, `vrd` RNG number: {}", default_rng_number, vrd_rng_number);
+    println!(
+        "🦀 Default RNG number: {}, `vrd` RNG number: {}",
+        default_rng_number, vrd_rng_number
+    );
 
     // Serialize the random number generator to JSON
     let serialized_rng = serde_json::to_string(&rng).unwrap();
     println!("🦀 Serialized RNG: {}", serialized_rng);
 
     // Deserialize the random number generator from JSON
-    let deserialized_rng: Random = serde_json::from_str(&serialized_rng).unwrap();
+    let deserialized_rng: Random =
+        serde_json::from_str(&serialized_rng).unwrap();
     println!("🦀 Deserialized RNG: {:?}", deserialized_rng);
 
     // Generating a random 64-bit signed integer.

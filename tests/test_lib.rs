@@ -6,7 +6,6 @@
 #[cfg(test)]
 mod tests {
 
-    extern crate vrd;
     use std::convert::TryInto;
     use vrd::random::Random;
 
@@ -100,7 +99,7 @@ mod tests {
         assert!((0..=10).contains(&r));
     }
     #[test]
-    pub fn test_new() {
+    fn test_new() {
         let rng = Random::new();
         assert!(rng.mti <= N);
         assert!(rng.mt[0] > 0);

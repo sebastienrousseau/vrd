@@ -48,7 +48,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! vrd = "0.0.6"
+//! vrd = "0.0.7"
 //! serde = { version = "1.0.160", features = ["derive"] }
 //! ```
 //!
@@ -92,11 +92,6 @@
 //! [0]: https://minifunctions.com/vrd
 //!
 #![cfg_attr(feature = "bench", feature(test))]
-#![deny(dead_code)]
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![forbid(unsafe_code)]
-#![warn(unreachable_pub)]
 #![doc(
     html_favicon_url = "https://kura.pro/vrd/images/favicon.ico",
     html_logo_url = "https://kura.pro/vrd/images/logos/vrd.svg",

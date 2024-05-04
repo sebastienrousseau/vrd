@@ -3,11 +3,22 @@
 // This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// Configuration for the Mersenne Twister algorithm.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+)]
 pub struct MersenneTwisterConfig {
     /// The number of elements in the array used for the Mersenne Twister algorithm.
     /// Its value is set to 624 for optimal performance.
@@ -75,7 +86,15 @@ impl MersenneTwisterConfig {
         tempering_mask_b: u32,
         tempering_mask_c: u32,
     ) -> MersenneTwisterConfig {
-        MersenneTwisterConfig::validate(n, m, matrix_a, upper_mask, lower_mask, tempering_mask_b, tempering_mask_c);
+        MersenneTwisterConfig::validate(
+            n,
+            m,
+            matrix_a,
+            upper_mask,
+            lower_mask,
+            tempering_mask_b,
+            tempering_mask_c,
+        );
         MersenneTwisterConfig {
             n,
             m,
@@ -92,14 +111,41 @@ impl MersenneTwisterConfig {
     /// # Panics
     ///
     /// This function panics if any of the provided parameters are outside of their valid range.
-    fn validate(n: usize, m: usize, matrix_a: u32, upper_mask: u32, lower_mask: u32, tempering_mask_b: u32, tempering_mask_c: u32) {
+    fn validate(
+        n: usize,
+        m: usize,
+        matrix_a: u32,
+        upper_mask: u32,
+        lower_mask: u32,
+        tempering_mask_b: u32,
+        tempering_mask_c: u32,
+    ) {
         assert!(n >= 1, "n must be at least 1");
-        assert!(m >= 1 && m < n, "m must be at least 1 and less than n");
-        assert_eq!(matrix_a & 0x80000000, 0x80000000, "matrix_a must have its highest bit set");
-        assert_eq!(upper_mask, 0x80000000, "upper_mask must be a valid 32-bit unsigned integer");
-        assert_eq!(lower_mask, 0x7fffffff, "lower_mask must be a valid 32-bit unsigned integer");
-        assert_eq!(tempering_mask_b, 0x9d2c5680, "tempering_mask_b must be a valid 32-bit unsigned integer");
-        assert_eq!(tempering_mask_c, 0xefc60000, "tempering_mask_c must be a valid 32-bit unsigned integer");
+        assert!(
+            m >= 1 && m < n,
+            "m must be at least 1 and less than n"
+        );
+        assert_eq!(
+            matrix_a & 0x80000000,
+            0x80000000,
+            "matrix_a must have its highest bit set"
+        );
+        assert_eq!(
+            upper_mask, 0x80000000,
+            "upper_mask must be a valid 32-bit unsigned integer"
+        );
+        assert_eq!(
+            lower_mask, 0x7fffffff,
+            "lower_mask must be a valid 32-bit unsigned integer"
+        );
+        assert_eq!(
+            tempering_mask_b, 0x9d2c5680,
+            "tempering_mask_b must be a valid 32-bit unsigned integer"
+        );
+        assert_eq!(
+            tempering_mask_c, 0xefc60000,
+            "tempering_mask_c must be a valid 32-bit unsigned integer"
+        );
     }
 
     /// Creates a new `MersenneTwisterConfig` with default values.
@@ -123,12 +169,7 @@ impl MersenneTwisterConfig {
     /// ```
     pub fn new() -> MersenneTwisterConfig {
         MersenneTwisterConfig::new_custom(
-            624,
-            397,
-            0x9908b0df,
-            0x80000000,
-            0x7fffffff,
-            0x9d2c5680,
+            624, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
             0xefc60000,
         )
     }
@@ -149,7 +190,10 @@ impl MersenneTwisterConfig {
     ///
     /// This function panics if the provided parameter is outside of its valid range.
     pub fn set_m(&mut self, m: usize) {
-        assert!(m >= 1 && m < self.n, "m must be at least 1 and less than n");
+        assert!(
+            m >= 1 && m < self.n,
+            "m must be at least 1 and less than n"
+        );
         self.m = m;
     }
 
@@ -159,7 +203,11 @@ impl MersenneTwisterConfig {
     ///
     /// This function panics if the provided parameter is not valid.
     pub fn set_matrix_a(&mut self, matrix_a: u32) {
-        assert_eq!(matrix_a & 0x80000000, 0x80000000, "matrix_a must have its highest bit set");
+        assert_eq!(
+            matrix_a & 0x80000000,
+            0x80000000,
+            "matrix_a must have its highest bit set"
+        );
         self.matrix_a = matrix_a;
     }
 
@@ -169,7 +217,10 @@ impl MersenneTwisterConfig {
     ///
     /// This function panics if the provided parameter is not valid.
     pub fn set_upper_mask(&mut self, upper_mask: u32) {
-        assert_eq!(upper_mask, 0x80000000, "upper_mask must be a valid 32-bit unsigned integer");
+        assert_eq!(
+            upper_mask, 0x80000000,
+            "upper_mask must be a valid 32-bit unsigned integer"
+        );
         self.upper_mask = upper_mask;
     }
 
@@ -179,7 +230,10 @@ impl MersenneTwisterConfig {
     ///
     /// This function panics if the provided parameter is not valid.
     pub fn set_lower_mask(&mut self, lower_mask: u32) {
-        assert_eq!(lower_mask, 0x7fffffff, "lower_mask must be a valid 32-bit unsigned integer");
+        assert_eq!(
+            lower_mask, 0x7fffffff,
+            "lower_mask must be a valid 32-bit unsigned integer"
+        );
         self.lower_mask = lower_mask;
     }
 
@@ -189,7 +243,10 @@ impl MersenneTwisterConfig {
     ///
     /// This function panics if the provided parameter is not valid.
     pub fn set_tempering_mask_b(&mut self, tempering_mask_b: u32) {
-        assert_eq!(tempering_mask_b, 0x9d2c5680, "tempering_mask_b must be a valid 32-bit unsigned integer");
+        assert_eq!(
+            tempering_mask_b, 0x9d2c5680,
+            "tempering_mask_b must be a valid 32-bit unsigned integer"
+        );
         self.tempering_mask_b = tempering_mask_b;
     }
 
@@ -199,10 +256,12 @@ impl MersenneTwisterConfig {
     ///
     /// This function panics if the provided parameter is not valid.
     pub fn set_tempering_mask_c(&mut self, tempering_mask_c: u32) {
-        assert_eq!(tempering_mask_c, 0xefc60000, "tempering_mask_c must be a valid 32-bit unsigned integer");
+        assert_eq!(
+            tempering_mask_c, 0xefc60000,
+            "tempering_mask_c must be a valid 32-bit unsigned integer"
+        );
         self.tempering_mask_c = tempering_mask_c;
     }
-
 }
 
 impl Default for MersenneTwisterConfig {
@@ -217,4 +276,3 @@ impl fmt::Display for MersenneTwisterConfig {
             self.n, self.m, self.matrix_a, self.upper_mask, self.lower_mask, self.tempering_mask_b, self.tempering_mask_c)
     }
 }
-

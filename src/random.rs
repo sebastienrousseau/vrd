@@ -130,7 +130,7 @@ impl Random {
         if values.is_empty() {
             return None;
         }
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         let index = rng.gen_range(0..values.len());
         Some(&values[index])
     }
@@ -389,7 +389,7 @@ impl Random {
             max > min,
             "max must be greater than min for random_range"
         );
-        let mut rng = rand::thread_rng(); // Get a thread-local RNG
+        let mut rng = thread_rng(); // Get a thread-local RNG
         rng.gen_range(min..max) // Use the gen_range method for uniform distribution
     }
 

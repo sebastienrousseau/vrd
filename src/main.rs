@@ -3,6 +3,42 @@
 // This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
+//! # Random (VRD) Library
+//!
+//! The `Random (VRD)` library is a Rust implementation of the Mersenne Twister random number generator.
+//! It provides functionality for generating random numbers and performing various operations related to randomness.
+//!
+//! ## Features
+//!
+//! - Mersenne Twister random number generation
+//! - UUID generation
+//! - DateTime creation
+//! - Logging with configurable log levels
+//!
+//! ## Usage
+//!
+//! Add the following to your `Cargo.toml` file:
+//!
+//! ```toml
+//! [dependencies]
+//! vrd = "0.1.0"
+//! ```
+//!
+//! Then, use the library in your Rust code:
+//!
+//! ```rust
+//! use vrd::{create_log_entry, log_entry_async, run};
+//! ```
+//!
+//! For more detailed usage and examples, please refer to the documentation of individual modules and functions.
+//!
+//! ## License
+//!
+//! This library is licensed under either of the following, at your option:
+//!
+//! - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE.md))
+//! - MIT License ([LICENSE-MIT](LICENSE-MIT.md))
+//!
 use dtt::DateTime;
 use rlg::log_level::LogLevel;
 use std::process;
