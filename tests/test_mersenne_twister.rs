@@ -394,4 +394,54 @@ mod tests {
                                                        // Act
         MersenneTwisterConfig::validate(0, 397, &params);
     }
+
+    #[test]
+    #[should_panic] // Expect all cases to panic
+    fn test_new_custom_invalid_parameters() {
+        let test_cases = vec![
+            (0, 397, "n must be at least 1"),
+            (624, 0, "m must be at least 1 and less than n"),
+            (624, 397, "matrix_a must have its highest bit set"), // Invalid matrix_a
+            (624, 397, "0xffffffff"), // Invalid upper_mask
+            (624, 397, "0xffffffff"), // Invalid lower_mask
+            (624, 397, "0xffffffff"), // Invalid tempering_mask_b
+            (624, 397, "0xffffffff"), // Invalid tempering_mask_c
+        ];
+
+        for (n, m, invalid_param) in test_cases {
+            let mut params = MersenneTwisterParams::default();
+            let expected_msg = invalid_param; // Assuming invalid_param contains error messages
+
+            // Set the invalid parameter based on the test case
+            if let Ok(param_as_int) = invalid_param.parse::<u32>() {
+                // Try parsing first
+                match param_as_int {
+                    param if param & 0x80000000 == 0 => {
+                        params.matrix_a = param
+                    }
+                    0xffffffff => {
+                        params.upper_mask = param_as_int; // Use the parsed value
+                        params.lower_mask = param_as_int;
+                        params.tempering_mask_b = param_as_int;
+                        params.tempering_mask_c = param_as_int;
+                    }
+                    _ => unreachable!(),
+                }
+            } else {
+                // Handle cases where invalid_param is not a number (likely an error message)
+                panic!("{}", expected_msg); // Or handle accordingly
+            }
+
+            let result = std::panic::catch_unwind(|| {
+                MersenneTwisterConfig::new_custom(n, m, params);
+            });
+
+            assert!(result.is_err());
+            assert!(result
+                .unwrap_err()
+                .downcast_ref::<&str>()
+                .unwrap()
+                .contains(expected_msg));
+        }
+    }
 }
