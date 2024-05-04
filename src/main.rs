@@ -21,7 +21,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! vrd = "0.1.0"
+//! vrd = "0.0.1"
 //! ```
 //!
 //! Then, use the library in your Rust code:
@@ -75,7 +75,16 @@ fn main() {
             &error_message,
         );
 
-        runtime.block_on(async { log_entry_async(log_entry).await });
+        match runtime.block_on(async { log_entry_async(log_entry).await }) {
+            Ok(_) => {
+                // Logging successful
+                println!("Error logged successfully.");
+            }
+            Err(e) => {
+                // Logging failed
+                eprintln!("Failed to log error: {}", e);
+            }
+        }
 
         process::exit(1);
     }

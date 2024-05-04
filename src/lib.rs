@@ -158,9 +158,7 @@ pub fn create_log_entry(
 }
 
 /// Log an entry asynchronously.
-pub async fn log_entry_async(entry: Log) {
-    entry
-        .log()
-        .await
-        .unwrap_or_else(|e| eprintln!("Failed to log entry: {}", e));
+pub async fn log_entry_async(entry: Log) -> Result<(), Box<dyn std::error::Error>> {
+    entry.log().await?;
+    Ok(())
 }
