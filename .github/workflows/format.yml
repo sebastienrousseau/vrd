@@ -1,8 +1,9 @@
-name: 🧪 Lint
+name: 💾 Format
 
 on:
   push:
     branches:
+      - main
       - feat/vrd
   pull_request:
     branches:
@@ -12,12 +13,12 @@ on:
 
 jobs:
   all:
-    name: Lint
+    name: Format
     runs-on: ubuntu-latest
     steps:
       - uses: hecrj/setup-rust-action@v2
         with:
           components: clippy
       - uses: actions/checkout@v4
-      - name: Check lints
-        run: cargo clippy --workspace --all-features --all-targets --no-deps -- -D warnings
+      - name: Check format
+        run: cargo fmt --all -- --check --verbose

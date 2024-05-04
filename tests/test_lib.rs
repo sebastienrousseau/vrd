@@ -6,8 +6,6 @@
 #[cfg(test)]
 mod tests {
 
-    extern crate vrd;
-    use std::convert::TryInto;
     use vrd::random::Random;
 
     const N: usize = 624;
@@ -100,7 +98,7 @@ mod tests {
         assert!((0..=10).contains(&r));
     }
     #[test]
-    pub fn test_new() {
+    fn test_new() {
         let rng = Random::new();
         assert!(rng.mti <= N);
         assert!(rng.mt[0] > 0);
@@ -131,7 +129,9 @@ mod tests {
 
         // Verify that `mti` is set to `N` after seeding
         assert_eq!(rng.mti, N);
-        assert!(rng.mt.iter().any(|&x| x != N.try_into().unwrap()));
+
+        // Comparing elements of `rng.mt` with the value of `n`
+        assert!(rng.mt.iter().any(|&x| x != N as u32));
     }
 
     #[test]

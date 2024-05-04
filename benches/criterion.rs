@@ -30,12 +30,12 @@
 //! criterion_group!(benches, benchmark_random);
 //! criterion_main!(benches);
 //! ```
-extern crate criterion;
-extern crate vrd;
+#![allow(missing_docs)]
 use self::vrd::random::Random;
 use criterion::{
     black_box, criterion_group, criterion_main, Criterion,
 };
+use vrd;
 
 /// Benchmarks the random number generation functions provided by the `Random` trait.
 ///

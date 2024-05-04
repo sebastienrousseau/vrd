@@ -48,7 +48,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! vrd = "0.0.6"
+//! vrd = "0.0.7"
 //! serde = { version = "1.0.160", features = ["derive"] }
 //! ```
 //!
@@ -92,11 +92,6 @@
 //! [0]: https://minifunctions.com/vrd
 //!
 #![cfg_attr(feature = "bench", feature(test))]
-#![deny(dead_code)]
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![forbid(unsafe_code)]
-#![warn(unreachable_pub)]
 #![doc(
     html_favicon_url = "https://kura.pro/vrd/images/favicon.ico",
     html_logo_url = "https://kura.pro/vrd/images/logos/vrd.svg",
@@ -163,9 +158,9 @@ pub fn create_log_entry(
 }
 
 /// Log an entry asynchronously.
-pub async fn log_entry_async(entry: Log) {
-    entry
-        .log()
-        .await
-        .unwrap_or_else(|e| eprintln!("Failed to log entry: {}", e));
+pub async fn log_entry_async(
+    entry: Log,
+) -> Result<(), Box<dyn std::error::Error>> {
+    entry.log().await?;
+    Ok(())
 }

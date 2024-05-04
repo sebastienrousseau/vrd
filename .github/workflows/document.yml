@@ -3,10 +3,12 @@ name: 🧪 Document
 on:
   push:
     branches:
-      - main
+      - feat/vrd
   pull_request:
     branches:
-      - main
+      - feat/vrd
+  release:
+    types: [created]
 
 jobs:
   all:
@@ -43,10 +45,10 @@ jobs:
           retention-days: 1
 
       - name: Write CNAME file
-        run: echo 'doc.vrdlib.com' > ./target/doc/CNAME
+        run: echo 'docs.shokunin.one' > ./target/doc/CNAME
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           cname: true
           commit_message: Deploy documentation at ${{ github.sha }}

@@ -84,7 +84,7 @@ Add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-vrd = "0.0.6"
+vrd = "0.0.7"
 serde = { version = "1.0.160", features = ["derive"] }
 ```
 
