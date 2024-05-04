@@ -75,7 +75,9 @@ fn main() {
             &error_message,
         );
 
-        match runtime.block_on(async { log_entry_async(log_entry).await }) {
+        match runtime
+            .block_on(async { log_entry_async(log_entry).await })
+        {
             Ok(_) => {
                 // Logging successful
                 println!("Error logged successfully.");

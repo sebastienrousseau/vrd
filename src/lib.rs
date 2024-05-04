@@ -158,7 +158,9 @@ pub fn create_log_entry(
 }
 
 /// Log an entry asynchronously.
-pub async fn log_entry_async(entry: Log) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn log_entry_async(
+    entry: Log,
+) -> Result<(), Box<dyn std::error::Error>> {
     entry.log().await?;
     Ok(())
 }
