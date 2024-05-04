@@ -151,7 +151,7 @@ impl Random {
     /// # Notes
     /// The generated float is inclusive of 0.0 and exclusive of 1.0.
     pub fn float(&mut self) -> f32 {
-        thread_rng().gen::<f64>() as f32
+        thread_rng().r#gen::<f32>()
     }
 
     /// Generates a random integer within a specified range.
@@ -216,7 +216,7 @@ impl Random {
     /// # Notes
     /// The generated double is a number in the range [0.0, 1.0).
     pub fn double(&mut self) -> f64 {
-        thread_rng().gen::<f64>()
+        thread_rng().r#gen::<f64>()
     }
 
     /// Returns the current index of the internal state array used in random number generation.
@@ -285,7 +285,7 @@ impl Random {
             mt: [0; N],
             mti: N + 1,
         };
-        let seed = thread_rng().gen();
+        let seed = thread_rng().r#gen();
         rng.mt[0] = seed;
         for i in 1..N {
             rng.mt[i] = 1812433253u32
@@ -538,7 +538,7 @@ impl Random {
     /// # Returns
     /// An `f64` representing a randomly generated 64-bit floating-point number.
     pub fn f64(&mut self) -> f64 {
-        thread_rng().gen::<f64>()
+        thread_rng().r#gen::<f64>()
     }
 
     /// Generates a random string of the specified length.
