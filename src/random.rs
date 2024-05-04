@@ -194,7 +194,19 @@ impl Random {
     /// # Panics
     /// Panics if `min` is greater than `max`.
     pub fn int(&mut self, min: i32, max: i32) -> i32 {
-        thread_rng().gen_range(min..=max)
+        assert!(
+            min <= max,
+            "min must be less than or equal to max for int"
+        );
+
+        // Use your Mersenne Twister 'rand()' to get a random u32 value
+        let random_u32 = self.rand();
+
+        // Scale and shift the random_u32 into the desired range:
+        let range = max as u32 - min as u32 + 1; // Calculate the size of the range
+        let value_in_range = (random_u32 % range) + min as u32;
+
+        value_in_range as i32
     }
 
     /// Generates a random unsigned integer within a specified range.
@@ -308,8 +320,9 @@ impl Random {
         let seed = thread_rng().r#gen();
         rng.mt[0] = seed;
         for i in 1..N {
+            let previous_value = rng.mt[i - 1];
             rng.mt[i] = 1812433253u32
-                .wrapping_mul(rng.mt[i - 1] ^ (rng.mt[i - 1] >> 30))
+                .wrapping_mul(previous_value ^ (previous_value >> 30))
                 .wrapping_add(i as u32);
         }
         rng.mti = N;
