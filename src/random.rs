@@ -305,7 +305,7 @@ impl Random {
             mt: [0; N],
             mti: N + 1,
         };
-        let seed = thread_rng().gen();
+        let seed = thread_rng().r#gen();
         rng.mt[0] = seed;
         for i in 1..N {
             rng.mt[i] = 1812433253u32
