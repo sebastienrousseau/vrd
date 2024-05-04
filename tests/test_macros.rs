@@ -125,11 +125,12 @@ mod tests {
     }
 
     #[test]
-    fn test_random_range_macro_valid_range() {
+    fn test_rand_range_macro_valid_range() {
         let mut rng = Random::new();
         let min = 10;
         let max = 20;
         let num = random_range!(rng, min, max);
+        println!("Generated number: {}", num); // Add this line for debugging
         assert!(
             num >= min && num < max,
             "Number should be within the given range."

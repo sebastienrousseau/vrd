@@ -5,95 +5,129 @@
 
 #[cfg(test)]
 mod tests {
-    use vrd::MersenneTwisterConfig;
+    // Import necessary modules from the vrd crate
+    use vrd::{
+        mersenne_twister::MersenneTwisterParams, MersenneTwisterConfig,
+    };
 
     // Test creating a custom Mersenne Twister configuration
     #[test]
     fn test_new_custom() {
         // Arrange
-        let config = MersenneTwisterConfig::new_custom(
-            624, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0x80000000,
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xefc60000,
+        };
+
+        // Act
+        let config =
+            MersenneTwisterConfig::new_custom(624, 397, params);
 
         // Assert
         assert_eq!(config.n, 624);
         assert_eq!(config.m, 397);
-        assert_eq!(config.matrix_a, 0x9908b0df);
-        assert_eq!(config.upper_mask, 0x80000000);
-        assert_eq!(config.lower_mask, 0x7fffffff);
-        assert_eq!(config.tempering_mask_b, 0x9d2c5680);
-        assert_eq!(config.tempering_mask_c, 0xefc60000);
+        assert_eq!(config.params.matrix_a, 0x9908b0df);
+        assert_eq!(config.params.upper_mask, 0x80000000);
+        assert_eq!(config.params.lower_mask, 0x7fffffff);
+        assert_eq!(config.params.tempering_mask_b, 0x9d2c5680);
+        assert_eq!(config.params.tempering_mask_c, 0xefc60000);
     }
 
     // Test creating a custom configuration with invalid n value
     #[test]
     #[should_panic(expected = "n must be at least 1")]
     fn test_new_custom_invalid_n() {
-        MersenneTwisterConfig::new_custom(
-            0, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams::default(); // Provide default params here
+        MersenneTwisterConfig::new_custom(0, 397, params);
     }
 
     // Test creating a custom configuration with invalid m value
     #[test]
     #[should_panic(expected = "m must be at least 1 and less than n")]
     fn test_new_custom_invalid_m() {
-        MersenneTwisterConfig::new_custom(
-            624, 0, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams::default(); // Provide default params here
+        MersenneTwisterConfig::new_custom(624, 0, params);
     }
 
     // Test creating a custom configuration with invalid matrix_a value
     #[test]
     #[should_panic(expected = "matrix_a must have its highest bit set")]
     fn test_new_custom_invalid_matrix_a() {
-        MersenneTwisterConfig::new_custom(
-            624, 397, 0x7fffffff, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
-    }
-
-    // Test creating a custom configuration with invalid upper_mask value
-    #[test]
-    #[should_panic(expected = "upper_mask must be a valid 32-bit unsigned integer")]
-    fn test_new_custom_invalid_upper_mask() {
-        MersenneTwisterConfig::new_custom(
-            624, 397, 0x9908b0df, 0xffffffff, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
-    }
-
-    // Test creating a custom configuration with invalid lower_mask value
-    #[test]
-    #[should_panic(expected = "lower_mask must be a valid 32-bit unsigned integer")]
-    fn test_new_custom_invalid_lower_mask() {
-        MersenneTwisterConfig::new_custom(
-            624, 397, 0x9908b0df, 0x80000000, 0xffffffff, 0x9d2c5680,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams {
+            matrix_a: 0x7fffffff, // Invalid value
+            upper_mask: 0x80000000,
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xefc60000,
+        };
+        MersenneTwisterConfig::new_custom(624, 397, params);
     }
 
     // Test creating a custom configuration with invalid tempering_mask_b value
     #[test]
-    #[should_panic(expected = "tempering_mask_b must be a valid 32-bit unsigned integer")]
+    #[should_panic(
+        expected = "tempering_mask_b must be a valid 32-bit unsigned integer"
+    )]
     fn test_new_custom_invalid_tempering_mask_b() {
-        MersenneTwisterConfig::new_custom(
-            624, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0xffffffff,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0x80000000,
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0xffffffff, // Invalid value
+            tempering_mask_c: 0xefc60000,
+        };
+        MersenneTwisterConfig::new_custom(624, 397, params);
+    }
+
+    // Test creating a custom configuration with invalid upper_mask value
+    #[test]
+    #[should_panic(
+        expected = "upper_mask must be a valid 32-bit unsigned integer"
+    )]
+    fn test_new_custom_invalid_upper_mask() {
+        let params = MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0xffffffff, // Invalid value
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xefc60000,
+        };
+        MersenneTwisterConfig::new_custom(624, 397, params);
+    }
+
+    // Test creating a custom configuration with invalid lower_mask value
+    #[test]
+    #[should_panic(
+        expected = "lower_mask must be a valid 32-bit unsigned integer"
+    )]
+    fn test_new_custom_invalid_lower_mask() {
+        let params = MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0x80000000,
+            lower_mask: 0xffffffff, // Invalid value
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xefc60000,
+        };
+        MersenneTwisterConfig::new_custom(624, 397, params);
     }
 
     // Test creating a custom configuration with invalid tempering_mask_c value
     #[test]
-    #[should_panic(expected = "tempering_mask_c must be a valid 32-bit unsigned integer")]
+    #[should_panic(
+        expected = "tempering_mask_c must be a valid 32-bit unsigned integer"
+    )]
     fn test_new_custom_invalid_tempering_mask_c() {
-        MersenneTwisterConfig::new_custom(
-            624, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xffffffff,
-        );
+        let params = MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0x80000000,
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xffffffff, // Invalid value
+        };
+        MersenneTwisterConfig::new_custom(624, 397, params);
     }
 
     // Test setting configuration parameters
@@ -103,19 +137,17 @@ mod tests {
         let mut config = MersenneTwisterConfig::new();
 
         // Act
-        config.set_config(
-            1000, 500, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams::default();
+        config.set_config(1000, 500, params);
 
         // Assert
         assert_eq!(config.n, 1000);
         assert_eq!(config.m, 500);
-        assert_eq!(config.matrix_a, 0x9908b0df);
-        assert_eq!(config.upper_mask, 0x80000000);
-        assert_eq!(config.lower_mask, 0x7fffffff);
-        assert_eq!(config.tempering_mask_b, 0x9d2c5680);
-        assert_eq!(config.tempering_mask_c, 0xefc60000);
+        assert_eq!(config.params.matrix_a, 0x9908b0df);
+        assert_eq!(config.params.upper_mask, 0x80000000);
+        assert_eq!(config.params.lower_mask, 0x7fffffff);
+        assert_eq!(config.params.tempering_mask_b, 0x9d2c5680);
+        assert_eq!(config.params.tempering_mask_c, 0xefc60000);
     }
 
     // Test creating a default configuration
@@ -127,11 +159,11 @@ mod tests {
         // Assert
         assert_eq!(config.n, 624);
         assert_eq!(config.m, 397);
-        assert_eq!(config.matrix_a, 0x9908b0df);
-        assert_eq!(config.upper_mask, 0x80000000);
-        assert_eq!(config.lower_mask, 0x7fffffff);
-        assert_eq!(config.tempering_mask_b, 0x9d2c5680);
-        assert_eq!(config.tempering_mask_c, 0xefc60000);
+        assert_eq!(config.params.matrix_a, 0x9908b0df);
+        assert_eq!(config.params.upper_mask, 0x80000000);
+        assert_eq!(config.params.lower_mask, 0x7fffffff);
+        assert_eq!(config.params.tempering_mask_b, 0x9d2c5680);
+        assert_eq!(config.params.tempering_mask_c, 0xefc60000);
     }
 
     // Test setting n parameter
@@ -192,7 +224,7 @@ mod tests {
         config.set_matrix_a(0x9908b0df);
 
         // Assert
-        assert_eq!(config.matrix_a, 0x9908b0df);
+        assert_eq!(config.params.matrix_a, 0x9908b0df);
     }
 
     // Test setting matrix_a parameter with invalid value
@@ -216,12 +248,14 @@ mod tests {
         config.set_upper_mask(0x80000000);
 
         // Assert
-        assert_eq!(config.upper_mask, 0x80000000);
+        assert_eq!(config.params.upper_mask, 0x80000000);
     }
 
     // Test setting upper_mask parameter with invalid value
     #[test]
-    #[should_panic(expected = "upper_mask must be a valid 32-bit unsigned integer")]
+    #[should_panic(
+        expected = "upper_mask must be a valid 32-bit unsigned integer"
+    )]
     fn test_set_upper_mask_invalid() {
         // Arrange
         let mut config = MersenneTwisterConfig::new();
@@ -240,12 +274,14 @@ mod tests {
         config.set_lower_mask(0x7fffffff);
 
         // Assert
-        assert_eq!(config.lower_mask, 0x7fffffff);
+        assert_eq!(config.params.lower_mask, 0x7fffffff);
     }
 
     // Test setting lower_mask parameter with invalid value
     #[test]
-    #[should_panic(expected = "lower_mask must be a valid 32-bit unsigned integer")]
+    #[should_panic(
+        expected = "lower_mask must be a valid 32-bit unsigned integer"
+    )]
     fn test_set_lower_mask_invalid() {
         // Arrange
         let mut config = MersenneTwisterConfig::new();
@@ -264,12 +300,14 @@ mod tests {
         config.set_tempering_mask_b(0x9d2c5680);
 
         // Assert
-        assert_eq!(config.tempering_mask_b, 0x9d2c5680);
+        assert_eq!(config.params.tempering_mask_b, 0x9d2c5680);
     }
 
     // Test setting tempering_mask_b parameter with invalid value
     #[test]
-    #[should_panic(expected = "tempering_mask_b must be a valid 32-bit unsigned integer")]
+    #[should_panic(
+        expected = "tempering_mask_b must be a valid 32-bit unsigned integer"
+    )]
     fn test_set_tempering_mask_b_invalid() {
         // Arrange
         let mut config = MersenneTwisterConfig::new();
@@ -288,12 +326,14 @@ mod tests {
         config.set_tempering_mask_c(0xefc60000);
 
         // Assert
-        assert_eq!(config.tempering_mask_c, 0xefc60000);
+        assert_eq!(config.params.tempering_mask_c, 0xefc60000);
     }
 
     // Test setting tempering_mask_c parameter with invalid value
     #[test]
-    #[should_panic(expected = "tempering_mask_c must be a valid 32-bit unsigned integer")]
+    #[should_panic(
+        expected = "tempering_mask_c must be a valid 32-bit unsigned integer"
+    )]
     fn test_set_tempering_mask_c_invalid() {
         // Arrange
         let mut config = MersenneTwisterConfig::new();
@@ -311,11 +351,11 @@ mod tests {
         // Assert
         assert_eq!(config.n, 624);
         assert_eq!(config.m, 397);
-        assert_eq!(config.matrix_a, 0x9908b0df);
-        assert_eq!(config.upper_mask, 0x80000000);
-        assert_eq!(config.lower_mask, 0x7fffffff);
-        assert_eq!(config.tempering_mask_b, 0x9d2c5680);
-        assert_eq!(config.tempering_mask_c, 0xefc60000);
+        assert_eq!(config.params.matrix_a, 0x9908b0df);
+        assert_eq!(config.params.upper_mask, 0x80000000);
+        assert_eq!(config.params.lower_mask, 0x7fffffff);
+        assert_eq!(config.params.tempering_mask_b, 0x9d2c5680);
+        assert_eq!(config.params.tempering_mask_c, 0xefc60000);
     }
 
     // Test displaying configuration
@@ -323,7 +363,16 @@ mod tests {
     fn test_display() {
         // Arrange
         let config = MersenneTwisterConfig::new();
-        let expected = "MersenneTwisterConfig { n: 624, m: 397, matrix_a: 0x9908b0df, upper_mask: 0x80000000, lower_mask: 0x7fffffff, tempering_mask_b: 0x9d2c5680, tempering_mask_c: 0xefc60000 }";
+        let expected = format!(
+        "MersenneTwisterConfig {{ n: {}, m: {}, matrix_a: 0x{:x}, upper_mask: 0x{:x}, lower_mask: 0x{:x}, tempering_mask_b: 0x{:x}, tempering_mask_c: 0x{:x} }}",
+        config.n,
+        config.m,
+        config.params.matrix_a,
+        config.params.upper_mask,
+        config.params.lower_mask,
+        config.params.tempering_mask_b,
+        config.params.tempering_mask_c
+    );
 
         // Act & Assert
         assert_eq!(format!("{}", config), expected);
@@ -332,21 +381,17 @@ mod tests {
     // Test validating a valid configuration
     #[test]
     fn test_validate_valid() {
-        // Act
-        MersenneTwisterConfig::validate(
-            624, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams::default(); // Provide default params here
+                                                       // Act
+        MersenneTwisterConfig::validate(624, 397, &params);
     }
 
     // Test validating a configuration with invalid n value
     #[test]
     #[should_panic(expected = "n must be at least 1")]
     fn test_validate_invalid_n() {
-        // Act
-        MersenneTwisterConfig::validate(
-            0, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        );
+        let params = MersenneTwisterParams::default(); // Provide default params here
+                                                       // Act
+        MersenneTwisterConfig::validate(0, 397, &params);
     }
 }

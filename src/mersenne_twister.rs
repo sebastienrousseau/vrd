@@ -4,9 +4,57 @@
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{
+    fmt,
+    fs::File,
+    io::{BufReader, BufWriter},
+};
+
+/// Configuration parameters for the Mersenne Twister algorithm.
+///
+/// This struct contains the constant values required for the Mersenne Twister algorithm.
+///
+/// # Fields
+///
+/// - `matrix_a`: A constant value used in the Mersenne Twister algorithm. It must have its highest bit set (0x80000000).
+/// - `upper_mask`: A constant value used for masking the upper bits of the generated values (0x80000000).
+/// - `lower_mask`: A constant value used for masking the lower bits of the generated values (0x7fffffff).
+/// - `tempering_mask_b`: A constant value used for tempering the generated values (0x9d2c5680).
+/// - `tempering_mask_c`: A constant value used for tempering the generated values (0xefc60000).
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Hash,
+    PartialOrd,
+    Ord,
+)]
+pub struct MersenneTwisterParams {
+    /// A constant value used in the Mersenne Twister algorithm. It must have its highest bit set (0x80000000).
+    pub matrix_a: u32,
+    /// A constant value used for masking the upper bits of the generated values (0x80000000).
+    pub upper_mask: u32,
+    /// A constant value used for masking the lower bits of the generated values (0x7fffffff).
+    pub lower_mask: u32,
+    /// A constant value used for tempering the generated values (0x9d2c5680).
+    pub tempering_mask_b: u32,
+    /// A constant value used for tempering the generated values (0xefc60000).
+    pub tempering_mask_c: u32,
+}
 
 /// Configuration for the Mersenne Twister algorithm.
+///
+/// This struct contains the configurable parameters for the Mersenne Twister algorithm.
+///
+/// # Fields
+///
+/// - `n`: The number of elements in the array used for the Mersenne Twister algorithm. Its value is set to 624 for optimal performance. Must be at least 1.
+/// - `m`: The number of elements to skip in the array used for the Mersenne Twister algorithm. Its value is set to 397 for optimal performance. Must be at least 1 and less than `n`.
+/// - `params`: An instance of `MersenneTwisterParams` containing the constant values for the Mersenne Twister algorithm.
 #[derive(
     Clone,
     Copy,
@@ -30,25 +78,8 @@ pub struct MersenneTwisterConfig {
     /// Must be at least 1 and less than `n`.
     pub m: usize,
 
-    /// A constant value used in the Mersenne Twister algorithm.
-    /// Must have its highest bit set.
-    pub matrix_a: u32,
-
-    /// A constant value used in the Mersenne Twister algorithm.
-    /// Must be a valid 32-bit unsigned integer.
-    pub upper_mask: u32,
-
-    /// A constant value used in the Mersenne Twister algorithm.
-    /// Must be a valid 32-bit unsigned integer.
-    pub lower_mask: u32,
-
-    /// A constant value used in the Mersenne Twister algorithm.
-    /// Must be a valid 32-bit unsigned integer.
-    pub tempering_mask_b: u32,
-
-    /// A constant value used in the Mersenne Twister algorithm.
-    /// Must be a valid 32-bit unsigned integer.
-    pub tempering_mask_c: u32,
+    /// Configuration parameters for the Mersenne Twister algorithm.
+    pub params: MersenneTwisterParams,
 }
 
 /// Implementation of the `MersenneTwisterConfig` struct.
@@ -59,11 +90,7 @@ impl MersenneTwisterConfig {
     ///
     /// * `n` - The number of elements in the array.
     /// * `m` - The number of elements to skip.
-    /// * `matrix_a` - Constant value used in the algorithm.
-    /// * `upper_mask` - Constant value used in the algorithm.
-    /// * `lower_mask` - Constant value used in the algorithm.
-    /// * `tempering_mask_b` - Constant value used in the algorithm.
-    /// * `tempering_mask_c` - Constant value used in the algorithm.
+    /// * `params` - Configuration parameters for the Mersenne Twister algorithm.
     ///
     /// # Panics
     ///
@@ -72,45 +99,25 @@ impl MersenneTwisterConfig {
     /// # Example
     ///
     /// ```
-    /// use vrd::mersenne_twister::MersenneTwisterConfig;
+    /// use vrd::mersenne_twister::{MersenneTwisterConfig, MersenneTwisterParams};
     ///
-    /// let config = MersenneTwisterConfig::new_custom(
-    ///     624,                // n
-    ///     397,                // m
-    ///     0x9908b0df,         // matrix_a
-    ///     0x80000000,         // upper_mask
-    ///     0x7fffffff,         // lower_mask
-    ///     0x9d2c5680,         // tempering_mask_b
-    ///     0xefc60000          // tempering_mask_c
-    /// );
+    /// let params = MersenneTwisterParams {
+    ///     matrix_a: 0x9908b0df,
+    ///     upper_mask: 0x80000000,
+    ///     lower_mask: 0x7fffffff,
+    ///     tempering_mask_b: 0x9d2c5680,
+    ///     tempering_mask_c: 0xefc60000,
+    /// };
+    ///
+    /// let config = MersenneTwisterConfig::new_custom(624, 397, params);
     /// ```
     pub fn new_custom(
         n: usize,
         m: usize,
-        matrix_a: u32,
-        upper_mask: u32,
-        lower_mask: u32,
-        tempering_mask_b: u32,
-        tempering_mask_c: u32,
+        params: MersenneTwisterParams,
     ) -> MersenneTwisterConfig {
-        MersenneTwisterConfig::validate(
-            n,
-            m,
-            matrix_a,
-            upper_mask,
-            lower_mask,
-            tempering_mask_b,
-            tempering_mask_c,
-        );
-        MersenneTwisterConfig {
-            n,
-            m,
-            matrix_a,
-            upper_mask,
-            lower_mask,
-            tempering_mask_b,
-            tempering_mask_c,
-        }
+        MersenneTwisterConfig::validate(n, m, &params);
+        MersenneTwisterConfig { n, m, params }
     }
 
     /// Sets all the fields of the `MersenneTwisterConfig` struct at once.
@@ -119,11 +126,7 @@ impl MersenneTwisterConfig {
     ///
     /// * `n` - The number of elements in the array.
     /// * `m` - The number of elements to skip.
-    /// * `matrix_a` - Constant value used in the algorithm.
-    /// * `upper_mask` - Constant value used in the algorithm.
-    /// * `lower_mask` - Constant value used in the algorithm.
-    /// * `tempering_mask_b` - Constant value used in the algorithm.
-    /// * `tempering_mask_c` - Constant value used in the algorithm.
+    /// * `params` - Configuration parameters for the Mersenne Twister algorithm.
     ///
     /// # Panics
     ///
@@ -132,45 +135,30 @@ impl MersenneTwisterConfig {
     /// # Example
     ///
     /// ```
-    /// use vrd::mersenne_twister::MersenneTwisterConfig;
+    /// use vrd::mersenne_twister::{MersenneTwisterConfig, MersenneTwisterParams};
     ///
     /// let mut config = MersenneTwisterConfig::new();
-    /// config.set_config(
-    ///     1000,               // n
-    ///     500,                // m
-    ///     0x9908b0df,         // matrix_a
-    ///     0x80000000,         // upper_mask
-    ///     0x7fffffff,         // lower_mask
-    ///     0x9d2c5680,         // tempering_mask_b
-    ///     0xefc60000          // tempering_mask_c
-    /// );
+    ///
+    /// let params = MersenneTwisterParams {
+    ///     matrix_a: 0x9908b0df,
+    ///     upper_mask: 0x80000000,
+    ///     lower_mask: 0x7fffffff,
+    ///     tempering_mask_b: 0x9d2c5680,
+    ///     tempering_mask_c: 0xefc60000,
+    /// };
+    ///
+    /// config.set_config(1000, 500, params);
     /// ```
     pub fn set_config(
         &mut self,
         n: usize,
         m: usize,
-        matrix_a: u32,
-        upper_mask: u32,
-        lower_mask: u32,
-        tempering_mask_b: u32,
-        tempering_mask_c: u32,
+        params: MersenneTwisterParams,
     ) {
-        MersenneTwisterConfig::validate(
-            n,
-            m,
-            matrix_a,
-            upper_mask,
-            lower_mask,
-            tempering_mask_b,
-            tempering_mask_c,
-        );
+        MersenneTwisterConfig::validate(n, m, &params);
         self.n = n;
         self.m = m;
-        self.matrix_a = matrix_a;
-        self.upper_mask = upper_mask;
-        self.lower_mask = lower_mask;
-        self.tempering_mask_b = tempering_mask_b;
-        self.tempering_mask_c = tempering_mask_c;
+        self.params = params;
     }
 
     /// Validates the parameters for a MersenneTwisterConfig.
@@ -181,11 +169,7 @@ impl MersenneTwisterConfig {
     pub fn validate(
         n: usize,
         m: usize,
-        matrix_a: u32,
-        upper_mask: u32,
-        lower_mask: u32,
-        tempering_mask_b: u32,
-        tempering_mask_c: u32,
+        params: &MersenneTwisterParams,
     ) {
         assert!(n >= 1, "n must be at least 1");
         assert!(
@@ -193,24 +177,24 @@ impl MersenneTwisterConfig {
             "m must be at least 1 and less than n"
         );
         assert_eq!(
-            matrix_a & 0x80000000,
+            params.matrix_a & 0x80000000,
             0x80000000,
             "matrix_a must have its highest bit set"
         );
         assert_eq!(
-            upper_mask, 0x80000000,
+            params.upper_mask, 0x80000000,
             "upper_mask must be a valid 32-bit unsigned integer"
         );
         assert_eq!(
-            lower_mask, 0x7fffffff,
+            params.lower_mask, 0x7fffffff,
             "lower_mask must be a valid 32-bit unsigned integer"
         );
         assert_eq!(
-            tempering_mask_b, 0x9d2c5680,
+            params.tempering_mask_b, 0x9d2c5680,
             "tempering_mask_b must be a valid 32-bit unsigned integer"
         );
         assert_eq!(
-            tempering_mask_c, 0xefc60000,
+            params.tempering_mask_c, 0xefc60000,
             "tempering_mask_c must be a valid 32-bit unsigned integer"
         );
     }
@@ -235,10 +219,14 @@ impl MersenneTwisterConfig {
     /// let config = MersenneTwisterConfig::new();
     /// ```
     pub fn new() -> MersenneTwisterConfig {
-        MersenneTwisterConfig::new_custom(
-            624, 397, 0x9908b0df, 0x80000000, 0x7fffffff, 0x9d2c5680,
-            0xefc60000,
-        )
+        let params = MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0x80000000,
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xefc60000,
+        };
+        MersenneTwisterConfig::new_custom(624, 397, params)
     }
 
     /// Sets the number of elements in the array.
@@ -275,7 +263,7 @@ impl MersenneTwisterConfig {
             0x80000000,
             "matrix_a must have its highest bit set"
         );
-        self.matrix_a = matrix_a;
+        self.params.matrix_a = matrix_a;
     }
 
     /// Sets the upper_mask constant value.
@@ -288,7 +276,7 @@ impl MersenneTwisterConfig {
             upper_mask, 0x80000000,
             "upper_mask must be a valid 32-bit unsigned integer"
         );
-        self.upper_mask = upper_mask;
+        self.params.upper_mask = upper_mask;
     }
 
     /// Sets the lower_mask constant value.
@@ -301,7 +289,7 @@ impl MersenneTwisterConfig {
             lower_mask, 0x7fffffff,
             "lower_mask must be a valid 32-bit unsigned integer"
         );
-        self.lower_mask = lower_mask;
+        self.params.lower_mask = lower_mask;
     }
 
     /// Sets the tempering_mask_b constant value.
@@ -314,7 +302,7 @@ impl MersenneTwisterConfig {
             tempering_mask_b, 0x9d2c5680,
             "tempering_mask_b must be a valid 32-bit unsigned integer"
         );
-        self.tempering_mask_b = tempering_mask_b;
+        self.params.tempering_mask_b = tempering_mask_b;
     }
 
     /// Sets the tempering_mask_c constant value.
@@ -327,7 +315,43 @@ impl MersenneTwisterConfig {
             tempering_mask_c, 0xefc60000,
             "tempering_mask_c must be a valid 32-bit unsigned integer"
         );
-        self.tempering_mask_c = tempering_mask_c;
+        self.params.tempering_mask_c = tempering_mask_c;
+    }
+
+    /// Serialize a MersenneTwisterConfig instance to a JSON file
+    ///
+    /// # Arguments
+    /// * `config` - A reference to a MersenneTwisterConfig instance
+    /// * `filename` - A string slice containing the filename
+    ///
+    /// # Returns
+    /// * `Result<(), Box<dyn std::error::Error>>` - A result indicating success or failure
+    ///
+    pub fn serialize_to_file(
+        config: &MersenneTwisterConfig,
+        filename: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::create(filename)?;
+        let writer = BufWriter::new(file);
+        serde_json::to_writer(writer, config)?;
+        Ok(())
+    }
+
+    /// Deserialize a MersenneTwisterConfig instance from a JSON file
+    ///
+    /// # Arguments
+    /// * `filename` - A string slice containing the filename
+    ///
+    /// # Returns
+    /// * `Result<MersenneTwisterConfig, Box<dyn std::error::Error>>` - A result containing the deserialized MersenneTwisterConfig instance
+    ///
+    pub fn deserialize_from_file(
+        filename: &str,
+    ) -> Result<MersenneTwisterConfig, Box<dyn std::error::Error>> {
+        let file = File::open(filename)?;
+        let reader = BufReader::new(file);
+        let config = serde_json::from_reader(reader)?;
+        Ok(config)
     }
 }
 
@@ -339,7 +363,28 @@ impl Default for MersenneTwisterConfig {
 
 impl fmt::Display for MersenneTwisterConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "MersenneTwisterConfig {{ n: {}, m: {}, matrix_a: 0x{:x}, upper_mask: 0x{:x}, lower_mask: 0x{:x}, tempering_mask_b: 0x{:x}, tempering_mask_c: 0x{:x} }}", 
-            self.n, self.m, self.matrix_a, self.upper_mask, self.lower_mask, self.tempering_mask_b, self.tempering_mask_c)
+        write!(
+            f,
+            "MersenneTwisterConfig {{ n: {}, m: {}, matrix_a: 0x{:x}, upper_mask: 0x{:x}, lower_mask: 0x{:x}, tempering_mask_b: 0x{:x}, tempering_mask_c: 0x{:x} }}",
+            self.n,
+            self.m,
+            self.params.matrix_a,
+            self.params.upper_mask,
+            self.params.lower_mask,
+            self.params.tempering_mask_b,
+            self.params.tempering_mask_c,
+        )
+    }
+}
+
+impl Default for MersenneTwisterParams {
+    fn default() -> Self {
+        MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0x80000000,
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xefc60000,
+        }
     }
 }

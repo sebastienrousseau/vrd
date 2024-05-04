@@ -4,8 +4,7 @@
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
 use crate::MersenneTwisterConfig;
-use rand::thread_rng;
-use rand::Rng;
+use rand::{thread_rng, Rng, RngCore};
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
@@ -31,14 +30,11 @@ use serde_big_array::BigArray;
 /// use vrd::random::Random;
 /// let mut rng = Random::new();
 /// ```
-
-/// # Random Number Generation
 pub struct Random {
     /// The array of unsigned 32-bit integers used to generate random numbers.
     #[serde(with = "BigArray")]
     pub mt: [u32; 624],
-    /// The current index of the array used in the generation of random
-    /// numbers
+    /// The current index of the array used in the generation of random numbers.
     pub mti: usize,
 }
 
@@ -152,6 +148,30 @@ impl Random {
     /// The generated float is inclusive of 0.0 and exclusive of 1.0.
     pub fn float(&mut self) -> f32 {
         thread_rng().r#gen::<f32>()
+    }
+
+    /// Creates a new instance of the `Random` struct, seeded with a non-deterministic value obtained from the system's entropy source.
+    ///
+    /// This method ensures that each instance of `Random` produces a unique and unpredictable sequence of numbers.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::from_entropy(); // Creates a new instance of Random with a non-deterministic seed
+    /// let random_number = rng.rand(); // Generates a random number
+    /// println!("Random number: {}", random_number);
+    /// ```
+    ///
+    /// # Returns
+    /// A new instance of `Random` with its internal state initialized for random number generation using a non-deterministic seed.
+    ///
+    /// # Notes
+    /// - The internal state is seeded with a non-deterministic value obtained from the system's entropy source, ensuring unique and unpredictable sequences of random numbers for each instance of `Random`.
+    pub fn from_entropy() -> Self {
+        let seed = thread_rng().next_u32();
+        let mut rng = Random::new();
+        rng.seed(seed);
+        rng
     }
 
     /// Generates a random integer within a specified range.
@@ -285,7 +305,7 @@ impl Random {
             mt: [0; N],
             mti: N + 1,
         };
-        let seed = thread_rng().r#gen();
+        let seed = thread_rng().gen();
         rng.mt[0] = seed;
         for i in 1..N {
             rng.mt[i] = 1812433253u32
@@ -356,8 +376,8 @@ impl Random {
         let mut y = self.mt[self.mti];
         self.mti += 1;
         y ^= y >> 11;
-        y ^= (y << 7) & config.tempering_mask_b;
-        y ^= (y << 15) & config.tempering_mask_c;
+        y ^= (y << 7) & config.params.tempering_mask_b;
+        y ^= (y << 15) & config.params.tempering_mask_c;
         y ^= y >> 18;
         y
     }
@@ -475,13 +495,14 @@ impl Random {
     pub fn twist(&mut self) {
         let config = MersenneTwisterConfig::default();
         for i in 0..config.n {
-            let x = (self.mt[i] & config.upper_mask)
-                + (self.mt[(i + 1) % config.n] & config.lower_mask);
+            let x = (self.mt[i] & config.params.upper_mask)
+                + (self.mt[(i + 1) % config.n]
+                    & config.params.lower_mask);
             let x_a = x >> 1;
             if x % 2 != 0 {
                 self.mt[i] = self.mt[(i + config.m) % config.n]
                     ^ x_a
-                    ^ config.matrix_a;
+                    ^ config.params.matrix_a;
             } else {
                 self.mt[i] = self.mt[(i + config.m) % config.n] ^ x_a;
             }
@@ -557,15 +578,16 @@ impl Random {
     /// # Returns
     /// A `String` representing a randomly generated string of the specified length.
     pub fn string(&mut self, length: usize) -> String {
+        let mut rng = thread_rng();
         let chars: Vec<char> = (0..length)
             .map(|_| {
-                let value = self.rand() % 62;
-                if value < 10 {
-                    (b'0' + value as u8) as char
-                } else if value < 36 {
-                    (b'a' + value as u8 - 10) as char
+                let value = rng.gen_range(0..62);
+                if value < 26 {
+                    (b'a' + value as u8) as char
+                } else if value < 52 {
+                    (b'A' + value as u8 - 26) as char
                 } else {
-                    (b'A' + value as u8 - 36) as char
+                    (b'0' + value as u8 - 52) as char
                 }
             })
             .collect();
@@ -643,6 +665,144 @@ impl Random {
             }
         }
         k - 1
+    }
+    /// Generates a random subslice of the specified length from the given slice.
+    ///
+    /// # Arguments
+    /// * `slice` - The slice from which to generate a random subslice.
+    /// * `length` - The desired length of the random subslice.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let slice = &[1, 2, 3, 4, 5];
+    /// let random_subslice = rng.rand_slice(slice, 3);
+    /// println!("Random subslice: {:?}", random_subslice);
+    /// ```
+    ///
+    /// # Returns
+    /// A slice containing a randomly generated subslice of the specified length.
+    pub fn rand_slice<'a, T>(
+        &'a mut self,
+        slice: &'a [T],
+        length: usize,
+    ) -> &[T] {
+        let start = self
+            .random_range(0, slice.len() as u32 - length as u32)
+            as usize;
+        &slice[start..start + length]
+    }
+
+    /// Randomly samples elements from the given slice without replacement.
+    ///
+    /// # Arguments
+    /// * `slice` - The slice from which to sample elements.
+    /// * `amount` - The number of elements to sample.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let slice = &[1, 2, 3, 4, 5];
+    /// let samples = rng.sample(slice, 3);
+    /// println!("Random samples: {:?}", samples);
+    /// ```
+    ///
+    /// # Returns
+    /// A vector containing the randomly sampled elements.
+    pub fn sample<'a, T>(
+        &'a mut self,
+        slice: &'a [T],
+        amount: usize,
+    ) -> Vec<&T> {
+        let mut result = Vec::with_capacity(amount);
+        let mut indices: Vec<usize> = (0..slice.len()).collect();
+        for _ in 0..amount {
+            let index =
+                self.random_range(0, indices.len() as u32) as usize;
+            result.push(&slice[indices[index]]);
+            indices.remove(index);
+        }
+        result
+    }
+
+    /// Randomly samples elements from the given slice with replacement.
+    ///
+    /// # Arguments
+    /// * `slice` - The slice from which to sample elements.
+    /// * `amount` - The number of elements to sample.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let slice = &[1, 2, 3, 4, 5];
+    /// let samples = rng.sample_with_replacement(slice, 3);
+    /// println!("Random samples with replacement: {:?}", samples);
+    /// ```
+    ///
+    /// # Returns
+    /// A vector containing the randomly sampled elements with replacement.
+    pub fn sample_with_replacement<'a, T>(
+        &'a mut self,
+        slice: &'a [T],
+        amount: usize,
+    ) -> Vec<&T> {
+        let mut result = Vec::with_capacity(amount);
+        for _ in 0..amount {
+            let index =
+                self.random_range(0, slice.len() as u32) as usize;
+            result.push(&slice[index]);
+        }
+        result
+    }
+
+    /// Fills the given mutable slice with random values.
+    ///
+    /// # Arguments
+    /// * `slice` - The mutable slice to fill with random values.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let mut buffer = [0; 10];
+    /// rng.fill(&mut buffer);
+    /// println!("Filled buffer: {:?}", buffer);
+    /// ```
+    pub fn fill<T>(&mut self, slice: &mut [T])
+    where
+        T: Default + std::ops::RemAssign<u32>,
+    {
+        // Seed the RNG with a new random value before filling the buffer
+        self.seed(thread_rng().next_u32());
+
+        for item in slice {
+            let random_value = self.rand();
+            *item = T::default();
+            *item %= random_value;
+        }
+    }
+
+    /// Shuffles the elements of a mutable slice randomly.
+    ///
+    /// # Arguments
+    /// * `slice` - The mutable slice to shuffle.
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let mut rng = Random::new();
+    /// let mut values = [1, 2, 3, 4, 5];
+    /// rng.shuffle(&mut values);
+    /// println!("Shuffled values: {:?}", values);
+    /// ```
+    pub fn shuffle<T>(&mut self, slice: &mut [T]) {
+        for i in (1..slice.len()).rev() {
+            let j = self.random_range(0, (i + 1) as u32) as usize;
+            slice.swap(i, j);
+        }
     }
 }
 

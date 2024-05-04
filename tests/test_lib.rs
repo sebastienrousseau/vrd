@@ -6,7 +6,6 @@
 #[cfg(test)]
 mod tests {
 
-    use std::convert::TryInto;
     use vrd::random::Random;
 
     const N: usize = 624;
@@ -130,7 +129,9 @@ mod tests {
 
         // Verify that `mti` is set to `N` after seeding
         assert_eq!(rng.mti, N);
-        assert!(rng.mt.iter().any(|&x| x != N.try_into().unwrap()));
+
+        // Comparing elements of `rng.mt` with the value of `n`
+        assert!(rng.mt.iter().any(|&x| x != N as u32));
     }
 
     #[test]
