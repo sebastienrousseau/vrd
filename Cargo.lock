@@ -915,7 +915,7 @@ dependencies = [
  "assert_cmd",
  "bitflags",
  "criterion",
- "dtt 0.0.5",
+ "dtt 0.0.6",
  "rand",
  "rlg 0.0.4",
  "serde",
