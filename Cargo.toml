@@ -47,7 +47,7 @@ debug = true
 
 [dependencies]
 # Dependencies are only used for building.
-bitflags = "2.5.0"
+bitflags = "2.6.0"
 dtt = "0.0.6"
 rand = "0.8.5"
 rlg = "0.0.4"
