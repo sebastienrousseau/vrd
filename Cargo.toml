@@ -52,6 +52,10 @@ serde-big-array =  "0.5.1"
 tokio = { version = "1.39.3", features = ["full"] }
 uuid ={ version = "1.10.0", features = ["v4"] }
 
+[build-dependencies]
+# Dependencies for build scripts.
+version_check = "0.9.4" # Check the Rust version used to compile the package.
+
 [dev-dependencies]
 # Development dependencies are only used for testing and building.
 assert_cmd = "2.0.16"
