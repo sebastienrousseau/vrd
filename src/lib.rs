@@ -91,7 +91,6 @@
 //!
 //! [0]: https://minifunctions.com/vrd
 //!
-#![cfg_attr(feature = "bench", feature(test))]
 #![doc(
     html_favicon_url = "https://kura.pro/vrd/images/favicon.ico",
     html_logo_url = "https://kura.pro/vrd/images/logos/vrd.svg",
