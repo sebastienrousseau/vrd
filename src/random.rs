@@ -794,7 +794,7 @@ impl Random {
 
 impl std::fmt::Display for Random {
     /// Returns a formatted string representation of the `Random` struct.
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Random {{ mt: {:?}, mti: {:?} }}", self.mt, self.mti)
     }
 }
