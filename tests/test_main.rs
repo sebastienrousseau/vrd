@@ -5,11 +5,11 @@
 
 #[cfg(test)]
 mod tests {
+    use dtt::DateTime;
     use rlg::{log_format::LogFormat, log_level::LogLevel};
+    use std::panic;
     use uuid::Uuid;
     use vrd::{create_log_entry, log_entry_async};
-    use dtt::DateTime;
-    use std::panic;
 
     // Logging tests
     /// Tests the creation of a log entry with specific details and verifies that the generated log entry contains the expected information.
@@ -40,8 +40,14 @@ mod tests {
         let iso = "2023-06-10T12:34:56Z";
         let message = "Test log message";
 
-        for level in &[LogLevel::DEBUG, LogLevel::INFO, LogLevel::WARN, LogLevel::ERROR] {
-            let log_entry = create_log_entry(uuid, iso, *level, message);
+        for level in &[
+            LogLevel::DEBUG,
+            LogLevel::INFO,
+            LogLevel::WARN,
+            LogLevel::ERROR,
+        ] {
+            let log_entry =
+                create_log_entry(uuid, iso, *level, message);
             assert_eq!(log_entry.level, *level);
         }
     }
@@ -143,9 +149,10 @@ mod tests {
         // if vrd::run() returns an error
         let result = panic::catch_unwind(|| {
             // Create a mock vrd::run() that always returns an error
-            let mock_run = || -> Result<(), Box<dyn std::error::Error>> {
-                Err("Simulated error".into())
-            };
+            let mock_run =
+                || -> Result<(), Box<dyn std::error::Error>> {
+                    Err("Simulated error".into())
+                };
 
             // Call a modified version of main() that uses our mock_run
             let date = DateTime::new();
@@ -158,7 +165,10 @@ mod tests {
                 .expect("Failed to build Tokio runtime");
 
             if let Err(run_error) = mock_run() {
-                let error_message = format!("Unexpected error running vrd: {:?}", run_error);
+                let error_message = format!(
+                    "Unexpected error running vrd: {:?}",
+                    run_error
+                );
                 let log_entry = create_log_entry(
                     &uuid,
                     &iso,
@@ -166,7 +176,10 @@ mod tests {
                     &error_message,
                 );
 
-                runtime.block_on(async { log_entry_async(log_entry).await })
+                runtime
+                    .block_on(async {
+                        log_entry_async(log_entry).await
+                    })
                     .expect("Failed to log error");
 
                 panic!("Simulated process::exit(1)");
