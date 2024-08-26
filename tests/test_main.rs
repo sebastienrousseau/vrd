@@ -182,11 +182,18 @@ mod tests {
                     })
                     .expect("Failed to log error");
 
+                // Simulating a panic instead of process::exit
                 panic!("Simulated process::exit(1)");
             }
         });
 
         // Assert that a panic occurred (simulating process::exit(1))
-        assert!(result.is_err());
+        if result.is_err() {
+            println!("Test passed as panic was expected");
+        } else {
+            panic!(
+                "Test failed: Expected a panic, but it did not occur"
+            );
+        }
     }
 }
