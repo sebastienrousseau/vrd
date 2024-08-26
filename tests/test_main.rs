@@ -141,7 +141,6 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    // Error handling tests
     /// Tests error handling in the main function by simulating a panic and verifying that it is caught.
     #[test]
     fn test_main_error_handling() {
@@ -188,8 +187,29 @@ mod tests {
         });
 
         // Assert that a panic occurred (simulating process::exit(1))
-        if result.is_err() {
-            println!("Test passed as panic was expected");
+        if let Err(err) = result {
+            if let Some(panic_message) =
+                err.downcast_ref::<&'static str>()
+            {
+                assert_eq!(
+                    panic_message,
+                    &"Simulated process::exit(1)"
+                );
+                println!(
+                    "Test passed as panic was expected and caught"
+                );
+            } else if let Some(panic_message) =
+                err.downcast_ref::<String>()
+            {
+                assert_eq!(panic_message, "Simulated process::exit(1)");
+                println!(
+                    "Test passed as panic was expected and caught"
+                );
+            } else {
+                panic!(
+                "Test failed: Panic occurred with an unexpected payload"
+            );
+            }
         } else {
             panic!(
                 "Test failed: Expected a panic, but it did not occur"
