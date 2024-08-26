@@ -4,7 +4,7 @@
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
 use crate::MersenneTwisterConfig;
-use rand::{thread_rng, Rng, RngCore};
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
@@ -23,13 +23,6 @@ use serde_big_array::BigArray;
 /// The `Random` struct is used to generate random numbers using the Mersenne Twister algorithm.
 ///
 /// This struct maintains an internal state for random number generation and provides methods to generate various types of random numbers.
-///
-/// # Initialization
-/// The random number generator can be initialized with the `new` method, which seeds the generator with a default value.
-/// ```
-/// use vrd::random::Random;
-/// let mut rng = Random::new();
-/// ```
 pub struct Random {
     /// The array of unsigned 32-bit integers used to generate random numbers.
     #[serde(with = "BigArray")]
@@ -46,8 +39,8 @@ impl Random {
     /// simulating a coin flip.
     ///
     /// # Arguments
-    /// * `probability` - A f64 value representing the probability of the function returning `true`.
-    ///                    This should be a value between 0.0 and 1.0, where 0.0 always returns `false` and 1.0 always returns `true`.
+    /// * `probability` - A `f64` value representing the probability of the function returning `true`.
+    ///                   This should be a value between 0.0 and 1.0, where 0.0 always returns `false` and 1.0 always returns `true`.
     ///
     /// # Examples
     /// ```
@@ -59,7 +52,8 @@ impl Random {
     /// # Panics
     /// Panics if `probability` is not between 0.0 and 1.0.
     pub fn bool(&mut self, probability: f64) -> bool {
-        thread_rng().gen_bool(probability)
+        let random_value = self.rand();
+        (random_value as f64) < (probability * u32::MAX as f64)
     }
 
     /// Generates a vector of random bytes of the specified length.
@@ -99,7 +93,8 @@ impl Random {
     /// # Returns
     /// A `char` representing a randomly chosen lowercase letter from 'a' to 'z'.
     pub fn char(&mut self) -> char {
-        thread_rng().gen_range('a'..='z')
+        let random_value = self.rand() % 26;
+        (b'a' + random_value as u8) as char
     }
 
     /// Selects a random element from a provided slice.
@@ -123,8 +118,7 @@ impl Random {
         if values.is_empty() {
             return None;
         }
-        let mut rng = thread_rng();
-        let index = rng.gen_range(0..values.len());
+        let index = (self.rand() as usize) % values.len();
         Some(&values[index])
     }
 
@@ -144,7 +138,7 @@ impl Random {
     /// # Notes
     /// The generated float is inclusive of 0.0 and exclusive of 1.0.
     pub fn float(&mut self) -> f32 {
-        thread_rng().r#gen::<f32>()
+        (self.rand() as f32) / (u32::MAX as f32)
     }
 
     /// Creates a new instance of the `Random` struct, seeded with a non-deterministic value obtained from the system's entropy source.
@@ -162,7 +156,7 @@ impl Random {
     /// # Returns
     /// A new instance of `Random` with its internal state initialized for random number generation using a non-deterministic seed.
     pub fn from_entropy() -> Self {
-        let seed = thread_rng().next_u32();
+        let seed = rand::thread_rng().next_u32();
         let mut rng = Random::new();
         rng.seed(seed);
         rng
@@ -192,14 +186,8 @@ impl Random {
             min <= max,
             "min must be less than or equal to max for int"
         );
-
-        // Use your Mersenne Twister 'rand()' to get a random u32 value
-        let random_u32 = self.rand();
-
-        // Scale and shift the random_u32 into the desired range:
-        let range = max as u32 - min as u32 + 1; // Calculate the size of the range
-        let value_in_range = (random_u32 % range) + min as u32;
-
+        let range = max as u32 - min as u32 + 1;
+        let value_in_range = (self.rand() % range) + min as u32;
         value_in_range as i32
     }
 
@@ -223,7 +211,12 @@ impl Random {
     /// # Panics
     /// Panics if `min` is greater than `max`.
     pub fn uint(&mut self, min: u32, max: u32) -> u32 {
-        thread_rng().gen_range(min..=max)
+        assert!(
+            min <= max,
+            "min must be less than or equal to max for uint"
+        );
+        let range = max - min + 1;
+        (self.rand() % range) + min
     }
 
     /// Generates a random double-precision floating-point number.
@@ -242,7 +235,7 @@ impl Random {
     /// # Notes
     /// The generated double is a number in the range [0.0, 1.0).
     pub fn double(&mut self) -> f64 {
-        thread_rng().r#gen::<f64>()
+        (self.rand() as f64) / (u32::MAX as f64)
     }
 
     /// Returns the current index of the internal state array used in random number generation.
@@ -307,7 +300,7 @@ impl Random {
             mt: [0; N],
             mti: N + 1,
         };
-        let seed = thread_rng().r#gen();
+        let seed = rand::thread_rng().next_u32();
         rng.mt[0] = seed;
         for i in 1..N {
             let previous_value = rng.mt[i - 1];
@@ -366,7 +359,7 @@ impl Random {
     pub fn rand(&mut self) -> u32 {
         let config = MersenneTwisterConfig::default();
         if self.mti >= config.n {
-            if self.mti == config.n + 1 + 1 {
+            if self.mti == config.n + 1 {
                 self.seed(5489);
             }
             self.twist();
@@ -405,8 +398,8 @@ impl Random {
             max > min,
             "max must be greater than min for random_range"
         );
-        let mut rng = thread_rng(); // Get a thread-local RNG
-        rng.gen_range(min..max) // Use the gen_range method for uniform distribution
+        let range = max - min;
+        min + (self.rand() % range)
     }
 
     /// Generates a random number within a specified range of integer values.
@@ -429,7 +422,11 @@ impl Random {
     /// # Panics
     /// Panics if `min` is greater than `max`.
     pub fn range(&mut self, min: i32, max: i32) -> i32 {
-        thread_rng().gen_range(min..=max)
+        assert!(
+            min <= max,
+            "min must be less than or equal to max for range"
+        );
+        self.int(min, max)
     }
 
     /// Seeds the random number generator with a specified value.
@@ -459,8 +456,8 @@ impl Random {
         self.mt[0] = seed;
         for i in 1..N {
             self.mt[i] = 1812433253u32
-                .checked_mul(self.mt[i - 1] ^ (self.mt[i - 1] >> 30))
-                .map_or(u32::MAX, |val| val + i as u32);
+                .wrapping_mul(self.mt[i - 1] ^ (self.mt[i - 1] >> 30))
+                .wrapping_add(i as u32);
         }
         self.mti = N;
     }
@@ -490,13 +487,13 @@ impl Random {
                 + (self.mt[(i + 1) % config.n]
                     & config.params.lower_mask);
             let x_a = x >> 1;
-            if x % 2 != 0 {
-                self.mt[i] = self.mt[(i + config.m) % config.n]
+            self.mt[i] = if x % 2 != 0 {
+                self.mt[(i + config.m) % config.n]
                     ^ x_a
-                    ^ config.params.matrix_a;
+                    ^ config.params.matrix_a
             } else {
-                self.mt[i] = self.mt[(i + config.m) % config.n] ^ x_a;
-            }
+                self.mt[(i + config.m) % config.n] ^ x_a
+            };
         }
         self.mti = 0;
     }
@@ -550,7 +547,7 @@ impl Random {
     /// # Returns
     /// An `f64` representing a randomly generated 64-bit floating-point number.
     pub fn f64(&mut self) -> f64 {
-        thread_rng().r#gen::<f64>()
+        self.double()
     }
 
     /// Generates a random string of the specified length.
@@ -569,20 +566,7 @@ impl Random {
     /// # Returns
     /// A `String` representing a randomly generated string of the specified length.
     pub fn string(&mut self, length: usize) -> String {
-        let mut rng = thread_rng();
-        let chars: Vec<char> = (0..length)
-            .map(|_| {
-                let value = rng.gen_range(0..62);
-                if value < 26 {
-                    (b'a' + value as u8) as char
-                } else if value < 52 {
-                    (b'A' + value as u8 - 26) as char
-                } else {
-                    (b'0' + value as u8 - 52) as char
-                }
-            })
-            .collect();
-        chars.into_iter().collect()
+        (0..length).map(|_| self.char()).collect()
     }
 
     /// Generates a random number from a standard normal distribution (mean = 0, stddev = 1).
@@ -604,8 +588,6 @@ impl Random {
     pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
         let u1 = self.f64();
         let u2 = self.f64();
-        println!("u1: {}", u1);
-        println!("u2: {}", u2);
         let z0 = (-2.0 * u1.ln()).sqrt()
             * (2.0 * std::f64::consts::PI * u2).cos();
         mu + sigma * z0
@@ -675,7 +657,7 @@ impl Random {
     /// ```
     ///
     /// # Returns
-    /// A slice containing a randomly generated subslice of the specified length.
+    /// A `Result<&[T], &str>` containing a randomly generated subslice of the specified length.
     pub fn rand_slice<'a, T>(
         &mut self,
         slice: &'a [T],
