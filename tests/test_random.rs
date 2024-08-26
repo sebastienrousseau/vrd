@@ -72,7 +72,7 @@ mod tests {
 
         for _ in 0..1000 {
             let result = rng.float();
-            assert!(result >= 0.0 && result < 1.0);
+            assert!((0.0..1.0).contains(&result));
             assert!(result.is_finite());
         }
     }
@@ -85,7 +85,7 @@ mod tests {
 
         for _ in 0..1000 {
             let result = rng.double();
-            assert!(result >= 0.0 && result < 1.0);
+            assert!((0.0..1.0).contains(&result));
             assert!(result.is_finite());
         }
     }
@@ -134,7 +134,9 @@ mod tests {
     // Random range tests
     /// Tests the `random_range` method to ensure it panics when given invalid input.
     #[test]
-    #[should_panic(expected = "max must be greater than min for random_range")]
+    #[should_panic(
+        expected = "max must be greater than min for random_range"
+    )]
     fn test_random_range_invalid() {
         let mut rng = Random::new();
         rng.random_range(20, 10);

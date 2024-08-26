@@ -9,7 +9,17 @@ use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+)]
 /// The `Random` struct is used to generate random numbers using the Mersenne Twister algorithm.
 ///
 /// This struct maintains an internal state for random number generation and provides methods to generate various types of random numbers.
@@ -178,7 +188,10 @@ impl Random {
     /// # Panics
     /// Panics if `min` is greater than `max`.
     pub fn int(&mut self, min: i32, max: i32) -> i32 {
-        assert!(min <= max, "min must be less than or equal to max for int");
+        assert!(
+            min <= max,
+            "min must be less than or equal to max for int"
+        );
 
         // Use your Mersenne Twister 'rand()' to get a random u32 value
         let random_u32 = self.rand();
@@ -388,7 +401,10 @@ impl Random {
     /// # Panics
     /// Panics if `min` is not less than `max`.
     pub fn random_range(&mut self, min: u32, max: u32) -> u32 {
-        assert!(max > min, "max must be greater than min for random_range");
+        assert!(
+            max > min,
+            "max must be greater than min for random_range"
+        );
         let mut rng = thread_rng(); // Get a thread-local RNG
         rng.gen_range(min..max) // Use the gen_range method for uniform distribution
     }
@@ -471,7 +487,8 @@ impl Random {
         let config = MersenneTwisterConfig::default();
         for i in 0..config.n {
             let x = (self.mt[i] & config.params.upper_mask)
-                + (self.mt[(i + 1) % config.n] & config.params.lower_mask);
+                + (self.mt[(i + 1) % config.n]
+                    & config.params.lower_mask);
             let x_a = x >> 1;
             if x % 2 != 0 {
                 self.mt[i] = self.mt[(i + config.m) % config.n]
@@ -749,7 +766,9 @@ impl Random {
     /// ```
     pub fn fill<T>(&mut self, slice: &mut [T])
     where
-        T: Default + std::ops::RemAssign<u32> + std::ops::BitOrAssign<u32>,
+        T: Default
+            + std::ops::RemAssign<u32>
+            + std::ops::BitOrAssign<u32>,
     {
         for item in slice.iter_mut() {
             let random_value = self.rand();
@@ -840,7 +859,10 @@ impl RngCore for Random {
     ///
     /// # Returns
     /// A `Result<(), Error>` which is always `Ok(())` for this implementation.
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
+    fn try_fill_bytes(
+        &mut self,
+        dest: &mut [u8],
+    ) -> Result<(), rand::Error> {
         self.fill_bytes(dest);
         Ok(())
     }
