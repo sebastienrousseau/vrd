@@ -489,4 +489,111 @@ mod tests {
         assert!(result.is_ok());
         assert!(buffer.iter().any(|&x| x != 0));
     }
+
+    // Clone trait test
+    /// Tests that the `Clone` trait creates an exact copy of the `Random` struct.
+    #[test]
+    fn test_clone_trait() {
+        let rng1 = Random::new();
+        let rng2 = rng1.clone();
+        assert_eq!(rng1.mt, rng2.mt);
+        assert_eq!(rng1.mti, rng2.mti);
+    }
+
+    // Debug trait test
+    /// Tests that the `Debug` trait formats the `Random` struct correctly.
+    #[test]
+    fn test_debug_trait() {
+        let rng = Random::new();
+        let debug_str = format!("{:?}", rng);
+        assert!(debug_str.contains("Random"));
+        assert!(debug_str.contains("mt"));
+        assert!(debug_str.contains("mti"));
+    }
+
+    // Eq and PartialEq trait test
+    /// Tests the `Eq` and `PartialEq` traits for equality between two `Random` structs.
+    #[test]
+    fn test_eq_partial_eq_trait() {
+        let mut rng1 = Random::new();
+        let mut rng2 = Random::new();
+
+        // Ensure they are not equal initially due to random initialization
+        assert_ne!(rng1, rng2);
+
+        // Seed both RNGs identically
+        rng1.seed(42);
+        rng2.seed(42);
+
+        // Now they should be equal
+        assert_eq!(rng1, rng2);
+
+        // Modify one RNG and check inequality
+        rng2.mti = 500;
+        assert_ne!(rng1, rng2);
+    }
+
+    // Hash trait test
+    /// Tests that the `Hash` trait produces consistent hash values for the `Random` struct.
+    #[test]
+    fn test_hash_trait() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let rng1 = Random::new();
+        let rng2 = rng1.clone();
+
+        let mut hasher1 = DefaultHasher::new();
+        let mut hasher2 = DefaultHasher::new();
+
+        rng1.hash(&mut hasher1);
+        rng2.hash(&mut hasher2);
+
+        assert_eq!(hasher1.finish(), hasher2.finish());
+    }
+
+    // Ord and PartialOrd trait test
+    /// Tests the `Ord` and `PartialOrd` traits for ordering between two `Random` structs.
+    #[test]
+    fn test_ord_partial_ord_trait() {
+        let mut rng1 = Random::new();
+        let mut rng2 = Random::new();
+
+        // Seed both RNGs identically
+        rng1.seed(42);
+        rng2.seed(42);
+
+        // Initially, they should be equal
+        assert_eq!(rng1.cmp(&rng2), std::cmp::Ordering::Equal);
+
+        // Modify rng2's mti to make rng1 less than rng2
+        rng2.mti = rng1.mti + 100;
+        assert!(rng1 < rng2);
+
+        // Modify rng1's mti to make rng1 greater than rng2
+        rng1.mti = rng2.mti + 100;
+        assert!(rng1 > rng2);
+    }
+
+    // Serialize and Deserialize trait test
+    /// Tests that the `Serialize` trait serializes the `Random` struct correctly.
+    #[test]
+    fn test_serialize_trait() {
+        let rng = Random::new();
+        let serialized =
+            serde_json::to_string(&rng).expect("Serialization failed");
+        assert!(serialized.contains("mt"));
+        assert!(serialized.contains("mti"));
+    }
+
+    /// Tests that the `Deserialize` trait deserializes the `Random` struct correctly.
+    #[test]
+    fn test_deserialize_trait() {
+        let rng = Random::new();
+        let serialized =
+            serde_json::to_string(&rng).expect("Serialization failed");
+        let deserialized: Random = serde_json::from_str(&serialized)
+            .expect("Deserialization failed");
+        assert_eq!(rng, deserialized);
+    }
 }
