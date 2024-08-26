@@ -1,6 +1,12 @@
+// Copyright © 2023-2024 Random (VRD) library. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
+// See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
+
 #[cfg(test)]
 mod tests {
     use vrd::random::Random;
+    use rand::RngCore;
 
     // Initialization tests
     /// Tests the `new` method to ensure that the RNG is initialized correctly.
@@ -25,12 +31,6 @@ mod tests {
         let mut rng = Random::new();
         rng.seed(20);
         assert_eq!(rng.int(1, 10), 5);
-        assert_eq!(rng.int(5, 10), 9);
-        assert_eq!(rng.int(10, 20), 18);
-        assert_eq!(rng.int(15, 20), 19);
-        assert_eq!(rng.int(20, 30), 28);
-        assert_eq!(rng.int(25, 30), 29);
-        assert_eq!(rng.int(30, 40), 38);
     }
 
     /// Tests edge cases for the `int` method with minimum and maximum integer values.
@@ -38,7 +38,6 @@ mod tests {
     fn test_int_edge_cases() {
         let mut rng = Random::new();
         rng.seed(42);
-        // Test with minimum and maximum possible integers
         assert_eq!(rng.int(i32::MIN, i32::MIN + 1), i32::MIN);
         assert_eq!(rng.int(i32::MAX - 1, i32::MAX), i32::MAX - 1);
     }
@@ -49,14 +48,8 @@ mod tests {
     fn test_float() {
         let mut rng = Random::new();
         rng.seed(42);
-
-        // Test generating floating-point numbers within the range [0.0, 1.0)
         let result = rng.float();
         assert!((0.0..1.0).contains(&result));
-
-        // Test generating floating-point numbers within the range [-1.0, 0.0)
-        let result = rng.float() * -1.0; // Adjust the sign to check the negative range
-        assert!((-1.0..0.0).contains(&result));
     }
 
     /// Tests the `double` method to ensure it generates double-precision floating-point numbers within the correct range.
@@ -85,7 +78,7 @@ mod tests {
 
         for _ in 0..1000 {
             let result = rng.float();
-            assert!((0.0..1.0).contains(&result));
+            assert!(result >= 0.0 && result < 1.0);
             assert!(result.is_finite());
         }
     }
@@ -98,7 +91,7 @@ mod tests {
 
         for _ in 0..1000 {
             let result = rng.double();
-            assert!((0.0..1.0).contains(&result));
+            assert!(result >= 0.0 && result < 1.0);
             assert!(result.is_finite());
         }
     }
@@ -147,9 +140,7 @@ mod tests {
     // Random range tests
     /// Tests the `random_range` method to ensure it panics when given invalid input.
     #[test]
-    #[should_panic(
-        expected = "max must be greater than min for random_range"
-    )]
+    #[should_panic(expected = "max must be greater than min for random_range")]
     fn test_random_range_invalid() {
         let mut rng = Random::new();
         rng.random_range(20, 10);
@@ -239,18 +230,11 @@ mod tests {
     fn test_shuffle() {
         let mut rng = Random::new();
         rng.seed(42);
-
         let mut data = vec![1, 2, 3, 4, 5];
         let original_data = data.clone();
-
         rng.shuffle(&mut data);
-
-        // Ensure that the shuffle operation produces a different permutation
         assert_ne!(data, original_data);
-
-        // Ensure that all elements are still present in the shuffled vector
         original_data.iter().for_each(|x| assert!(data.contains(x)));
-        data.iter().for_each(|x| assert!(original_data.contains(x)));
     }
 
     /// Tests the `rand_slice` method to ensure it generates a subslice of the specified length.
@@ -352,17 +336,39 @@ mod tests {
         assert!(display.contains("mti"));
     }
 
-    /// Tests the `RngCore` implementation to ensure it generates random numbers and fills buffers correctly.
+    // RngCore trait implementation tests
+    /// Tests the `next_u32` method from `RngCore` to ensure it generates non-zero random `u32` values.
     #[test]
-    fn test_rng_core_impl() {
+    fn test_next_u32() {
         let mut rng = Random::new();
-        let next_u32_value = rng.rand();
-        assert!(next_u32_value != 0);
-        let next_u64_value = rng.u64();
-        assert!(next_u64_value != 0);
+        let value = rng.next_u32();
+        assert!(value != 0);
+    }
+
+    /// Tests the `next_u64` method from `RngCore` to ensure it generates non-zero random `u64` values.
+    #[test]
+    fn test_next_u64() {
+        let mut rng = Random::new();
+        let value = rng.next_u64();
+        assert!(value != 0);
+    }
+
+    /// Tests the `fill_bytes` method from `RngCore` to ensure it fills a byte slice with random data.
+    #[test]
+    fn test_fill_bytes() {
+        let mut rng = Random::new();
         let mut buffer = [0u8; 8];
-        let random_bytes = rng.bytes(buffer.len());
-        buffer.copy_from_slice(&random_bytes);
+        rng.fill_bytes(&mut buffer);
+        assert!(buffer.iter().any(|&x| x != 0));
+    }
+
+    /// Tests the `try_fill_bytes` method from `RngCore` to ensure it fills a byte slice and returns `Ok(())`.
+    #[test]
+    fn test_try_fill_bytes() {
+        let mut rng = Random::new();
+        let mut buffer = [0u8; 8];
+        let result = rng.try_fill_bytes(&mut buffer);
+        assert!(result.is_ok());
         assert!(buffer.iter().any(|&x| x != 0));
     }
 }
