@@ -116,7 +116,8 @@ mod tests {
         let mut true_count: i32 = 0;
         let mut false_count: i32 = 0;
 
-        for _ in 0..1000 {
+        // Increase the number of iterations to get a more stable distribution
+        for _ in 0..10_000 {
             if rng.bool(0.5) {
                 true_count += 1;
             } else {
@@ -125,7 +126,8 @@ mod tests {
         }
 
         let difference = (true_count - false_count).abs();
-        assert!(difference < 100);
+        // Adjust the tolerance threshold to account for larger sample size
+        assert!(difference < 500);
     }
 
     /// Tests the `char` method to ensure it generates lowercase characters.
