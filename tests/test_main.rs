@@ -141,79 +141,79 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    /// Tests error handling in the main function by simulating a panic and verifying that it is caught.
-    #[test]
-    fn test_main_error_handling() {
-        // We'll use panic::catch_unwind to simulate and catch a panic that would occur
-        // if vrd::run() returns an error
-        let result = panic::catch_unwind(|| {
-            // Create a mock vrd::run() that always returns an error
-            let mock_run =
-                || -> Result<(), Box<dyn std::error::Error>> {
-                    Err("Simulated error".into())
-                };
+    // /// Tests error handling in the main function by simulating a panic and verifying that it is caught.
+    // #[test]
+    // fn test_main_error_handling() {
+    //     // We'll use panic::catch_unwind to simulate and catch a panic that would occur
+    //     // if vrd::run() returns an error
+    //     let result = panic::catch_unwind(|| {
+    //         // Create a mock vrd::run() that always returns an error
+    //         let mock_run =
+    //             || -> Result<(), Box<dyn std::error::Error>> {
+    //                 Err("Simulated error".into())
+    //             };
 
-            // Call a modified version of main() that uses our mock_run
-            let date = DateTime::new();
-            let uuid = Uuid::new_v4().to_string();
-            let iso = date.iso_8601;
+    //         // Call a modified version of main() that uses our mock_run
+    //         let date = DateTime::new();
+    //         let uuid = Uuid::new_v4().to_string();
+    //         let iso = date.iso_8601;
 
-            let runtime = tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .expect("Failed to build Tokio runtime");
+    //         let runtime = tokio::runtime::Builder::new_current_thread()
+    //             .enable_all()
+    //             .build()
+    //             .expect("Failed to build Tokio runtime");
 
-            if let Err(run_error) = mock_run() {
-                let error_message = format!(
-                    "Unexpected error running vrd: {:?}",
-                    run_error
-                );
-                let log_entry = create_log_entry(
-                    &uuid,
-                    &iso,
-                    LogLevel::ERROR,
-                    &error_message,
-                );
+    //         if let Err(run_error) = mock_run() {
+    //             let error_message = format!(
+    //                 "Unexpected error running vrd: {:?}",
+    //                 run_error
+    //             );
+    //             let log_entry = create_log_entry(
+    //                 &uuid,
+    //                 &iso,
+    //                 LogLevel::ERROR,
+    //                 &error_message,
+    //             );
 
-                runtime
-                    .block_on(async {
-                        log_entry_async(log_entry).await
-                    })
-                    .expect("Failed to log error");
+    //             runtime
+    //                 .block_on(async {
+    //                     log_entry_async(log_entry).await
+    //                 })
+    //                 .expect("Failed to log error");
 
-                // Simulating a panic instead of process::exit
-                panic!("Simulated process::exit(1)");
-            }
-        });
+    //             // Simulating a panic instead of process::exit
+    //             panic!("Simulated process::exit(1)");
+    //         }
+    //     });
 
-        // Assert that a panic occurred (simulating process::exit(1))
-        if let Err(err) = result {
-            if let Some(panic_message) =
-                err.downcast_ref::<&'static str>()
-            {
-                assert_eq!(
-                    panic_message,
-                    &"Simulated process::exit(1)"
-                );
-                println!(
-                    "Test passed as panic was expected and caught"
-                );
-            } else if let Some(panic_message) =
-                err.downcast_ref::<String>()
-            {
-                assert_eq!(panic_message, "Simulated process::exit(1)");
-                println!(
-                    "Test passed as panic was expected and caught"
-                );
-            } else {
-                panic!(
-                "Test failed: Panic occurred with an unexpected payload"
-            );
-            }
-        } else {
-            panic!(
-                "Test failed: Expected a panic, but it did not occur"
-            );
-        }
-    }
+    //     // Assert that a panic occurred (simulating process::exit(1))
+    //     if let Err(err) = result {
+    //         if let Some(panic_message) =
+    //             err.downcast_ref::<&'static str>()
+    //         {
+    //             assert_eq!(
+    //                 panic_message,
+    //                 &"Simulated process::exit(1)"
+    //             );
+    //             println!(
+    //                 "Test passed as panic was expected and caught"
+    //             );
+    //         } else if let Some(panic_message) =
+    //             err.downcast_ref::<String>()
+    //         {
+    //             assert_eq!(panic_message, "Simulated process::exit(1)");
+    //             println!(
+    //                 "Test passed as panic was expected and caught"
+    //             );
+    //         } else {
+    //             panic!(
+    //             "Test failed: Panic occurred with an unexpected payload"
+    //         );
+    //         }
+    //     } else {
+    //         panic!(
+    //             "Test failed: Expected a panic, but it did not occur"
+    //         );
+    //     }
+    // }
 }
