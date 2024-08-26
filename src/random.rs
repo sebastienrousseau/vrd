@@ -209,14 +209,21 @@ impl Random {
     /// A `u32` representing a randomly generated unsigned integer within the specified range.
     ///
     /// # Panics
-    /// Panics if `min` is greater than `max`.
+    /// Panics if `min` is greater than `max` or if the range is zero.
     pub fn uint(&mut self, min: u32, max: u32) -> u32 {
         assert!(
             min <= max,
             "min must be less than or equal to max for uint"
         );
-        let range = max - min + 1;
-        (self.rand() % range) + min
+
+        if min == max {
+            return min; // If min and max are equal, return min (or max).
+        }
+
+        let range = max - min;
+        assert!(range > 0, "Range should be non-zero");
+
+        (self.rand() % (range + 1)) + min
     }
 
     /// Generates a random double-precision floating-point number.
