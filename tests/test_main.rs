@@ -7,7 +7,7 @@
 mod tests {
     use dtt::DateTime;
     use rlg::{log_format::LogFormat, log_level::LogLevel};
-    use std::panic;
+    // use std::panic;
     use uuid::Uuid;
     use vrd::{create_log_entry, log_entry_async};
 
