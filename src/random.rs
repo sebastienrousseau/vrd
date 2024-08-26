@@ -677,14 +677,25 @@ impl Random {
     /// # Returns
     /// A slice containing a randomly generated subslice of the specified length.
     pub fn rand_slice<'a, T>(
-        &'a mut self,
+        &mut self,
         slice: &'a [T],
         length: usize,
-    ) -> &[T] {
+    ) -> Result<&'a [T], &'static str> {
+        if slice.is_empty() {
+            return Err("Input slice is empty");
+        }
+        if length == 0 {
+            return Err("Requested length must be greater than zero");
+        }
+        if length > slice.len() {
+            return Err("Requested length exceeds slice length");
+        }
+
+        let available_start_positions = slice.len() - length + 1;
         let start = self
-            .random_range(0, slice.len() as u32 - length as u32)
+            .random_range(0, available_start_positions as u32)
             as usize;
-        &slice[start..start + length]
+        Ok(&slice[start..start + length])
     }
 
     /// Randomly samples elements from the given slice without replacement.

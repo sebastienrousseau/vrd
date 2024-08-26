@@ -42,6 +42,30 @@ mod tests {
         assert_eq!(rng.int(i32::MAX - 1, i32::MAX), i32::MAX - 1);
     }
 
+    /// Tests the `int` method to ensure it handles cases where min and max are equal.
+    #[test]
+    fn test_int_min_max_equal() {
+        let mut rng = Random::new();
+        assert_eq!(rng.int(5, 5), 5);
+    }
+
+    /// Tests the `int` method to ensure it panics when min is greater than max.
+    #[test]
+    #[should_panic(
+        expected = "min must be less than or equal to max for int"
+    )]
+    fn test_int_min_greater_than_max() {
+        let mut rng = Random::new();
+        rng.int(10, 5);
+    }
+
+    /// Tests the `uint` method to ensure it handles cases where min and max are equal.
+    #[test]
+    fn test_uint_min_max_equal() {
+        let mut rng = Random::new();
+        assert_eq!(rng.uint(5, 5), 5);
+    }
+
     // Floating-point generation tests
     /// Tests the `float` method to ensure it generates floating-point numbers within the correct range.
     #[test]
@@ -49,24 +73,6 @@ mod tests {
         let mut rng = Random::new();
         rng.seed(42);
         let result = rng.float();
-        assert!((0.0..1.0).contains(&result));
-    }
-
-    /// Tests the `double` method to ensure it generates double-precision floating-point numbers within the correct range.
-    #[test]
-    fn test_double() {
-        let mut rng = Random::new();
-        rng.seed(42);
-        let result = rng.double();
-        assert!((0.0..1.0).contains(&result));
-    }
-
-    /// Tests the `f64` method to ensure it generates 64-bit floating-point numbers within the correct range.
-    #[test]
-    fn test_f64() {
-        let mut rng = Random::new();
-        rng.seed(50);
-        let result = rng.f64();
         assert!((0.0..1.0).contains(&result));
     }
 
@@ -83,6 +89,15 @@ mod tests {
         }
     }
 
+    /// Tests the `double` method to ensure it generates double-precision floating-point numbers within the correct range.
+    #[test]
+    fn test_double() {
+        let mut rng = Random::new();
+        rng.seed(42);
+        let result = rng.double();
+        assert!((0.0..1.0).contains(&result));
+    }
+
     /// Tests edge cases for the `double` method to ensure it generates small doubles correctly.
     #[test]
     fn test_double_edge_cases() {
@@ -94,6 +109,15 @@ mod tests {
             assert!((0.0..1.0).contains(&result));
             assert!(result.is_finite());
         }
+    }
+
+    /// Tests the `f64` method to ensure it generates 64-bit floating-point numbers within the correct range.
+    #[test]
+    fn test_f64() {
+        let mut rng = Random::new();
+        rng.seed(50);
+        let result = rng.f64();
+        assert!((0.0..1.0).contains(&result));
     }
 
     // Byte and character generation tests
@@ -116,7 +140,6 @@ mod tests {
         let mut true_count: i32 = 0;
         let mut false_count: i32 = 0;
 
-        // Increase the number of iterations to get a more stable distribution
         for _ in 0..10_000 {
             if rng.bool(0.5) {
                 true_count += 1;
@@ -126,7 +149,6 @@ mod tests {
         }
 
         let difference = (true_count - false_count).abs();
-        // Adjust the tolerance threshold to account for larger sample size
         assert!(difference < 500);
     }
 
@@ -139,7 +161,33 @@ mod tests {
         assert!(result.is_ascii_lowercase());
     }
 
+    // String generation tests
+    /// Tests the `string` method to ensure it generates a string of the specified length.
+    #[test]
+    fn test_string() {
+        let mut rng = Random::new();
+        rng.seed(42);
+        let result = rng.string(10);
+        assert_eq!(result.len(), 10);
+        assert!(result.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
+
+    /// Tests the `string` method to ensure it handles zero length input correctly.
+    #[test]
+    fn test_string_zero_length() {
+        let mut rng = Random::new();
+        assert_eq!(rng.string(0), "");
+    }
+
     // Random range tests
+    /// Tests the `random_range` method to ensure it generates numbers within the specified range.
+    #[test]
+    fn test_random_range() {
+        let mut rng = Random::new();
+        rng.seed(40);
+        assert_ne!(rng.random_range(1, 10), 0);
+    }
+
     /// Tests the `random_range` method to ensure it panics when given invalid input.
     #[test]
     #[should_panic(
@@ -150,12 +198,14 @@ mod tests {
         rng.random_range(20, 10);
     }
 
-    /// Tests the `random_range` method to ensure it generates numbers within the specified range.
+    /// Tests the `random_range` method to ensure it panics when min equals max.
     #[test]
-    fn test_random_range() {
+    #[should_panic(
+        expected = "max must be greater than min for random_range"
+    )]
+    fn test_random_range_min_equal_max() {
         let mut rng = Random::new();
-        rng.seed(40);
-        assert_ne!(rng.random_range(1, 10), 0);
+        rng.random_range(10, 10);
     }
 
     // RNG state tests
@@ -229,6 +279,14 @@ mod tests {
         assert!(data.contains(chosen_element));
     }
 
+    /// Tests the `choose` method with an empty slice to ensure it returns `None`.
+    #[test]
+    fn test_choose_empty_slice() {
+        let mut rng = Random::new();
+        let empty_slice: &[i32] = &[];
+        assert!(rng.choose(empty_slice).is_none());
+    }
+
     /// Tests the `shuffle` method to ensure it shuffles a slice correctly.
     #[test]
     fn test_shuffle() {
@@ -247,8 +305,57 @@ mod tests {
         let mut rng = Random::new();
         rng.seed(42);
         let slice = &[1, 2, 3, 4, 5];
-        let subslice = rng.rand_slice(slice, 3);
+        let result = rng.rand_slice(slice, 3);
+        assert!(result.is_ok());
+        let subslice = result.unwrap();
         assert_eq!(subslice.len(), 3);
+        assert!(subslice.iter().all(|&x| slice.contains(&x)));
+    }
+
+    /// Tests the `rand_slice` method with an empty slice to ensure it returns an error.
+    #[test]
+    fn test_rand_slice_empty() {
+        let mut rng = Random::new();
+        let empty_slice: &[i32] = &[];
+        let result = rng.rand_slice(empty_slice, 1);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Input slice is empty");
+    }
+
+    /// Tests the `rand_slice` method with a zero length to ensure it returns an error.
+    #[test]
+    fn test_rand_slice_zero_length() {
+        let mut rng = Random::new();
+        let slice = &[1, 2, 3];
+        let result = rng.rand_slice(slice, 0);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "Requested length must be greater than zero"
+        );
+    }
+
+    /// Tests the `rand_slice` method with a length that exceeds the slice length to ensure it returns an error.
+    #[test]
+    fn test_rand_slice_length_exceeds() {
+        let mut rng = Random::new();
+        let slice = &[1, 2, 3];
+        let result = rng.rand_slice(slice, 4);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "Requested length exceeds slice length"
+        );
+    }
+
+    /// Tests the `rand_slice` method with a length equal to the slice length to ensure it returns the full slice.
+    #[test]
+    fn test_rand_slice_full_length() {
+        let mut rng = Random::new();
+        let slice = &[1, 2, 3];
+        let result = rng.rand_slice(slice, 3);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), slice);
     }
 
     /// Tests the `sample` method to ensure it samples elements without replacement correctly.
@@ -301,6 +408,14 @@ mod tests {
         assert!(result >= 0.0);
     }
 
+    /// Tests the `exponential` method to ensure it handles a zero rate correctly.
+    #[test]
+    fn test_exponential_zero_rate() {
+        let mut rng = Random::new();
+        let result = rng.exponential(0.0);
+        assert!(result.is_infinite() && result.is_sign_positive());
+    }
+
     /// Tests the `poisson` method to ensure it generates numbers from a Poisson distribution.
     #[test]
     fn test_poisson() {
@@ -310,19 +425,14 @@ mod tests {
 
         // Ensure that the result is within a reasonable range given the mean
         // For a mean of 3.0, values are likely to be between 0 and some reasonable upper bound.
-        // You might adjust this based on specific requirements.
         assert!(result < 20);
     }
 
-    // String generation tests
-    /// Tests the `string` method to ensure it generates a string of the specified length.
+    /// Tests the `poisson` method to ensure it handles a zero mean correctly.
     #[test]
-    fn test_string() {
+    fn test_poisson_zero_mean() {
         let mut rng = Random::new();
-        rng.seed(42);
-        let result = rng.string(10);
-        assert_eq!(result.len(), 10);
-        assert!(result.chars().all(|c| c.is_ascii_alphanumeric()));
+        assert_eq!(rng.poisson(0.0), 0);
     }
 
     // Buffer fill and display tests
