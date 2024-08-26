@@ -337,4 +337,75 @@ mod tests {
 
         assert!((sample_mean - expected_mean).abs() < 0.1);
     }
+
+    #[test]
+    fn test_rand_pseudo() {
+        let mut rng = Random::new();
+        let result = rand_pseudo!(rng);
+        // Assuming `pseudo` returns a 32-bit unsigned integer.
+        assert!(result <= u32::MAX);
+    }
+
+    #[test]
+    fn test_rand_double() {
+        let mut rng = Random::new();
+        let result = rand_double!(rng);
+        // Assuming `double` returns a double precision float (f64).
+        assert!(result.is_finite());
+    }
+
+    #[test]
+    fn test_rand_twist() {
+        let mut rng = Random::new();
+
+        // Capture some state before the twist operation
+        let before_twist_state = rng.mt.clone();
+
+        // Perform the twist operation
+        rand_twist!(rng);
+
+        // Capture the state after the twist operation
+        let after_twist_state = rng.mt.clone();
+
+        // The test should check if the state has changed
+        assert_ne!(
+            before_twist_state, after_twist_state,
+            "The state should have changed after twist"
+        );
+    }
+
+    #[test]
+    fn test_rand_bool() {
+        let mut rng = Random::new();
+        let probability = 0.5; // Example probability
+        let result = rand_bool!(rng, probability);
+        assert!(result == true || result == false);
+    }
+
+    #[test]
+    fn test_rand_range() {
+        let mut rng = Random::new();
+        let min = 1;
+        let max = 10;
+        let result = rand_range!(rng, min, max);
+        // Check if the result is within the expected range.
+        assert!(result >= min && result <= max);
+    }
+
+    #[test]
+    fn test_rand_float() {
+        let mut rng = Random::new();
+        let result = rand_float!(rng);
+        // Assuming `float` returns a single precision float (f32).
+        assert!(result.is_finite());
+    }
+
+    #[test]
+    fn test_rand_bytes() {
+        let mut rng = Random::new();
+        let length = 8;
+        let result = rand_bytes!(rng, length);
+        // Check if the result is of the expected length.
+        assert_eq!(result.len(), length);
+    }
 }
