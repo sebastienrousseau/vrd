@@ -301,12 +301,17 @@ mod tests {
 
     /// Tests the `poisson` method to ensure it generates numbers from a Poisson distribution.
     #[test]
-    fn test_poisson() {
-        let mut rng = Random::new();
-        rng.seed(42);
-        let result = rng.poisson(3.0);
-        assert!(result > 0);
-    }
+fn test_poisson() {
+    let mut rng = Random::new();
+    rng.seed(42);
+    let result = rng.poisson(3.0);
+
+    // Ensure that the result is within a reasonable range given the mean
+    // For a mean of 3.0, values are likely to be between 0 and some reasonable upper bound.
+    // You might adjust this based on specific requirements.
+    assert!(result < 20);
+}
+
 
     // String generation tests
     /// Tests the `string` method to ensure it generates a string of the specified length.
