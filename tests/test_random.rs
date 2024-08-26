@@ -25,6 +25,12 @@ mod tests {
         let mut rng = Random::new();
         rng.seed(20);
         assert_eq!(rng.int(1, 10), 5);
+        assert_eq!(rng.int(5, 10), 9);
+        assert_eq!(rng.int(10, 20), 18);
+        assert_eq!(rng.int(15, 20), 19);
+        assert_eq!(rng.int(20, 30), 28);
+        assert_eq!(rng.int(25, 30), 29);
+        assert_eq!(rng.int(30, 40), 38);
     }
 
     /// Tests edge cases for the `int` method with minimum and maximum integer values.
@@ -32,6 +38,7 @@ mod tests {
     fn test_int_edge_cases() {
         let mut rng = Random::new();
         rng.seed(42);
+        // Test with minimum and maximum possible integers
         assert_eq!(rng.int(i32::MIN, i32::MIN + 1), i32::MIN);
         assert_eq!(rng.int(i32::MAX - 1, i32::MAX), i32::MAX - 1);
     }
@@ -42,8 +49,14 @@ mod tests {
     fn test_float() {
         let mut rng = Random::new();
         rng.seed(42);
+
+        // Test generating floating-point numbers within the range [0.0, 1.0)
         let result = rng.float();
         assert!((0.0..1.0).contains(&result));
+
+        // Test generating floating-point numbers within the range [-1.0, 0.0)
+        let result = rng.float() * -1.0; // Adjust the sign to check the negative range
+        assert!((-1.0..0.0).contains(&result));
     }
 
     /// Tests the `double` method to ensure it generates double-precision floating-point numbers within the correct range.
@@ -226,11 +239,18 @@ mod tests {
     fn test_shuffle() {
         let mut rng = Random::new();
         rng.seed(42);
+
         let mut data = vec![1, 2, 3, 4, 5];
         let original_data = data.clone();
+
         rng.shuffle(&mut data);
+
+        // Ensure that the shuffle operation produces a different permutation
         assert_ne!(data, original_data);
+
+        // Ensure that all elements are still present in the shuffled vector
         original_data.iter().for_each(|x| assert!(data.contains(x)));
+        data.iter().for_each(|x| assert!(original_data.contains(x)));
     }
 
     /// Tests the `rand_slice` method to ensure it generates a subslice of the specified length.
