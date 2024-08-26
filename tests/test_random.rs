@@ -5,8 +5,8 @@
 
 #[cfg(test)]
 mod tests {
-    use vrd::random::Random;
     use rand::RngCore;
+    use vrd::random::Random;
 
     // Initialization tests
     /// Tests the `new` method to ensure that the RNG is initialized correctly.
@@ -140,7 +140,9 @@ mod tests {
     // Random range tests
     /// Tests the `random_range` method to ensure it panics when given invalid input.
     #[test]
-    #[should_panic(expected = "max must be greater than min for random_range")]
+    #[should_panic(
+        expected = "max must be greater than min for random_range"
+    )]
     fn test_random_range_invalid() {
         let mut rng = Random::new();
         rng.random_range(20, 10);
