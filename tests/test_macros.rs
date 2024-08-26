@@ -379,10 +379,27 @@ mod tests {
     fn test_rand_bool() {
         let mut rng = Random::new();
         let probability = 0.5; // Example probability
-        let result = rand_bool!(rng, probability);
-        // Since probability is 0.5, result should be either true or false
-        // This assertion is actually more meaningful when checked under different probabilities
-        assert!(!result);
+        let mut true_count: i32 = 0;
+        let mut false_count: i32 = 0;
+        let iterations = 1000;
+
+        for _ in 0..iterations {
+            let result = rand_bool!(rng, probability);
+            if result {
+                true_count += 1;
+            } else {
+                false_count += 1;
+            }
+        }
+
+        // With a probability of 0.5, we expect the number of `true` and `false` results to be roughly equal
+        // Allow some tolerance for randomness
+        let tolerance = iterations / 10;
+        assert!(
+        (true_count - false_count).abs() <= tolerance,
+        "The distribution between true and false should be approximately equal, but got true_count: {}, false_count: {}",
+        true_count, false_count
+    );
     }
 
     #[test]
