@@ -20,10 +20,23 @@
 //! - Using the `rand_choose!` macro: Select a random element from a slice.
 //!
 //! - Using the `rand_int!` macro: Generate a random integer within a specified range.
+//!
+//! - Using the `rand_alphanumeric!` macro: Generate a random alphanumeric character.
+//!
+//! - Using the `rand_shuffle!` macro: Shuffle a slice randomly.
+//!
+//! - Using the `rand_weighted_choice!` macro: Choose an element based on weights.
+//!
+//! - Using the `rand_normal!` macro: Generate a random number from a normal distribution.
+//!
+//! - Using the `rand_exponential!` macro: Generate a random number from an exponential distribution.
+//!
+//! - Using the `rand_poisson!` macro: Generate a random number from a Poisson distribution.
 
 use vrd::{
-    rand_bool, rand_bytes, rand_char, rand_choose, rand_double,
-    rand_float, rand_int, rand_uint,
+    rand_alphanumeric, rand_bool, rand_bytes, rand_char, rand_choose,
+    rand_double, rand_exponential, rand_float, rand_int, rand_normal,
+    rand_poisson, rand_shuffle, rand_uint, rand_weighted_choice,
 };
 
 fn main() {
@@ -53,7 +66,7 @@ fn main() {
     let random_int = rand_int!(rng, 1, 100);
     println!("🦀 Random integer (1 to 100): {}", random_int);
 
-    // Example: Generate a random 32-bit unsigned integer within the range 0 to u32::MAX
+    // Example: Generate a random 32-bit unsigned integer within the range 1 to u32::MAX
     let random_uint = rand_uint!(rng, 1, u32::MAX); // Ensure min < max
     println!("🦀 Random u32 (1 to u32::MAX): {}", random_uint);
 
@@ -64,4 +77,44 @@ fn main() {
     // Example: Generate a random floating-point number between 0.0 and 1.0
     let random_float = rand_float!(rng);
     println!("🦀 Random float (0.0 to 1.0): {}", random_float);
+
+    // Example: Generate a random alphanumeric character
+    let random_alphanumeric = rand_alphanumeric!(rng);
+    println!(
+        "🦀 Random alphanumeric character: {}",
+        random_alphanumeric
+    );
+
+    // Example: Shuffle a mutable slice randomly
+    let mut shuffle_values = [1, 2, 3, 4, 5];
+    rand_shuffle!(rng, &mut shuffle_values);
+    println!("🦀 Shuffled slice: {:?}", shuffle_values);
+
+    // Example: Choose a random element from a slice based on weights
+    let choices = ["apple", "banana", "cherry", "date"];
+    let weights = [2, 3, 5, 7];
+    let weighted_choice =
+        rand_weighted_choice!(rng, &choices, &weights);
+    println!(
+    "🦀 Random element based on weights from ['apple', 'banana', 'cherry', 'date']: {}",
+    weighted_choice
+);
+
+    // Example: Generate a random number from a normal distribution (mean 0, standard deviation 1)
+    let random_normal = rand_normal!(rng, 0.0, 1.0);
+    println!("🦀 Random number from normal distribution (mean 0, std dev 1): {}", random_normal);
+
+    // Example: Generate a random number from an exponential distribution with rate parameter 1.0
+    let random_exponential = rand_exponential!(rng, 1.0);
+    println!(
+        "🦀 Random number from exponential distribution (rate 1.0): {}",
+        random_exponential
+    );
+
+    // Example: Generate a random number from a Poisson distribution with mean 4.0
+    let random_poisson = rand_poisson!(rng, 4.0);
+    println!(
+        "🦀 Random number from Poisson distribution (mean 4.0): {}",
+        random_poisson
+    );
 }
