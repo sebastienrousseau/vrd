@@ -343,7 +343,8 @@ mod tests {
         let mut rng = Random::new();
         let result = rand_pseudo!(rng);
         // Assuming `pseudo` returns a 32-bit unsigned integer.
-        assert!(result <= u32::MAX);
+        // No need to check if it's >= 0 as it's always true for u32.
+        assert!(result < u32::MAX); // If you want to check if result is within a valid range.
     }
 
     #[test]
@@ -358,14 +359,14 @@ mod tests {
     fn test_rand_twist() {
         let mut rng = Random::new();
 
-        // Capture some state before the twist operation
-        let before_twist_state = rng.mt.clone();
+        // Directly assign the state since it implements `Copy`
+        let before_twist_state = rng.mt;
 
         // Perform the twist operation
         rand_twist!(rng);
 
         // Capture the state after the twist operation
-        let after_twist_state = rng.mt.clone();
+        let after_twist_state = rng.mt;
 
         // The test should check if the state has changed
         assert_ne!(
@@ -379,7 +380,9 @@ mod tests {
         let mut rng = Random::new();
         let probability = 0.5; // Example probability
         let result = rand_bool!(rng, probability);
-        assert!(result == true || result == false);
+        // Since probability is 0.5, result should be either true or false
+        // This assertion is actually more meaningful when checked under different probabilities
+        assert!(!result);
     }
 
     #[test]
