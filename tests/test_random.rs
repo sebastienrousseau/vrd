@@ -78,7 +78,7 @@ mod tests {
 
         for _ in 0..1000 {
             let result = rng.float();
-            assert!(result >= 0.0 && result < 1.0);
+            assert!((0.0..1.0).contains(&result));
             assert!(result.is_finite());
         }
     }
@@ -91,7 +91,7 @@ mod tests {
 
         for _ in 0..1000 {
             let result = rng.double();
-            assert!(result >= 0.0 && result < 1.0);
+            assert!((0.0..1.0).contains(&result));
             assert!(result.is_finite());
         }
     }
