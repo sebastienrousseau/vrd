@@ -8,6 +8,7 @@ use std::{
     fmt,
     fs::File,
     io::{self, BufReader, BufWriter},
+    path::Path,
 };
 
 /// Custom error type for `MersenneTwisterConfig`.
@@ -324,10 +325,19 @@ impl<const N: usize, const M: usize> MersenneTwisterConfig<N, M> {
     ///
     /// let config = MersenneTwisterConfig::<624, 397>::deserialize_from_file("config.json").unwrap();
     /// ```
-    pub fn deserialize_from_file(
-        filename: &str,
+    pub fn deserialize_from_file<P: AsRef<Path>>(
+        filename: P,
     ) -> Result<Self, MersenneTwisterError> {
-        let file = File::open(filename)?;
+        let file = File::open(&filename).map_err(|e| {
+            MersenneTwisterError::IoError(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!(
+                    "File {:?} not found: {}",
+                    filename.as_ref(),
+                    e
+                ),
+            ))
+        })?;
         let reader = BufReader::new(file);
         serde_json::from_reader(reader).map_err(|e| {
             MersenneTwisterError::SerializationError(e.to_string())
