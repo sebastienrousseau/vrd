@@ -14,7 +14,7 @@ on:
 jobs:
   all:
     name: Document
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,7 +46,7 @@ jobs:
           retention-days: 1
 
       - name: Write CNAME file
-        run: echo 'doc.vrd.com' > ./target/doc/CNAME
+        run: echo 'doc.vrdlib.com' > ./target/doc/CNAME
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4.0.0
