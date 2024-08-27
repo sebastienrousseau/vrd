@@ -2,7 +2,7 @@
 # Metadata about the package.
 authors = ["The Random (VRD) Contributors"]
 build = "build.rs"
-categories = ['Algorithms', 'Encoding','Parser implementations','Data structures']
+categories = ['algorithms', 'encoding','parser-implementations','data-structures']
 description = "A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm"
 documentation = "https://docs.rs/vrd"
 edition = "2021"
