@@ -337,4 +337,95 @@ mod tests {
 
         assert!((sample_mean - expected_mean).abs() < 0.1);
     }
+
+    #[test]
+    fn test_rand_pseudo() {
+        let mut rng = Random::new();
+        let result = rand_pseudo!(rng);
+        // Assuming `pseudo` returns a 32-bit unsigned integer.
+        // No need to check if it's >= 0 as it's always true for u32.
+        assert!(result < u32::MAX); // If you want to check if result is within a valid range.
+    }
+
+    #[test]
+    fn test_rand_double() {
+        let mut rng = Random::new();
+        let result = rand_double!(rng);
+        // Assuming `double` returns a double precision float (f64).
+        assert!(result.is_finite());
+    }
+
+    #[test]
+    fn test_rand_twist() {
+        let mut rng = Random::new();
+
+        // Directly assign the state since it implements `Copy`
+        let before_twist_state = rng.mt;
+
+        // Perform the twist operation
+        rand_twist!(rng);
+
+        // Capture the state after the twist operation
+        let after_twist_state = rng.mt;
+
+        // The test should check if the state has changed
+        assert_ne!(
+            before_twist_state, after_twist_state,
+            "The state should have changed after twist"
+        );
+    }
+
+    #[test]
+    fn test_rand_bool() {
+        let mut rng = Random::new();
+        let probability = 0.5; // Example probability
+        let mut true_count: i32 = 0;
+        let mut false_count: i32 = 0;
+        let iterations = 1000;
+
+        for _ in 0..iterations {
+            let result = rand_bool!(rng, probability);
+            if result {
+                true_count += 1;
+            } else {
+                false_count += 1;
+            }
+        }
+
+        // With a probability of 0.5, we expect the number of `true` and `false` results to be roughly equal
+        // Allow some tolerance for randomness
+        let tolerance = iterations / 10;
+        assert!(
+        (true_count - false_count).abs() <= tolerance,
+        "The distribution between true and false should be approximately equal, but got true_count: {}, false_count: {}",
+        true_count, false_count
+    );
+    }
+
+    #[test]
+    fn test_rand_range() {
+        let mut rng = Random::new();
+        let min = 1;
+        let max = 10;
+        let result = rand_range!(rng, min, max);
+        // Check if the result is within the expected range.
+        assert!(result >= min && result <= max);
+    }
+
+    #[test]
+    fn test_rand_float() {
+        let mut rng = Random::new();
+        let result = rand_float!(rng);
+        // Assuming `float` returns a single precision float (f32).
+        assert!(result.is_finite());
+    }
+
+    #[test]
+    fn test_rand_bytes() {
+        let mut rng = Random::new();
+        let length = 8;
+        let result = rand_bytes!(rng, length);
+        // Check if the result is of the expected length.
+        assert_eq!(result.len(), length);
+    }
 }

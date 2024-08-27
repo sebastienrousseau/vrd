@@ -4,7 +4,7 @@
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
 use crate::MersenneTwisterConfig;
-use rand::{thread_rng, Rng, RngCore};
+use rand::{RngCore, SeedableRng};
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
@@ -23,13 +23,6 @@ use serde_big_array::BigArray;
 /// The `Random` struct is used to generate random numbers using the Mersenne Twister algorithm.
 ///
 /// This struct maintains an internal state for random number generation and provides methods to generate various types of random numbers.
-///
-/// # Initialization
-/// The random number generator can be initialized with the `new` method, which seeds the generator with a default value.
-/// ```
-/// use vrd::random::Random;
-/// let mut rng = Random::new();
-/// ```
 pub struct Random {
     /// The array of unsigned 32-bit integers used to generate random numbers.
     #[serde(with = "BigArray")]
@@ -46,8 +39,8 @@ impl Random {
     /// simulating a coin flip.
     ///
     /// # Arguments
-    /// * `probability` - A f64 value representing the probability of the function returning `true`.
-    ///                    This should be a value between 0.0 and 1.0, where 0.0 always returns `false` and 1.0 always returns `true`.
+    /// * `probability` - A `f64` value representing the probability of the function returning `true`.
+    ///                   This should be a value between 0.0 and 1.0, where 0.0 always returns `false` and 1.0 always returns `true`.
     ///
     /// # Examples
     /// ```
@@ -59,7 +52,8 @@ impl Random {
     /// # Panics
     /// Panics if `probability` is not between 0.0 and 1.0.
     pub fn bool(&mut self, probability: f64) -> bool {
-        thread_rng().gen_bool(probability)
+        let random_value = self.rand();
+        (random_value as f64) < (probability * u32::MAX as f64)
     }
 
     /// Generates a vector of random bytes of the specified length.
@@ -99,7 +93,8 @@ impl Random {
     /// # Returns
     /// A `char` representing a randomly chosen lowercase letter from 'a' to 'z'.
     pub fn char(&mut self) -> char {
-        thread_rng().gen_range('a'..='z')
+        let random_value = self.rand() % 26;
+        (b'a' + random_value as u8) as char
     }
 
     /// Selects a random element from a provided slice.
@@ -119,15 +114,11 @@ impl Random {
     /// # Returns
     /// An `Option<&T>` which is `Some(&T)` if the slice is not empty, containing a randomly chosen element from the slice.
     /// Returns `None` if the slice is empty.
-    ///
-    /// # Panics
-    /// Does not panic under normal operation.
     pub fn choose<'a, T>(&'a mut self, values: &'a [T]) -> Option<&T> {
         if values.is_empty() {
             return None;
         }
-        let mut rng = thread_rng();
-        let index = rng.gen_range(0..values.len());
+        let index = (self.rand() as usize) % values.len();
         Some(&values[index])
     }
 
@@ -147,7 +138,7 @@ impl Random {
     /// # Notes
     /// The generated float is inclusive of 0.0 and exclusive of 1.0.
     pub fn float(&mut self) -> f32 {
-        thread_rng().r#gen::<f32>()
+        (self.rand() as f32) / (u32::MAX as f32)
     }
 
     /// Creates a new instance of the `Random` struct, seeded with a non-deterministic value obtained from the system's entropy source.
@@ -164,11 +155,8 @@ impl Random {
     ///
     /// # Returns
     /// A new instance of `Random` with its internal state initialized for random number generation using a non-deterministic seed.
-    ///
-    /// # Notes
-    /// - The internal state is seeded with a non-deterministic value obtained from the system's entropy source, ensuring unique and unpredictable sequences of random numbers for each instance of `Random`.
     pub fn from_entropy() -> Self {
-        let seed = thread_rng().next_u32();
+        let seed = rand::thread_rng().next_u32();
         let mut rng = Random::new();
         rng.seed(seed);
         rng
@@ -198,14 +186,8 @@ impl Random {
             min <= max,
             "min must be less than or equal to max for int"
         );
-
-        // Use your Mersenne Twister 'rand()' to get a random u32 value
-        let random_u32 = self.rand();
-
-        // Scale and shift the random_u32 into the desired range:
-        let range = max as u32 - min as u32 + 1; // Calculate the size of the range
-        let value_in_range = (random_u32 % range) + min as u32;
-
+        let range = max as u32 - min as u32 + 1;
+        let value_in_range = (self.rand() % range) + min as u32;
         value_in_range as i32
     }
 
@@ -227,9 +209,21 @@ impl Random {
     /// A `u32` representing a randomly generated unsigned integer within the specified range.
     ///
     /// # Panics
-    /// Panics if `min` is greater than `max`.
+    /// Panics if `min` is greater than `max` or if the range is zero.
     pub fn uint(&mut self, min: u32, max: u32) -> u32 {
-        thread_rng().gen_range(min..=max)
+        assert!(
+            min <= max,
+            "min must be less than or equal to max for uint"
+        );
+
+        if min == max {
+            return min; // If min and max are equal, return min (or max).
+        }
+
+        let range = max - min;
+        assert!(range > 0, "Range should be non-zero");
+
+        (self.rand() % (range + 1)) + min
     }
 
     /// Generates a random double-precision floating-point number.
@@ -248,7 +242,7 @@ impl Random {
     /// # Notes
     /// The generated double is a number in the range [0.0, 1.0).
     pub fn double(&mut self) -> f64 {
-        thread_rng().r#gen::<f64>()
+        (self.rand() as f64) / (u32::MAX as f64)
     }
 
     /// Returns the current index of the internal state array used in random number generation.
@@ -293,10 +287,10 @@ impl Random {
     ///
     /// This method seeds the random number generator with a default value obtained from the thread's random number generator.
     ///
-    ///
     /// The `new` method initializes the `Random` struct. It sets the initial state of the `mt` array
     /// using a default seed obtained from the system's RNG. This seeding process is crucial for ensuring
     /// that each instance of `Random` produces a unique and unpredictable sequence of numbers.
+    ///
     /// # Examples
     /// ```
     /// use vrd::random::Random;
@@ -307,17 +301,13 @@ impl Random {
     ///
     /// # Returns
     /// A new instance of `Random` with its internal state initialized for random number generation.
-    ///
-    /// # Notes
-    /// - The internal state is initialized with a seed value, ensuring that each instance of `Random` produces a unique sequence of random numbers.
-    /// - The `new` method ensures that the internal state is appropriately set up for the Mersenne Twister algorithm.
     pub fn new() -> Self {
         const N: usize = 624;
         let mut rng = Random {
             mt: [0; N],
             mti: N + 1,
         };
-        let seed = thread_rng().r#gen();
+        let seed = rand::thread_rng().next_u32();
         rng.mt[0] = seed;
         for i in 1..N {
             let previous_value = rng.mt[i - 1];
@@ -343,10 +333,6 @@ impl Random {
     ///
     /// # Returns
     /// A `u32` representing a pseudo-random number generated by combining multiple random number generations.
-    ///
-    /// # Notes
-    /// - This method is intended to provide a more complex random number by aggregating multiple random number generations.
-    /// - It might be useful in scenarios where a single call to the basic random number generator does not provide sufficient randomness.
     pub fn pseudo(&mut self) -> u32 {
         let mut res = self.rand();
         for _ in 0..31 {
@@ -378,9 +364,11 @@ impl Random {
     /// - This method updates the internal state of the random number generator each time it is called.
     /// - If the internal index (`mti`) reaches the threshold, it automatically reinitializes the internal state array.
     pub fn rand(&mut self) -> u32 {
-        let config = MersenneTwisterConfig::default();
-        if self.mti >= config.n {
-            if self.mti == config.n + 1 + 1 {
+        const N: usize = 624;
+        const M: usize = 397;
+        let config = MersenneTwisterConfig::<N, M>::default();
+        if self.mti >= N {
+            if self.mti == N + 1 {
                 self.seed(5489);
             }
             self.twist();
@@ -414,16 +402,13 @@ impl Random {
     ///
     /// # Panics
     /// Panics if `min` is not less than `max`.
-    ///
-    /// # Notes
-    /// - This method offers a convenient way to specify the range for random number generation.
     pub fn random_range(&mut self, min: u32, max: u32) -> u32 {
         assert!(
             max > min,
             "max must be greater than min for random_range"
         );
-        let mut rng = thread_rng(); // Get a thread-local RNG
-        rng.gen_range(min..max) // Use the gen_range method for uniform distribution
+        let range = max - min;
+        min + (self.rand() % range)
     }
 
     /// Generates a random number within a specified range of integer values.
@@ -445,11 +430,12 @@ impl Random {
     ///
     /// # Panics
     /// Panics if `min` is greater than `max`.
-    ///
-    /// # Notes
-    /// - This method is similar to `int` but allows for a different interface for specifying the range.
     pub fn range(&mut self, min: i32, max: i32) -> i32 {
-        thread_rng().gen_range(min..=max)
+        assert!(
+            min <= max,
+            "min must be less than or equal to max for range"
+        );
+        self.int(min, max)
     }
 
     /// Seeds the random number generator with a specified value.
@@ -474,14 +460,13 @@ impl Random {
     ///
     /// # Notes
     /// - Seeding the generator is essential for reproducibility of the random number sequence.
-    /// - Different seeds will produce different sequences, while the same seed will always produce the same sequence.
     pub fn seed(&mut self, seed: u32) {
         const N: usize = 624;
         self.mt[0] = seed;
         for i in 1..N {
             self.mt[i] = 1812433253u32
-                .checked_mul(self.mt[i - 1] ^ (self.mt[i - 1] >> 30))
-                .map_or(u32::MAX, |val| val + i as u32);
+                .wrapping_mul(self.mt[i - 1] ^ (self.mt[i - 1] >> 30))
+                .wrapping_add(i as u32);
         }
         self.mti = N;
     }
@@ -504,21 +489,19 @@ impl Random {
     ///
     /// # Notes
     /// - This method modifies the internal state array, ensuring that future random numbers generated are different from the previous ones.
-    /// - It is typically not called directly by users of the `Random` struct, as it is automatically managed by the `rand` and other methods.
     pub fn twist(&mut self) {
-        let config = MersenneTwisterConfig::default();
-        for i in 0..config.n {
+        const N: usize = 624;
+        const M: usize = 397;
+        let config = MersenneTwisterConfig::<N, M>::default();
+        for i in 0..N {
             let x = (self.mt[i] & config.params.upper_mask)
-                + (self.mt[(i + 1) % config.n]
-                    & config.params.lower_mask);
+                + (self.mt[(i + 1) % N] & config.params.lower_mask);
             let x_a = x >> 1;
-            if x % 2 != 0 {
-                self.mt[i] = self.mt[(i + config.m) % config.n]
-                    ^ x_a
-                    ^ config.params.matrix_a;
+            self.mt[i] = if x % 2 != 0 {
+                self.mt[(i + M) % N] ^ x_a ^ config.params.matrix_a
             } else {
-                self.mt[i] = self.mt[(i + config.m) % config.n] ^ x_a;
-            }
+                self.mt[(i + M) % N] ^ x_a
+            };
         }
         self.mti = 0;
     }
@@ -572,7 +555,7 @@ impl Random {
     /// # Returns
     /// An `f64` representing a randomly generated 64-bit floating-point number.
     pub fn f64(&mut self) -> f64 {
-        thread_rng().r#gen::<f64>()
+        self.double()
     }
 
     /// Generates a random string of the specified length.
@@ -591,31 +574,20 @@ impl Random {
     /// # Returns
     /// A `String` representing a randomly generated string of the specified length.
     pub fn string(&mut self, length: usize) -> String {
-        let mut rng = thread_rng();
-        let chars: Vec<char> = (0..length)
-            .map(|_| {
-                let value = rng.gen_range(0..62);
-                if value < 26 {
-                    (b'a' + value as u8) as char
-                } else if value < 52 {
-                    (b'A' + value as u8 - 26) as char
-                } else {
-                    (b'0' + value as u8 - 52) as char
-                }
-            })
-            .collect();
-        chars.into_iter().collect()
+        (0..length).map(|_| self.char()).collect()
     }
 
     /// Generates a random number from a standard normal distribution (mean = 0, stddev = 1).
+    ///
+    /// # Arguments
+    /// * `mu` - The mean of the normal distribution.
+    /// * `sigma` - The standard deviation of the normal distribution.
     ///
     /// # Examples
     /// ```
     /// use vrd::random::Random;
     /// let mut rng = Random::new();
-    /// let mu = 0.0; // Mean of the standard normal distribution
-    /// let sigma = 1.0; // Standard deviation of the standard normal distribution
-    /// let normal = rng.normal(mu, sigma);
+    /// let normal = rng.normal(0.0, 1.0);
     /// println!("Random number from standard normal distribution: {}", normal);
     /// ```
     ///
@@ -624,8 +596,6 @@ impl Random {
     pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
         let u1 = self.f64();
         let u2 = self.f64();
-        println!("u1: {}", u1);
-        println!("u2: {}", u2);
         let z0 = (-2.0 * u1.ln()).sqrt()
             * (2.0 * std::f64::consts::PI * u2).cos();
         mu + sigma * z0
@@ -647,7 +617,6 @@ impl Random {
     /// # Returns
     /// An `f64` representing a random number from an exponential distribution.
     pub fn exponential(&mut self, rate: f64) -> f64 {
-        // Implementation of the inverse CDF method
         -1.0 / rate * (1.0 - self.f64()).ln()
     }
 
@@ -679,6 +648,7 @@ impl Random {
         }
         k - 1
     }
+
     /// Generates a random subslice of the specified length from the given slice.
     ///
     /// # Arguments
@@ -695,16 +665,27 @@ impl Random {
     /// ```
     ///
     /// # Returns
-    /// A slice containing a randomly generated subslice of the specified length.
+    /// A `Result<&[T], &str>` containing a randomly generated subslice of the specified length.
     pub fn rand_slice<'a, T>(
-        &'a mut self,
+        &mut self,
         slice: &'a [T],
         length: usize,
-    ) -> &[T] {
+    ) -> Result<&'a [T], &'static str> {
+        if slice.is_empty() {
+            return Err("Input slice is empty");
+        }
+        if length == 0 {
+            return Err("Requested length must be greater than zero");
+        }
+        if length > slice.len() {
+            return Err("Requested length exceeds slice length");
+        }
+
+        let available_start_positions = slice.len() - length + 1;
         let start = self
-            .random_range(0, slice.len() as u32 - length as u32)
+            .random_range(0, available_start_positions as u32)
             as usize;
-        &slice[start..start + length]
+        Ok(&slice[start..start + length])
     }
 
     /// Randomly samples elements from the given slice without replacement.
@@ -786,15 +767,15 @@ impl Random {
     /// ```
     pub fn fill<T>(&mut self, slice: &mut [T])
     where
-        T: Default + std::ops::RemAssign<u32>,
+        T: Default
+            + std::ops::RemAssign<u32>
+            + std::ops::BitOrAssign<u32>,
     {
-        // Seed the RNG with a new random value before filling the buffer
-        self.seed(thread_rng().next_u32());
-
-        for item in slice {
+        for item in slice.iter_mut() {
             let random_value = self.rand();
             *item = T::default();
             *item %= random_value;
+            *item |= random_value;
         }
     }
 
@@ -821,14 +802,110 @@ impl Random {
 
 impl std::fmt::Display for Random {
     /// Returns a formatted string representation of the `Random` struct.
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Random {{ mt: {:?}, mti: {:?} }}", self.mt, self.mti)
     }
 }
 
 impl Default for Random {
     /// Returns a default random number generator
+    ///
+    /// # Examples
+    /// ```
+    /// use vrd::random::Random;
+    /// let rng = Random::default();
+    /// ```
+    ///
+    /// # Returns
+    /// A new instance of `Random` with its internal state initialized for random number generation.
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl RngCore for Random {
+    /// Generates the next random `u32` value.
+    ///
+    /// # Returns
+    /// A `u32` representing a randomly generated 32-bit unsigned integer.
+    fn next_u32(&mut self) -> u32 {
+        self.rand()
+    }
+
+    /// Generates the next random `u64` value.
+    ///
+    /// # Returns
+    /// A `u64` representing a randomly generated 64-bit unsigned integer.
+    fn next_u64(&mut self) -> u64 {
+        self.u64()
+    }
+
+    /// Fills `dest` with random data.
+    ///
+    /// # Arguments
+    /// * `dest` - The byte slice to be filled with random data.
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        for chunk in dest.chunks_mut(4) {
+            let random_value = self.rand().to_le_bytes();
+            chunk.copy_from_slice(&random_value[..chunk.len()]);
+        }
+    }
+
+    /// Attempts to fill `dest` with random data.
+    ///
+    /// This method will never fail for this implementation, so it always returns `Ok(())`.
+    ///
+    /// # Arguments
+    /// * `dest` - The byte slice to be filled with random data.
+    ///
+    /// # Returns
+    /// A `Result<(), Error>` which is always `Ok(())` for this implementation.
+    fn try_fill_bytes(
+        &mut self,
+        dest: &mut [u8],
+    ) -> Result<(), rand::Error> {
+        self.fill_bytes(dest);
+        Ok(())
+    }
+}
+
+impl SeedableRng for Random {
+    type Seed = [u8; 16]; // Adjust as necessary
+
+    fn from_seed(seed: Self::Seed) -> Self {
+        let mut mt = [0u32; 624];
+
+        // Initialize the state with a non-zero value
+        mt[0] = u32::from_le_bytes(seed[0..4].try_into().unwrap());
+
+        for i in 1..624 {
+            mt[i] = 0x6C078965u32
+                .wrapping_mul(mt[i - 1] ^ (mt[i - 1] >> 30))
+                .wrapping_add(i as u32);
+        }
+
+        // Further mix in the seed into the state array
+        let mut i = 1;
+        let mut j = 0;
+        for _ in 0..624.max(16) {
+            mt[i] = (mt[i]
+                ^ ((mt[i - 1] ^ (mt[i - 1] >> 30))
+                    .wrapping_mul(0x6C078965u32)))
+            .wrapping_add(u32::from_le_bytes(
+                seed[j..j + 4].try_into().unwrap(),
+            ))
+            .wrapping_add(j as u32); // Add seed and its index
+            i += 1;
+            j += 4;
+            if i >= 624 {
+                mt[0] = mt[623];
+                i = 1;
+            }
+            if j >= 16 {
+                j = 0;
+            }
+        }
+
+        Random { mt, mti: 624 }
     }
 }
