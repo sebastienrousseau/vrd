@@ -323,7 +323,11 @@ impl<const N: usize, const M: usize> MersenneTwisterConfig<N, M> {
     /// ```
     /// use vrd::mersenne_twister::MersenneTwisterConfig;
     ///
-    /// let config = MersenneTwisterConfig::<624, 397>::deserialize_from_file("config.json").unwrap();
+    /// let result = MersenneTwisterConfig::<624, 397>::deserialize_from_file("non_existent_config.json");
+    /// match result {
+    ///     Ok(config) => println!("Config loaded successfully: {:?}", config),
+    ///     Err(e) => println!("Failed to load config: {}", e),
+    /// }
     /// ```
     pub fn deserialize_from_file<P: AsRef<Path>>(
         filename: P,
