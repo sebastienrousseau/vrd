@@ -85,7 +85,7 @@
 //!`Random (VRD)` provides a set of comprehensive examples. You can find them in the `examples` directory of the project. To run the examples, clone the repository and execute the following command in your terminal from the project:
 //!
 //!```shell
-//!cargo run --example example
+//!cargo run --example
 //!```
 //!
 //!## Macros
@@ -249,7 +249,20 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Create a new log entry.
+/// Create a new log entry with the provided parameters.
+///
+/// This function constructs a new `Log` instance using the provided parameters.
+///
+/// # Parameters
+///
+/// * `uuid` - A string representing the unique identifier for the log entry.
+/// * `iso` - A string representing the ISO timestamp for the log entry.
+/// * `level` - An enum representing the log level (e.g., `LogLevel::Info`, `LogLevel::Warning`, `LogLevel::Error`).
+/// * `message` - A string containing the log message.
+///
+/// # Returns
+///
+/// A new `Log` instance with the provided parameters.
 pub fn create_log_entry(
     uuid: &str,
     iso: &str,
@@ -259,9 +272,23 @@ pub fn create_log_entry(
     Log::new(uuid, iso, &level, "VRD", message, &LogFormat::JSON)
 }
 
-/// Log an entry asynchronously.
+/// Asynchronously logs a `Log` entry.
+///
+/// This function takes a `Log` entry as input and logs it asynchronously.
+/// If the logging operation fails, it returns a `VrdError::LogError`.
+///
+/// # Parameters
+///
+/// * `entry`: A `Log` instance representing the entry to be logged.
+///
+/// # Returns
+///
+/// * `Result<(), Box<dyn Error>>`:
+///   - `Ok(())`: If the logging operation is successful.
+///   - `Err(Box<dyn Error>)`: If the logging operation fails, it returns a `VrdError::LogError` containing the error message.
 ///
 /// # Errors
+///
 /// - Returns a `VrdError::LogError` if logging fails.
 pub async fn log_entry_async(entry: Log) -> Result<(), Box<dyn Error>> {
     entry.log().await.map_err(|e| {

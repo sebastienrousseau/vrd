@@ -86,7 +86,7 @@ Compiler support: requires rustc 1.56.0+
 `Random (VRD)` provides a set of comprehensive examples. You can find them in the `examples` directory of the project. To run the examples, clone the repository and execute the following command in your terminal from the project:
 
 ```shell
-cargo run --example example
+cargo run --example
 ```
 
 ## Macros
