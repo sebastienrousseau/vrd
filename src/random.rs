@@ -4,7 +4,7 @@
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
 use crate::MersenneTwisterConfig;
-use rand::RngCore;
+use rand::{RngCore, SeedableRng};
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
@@ -866,5 +866,46 @@ impl RngCore for Random {
     ) -> Result<(), rand::Error> {
         self.fill_bytes(dest);
         Ok(())
+    }
+}
+
+impl SeedableRng for Random {
+    type Seed = [u8; 16]; // Adjust as necessary
+
+    fn from_seed(seed: Self::Seed) -> Self {
+        let mut mt = [0u32; 624];
+
+        // Initialize the state with a non-zero value
+        mt[0] = u32::from_le_bytes(seed[0..4].try_into().unwrap());
+
+        for i in 1..624 {
+            mt[i] = 0x6C078965u32
+                .wrapping_mul(mt[i - 1] ^ (mt[i - 1] >> 30))
+                .wrapping_add(i as u32);
+        }
+
+        // Further mix in the seed into the state array
+        let mut i = 1;
+        let mut j = 0;
+        for _ in 0..624.max(16) {
+            mt[i] = (mt[i]
+                ^ ((mt[i - 1] ^ (mt[i - 1] >> 30))
+                    .wrapping_mul(0x6C078965u32)))
+            .wrapping_add(u32::from_le_bytes(
+                seed[j..j + 4].try_into().unwrap(),
+            ))
+            .wrapping_add(j as u32); // Add seed and its index
+            i += 1;
+            j += 4;
+            if i >= 624 {
+                mt[0] = mt[623];
+                i = 1;
+            }
+            if j >= 16 {
+                j = 0;
+            }
+        }
+
+        Random { mt, mti: 624 }
     }
 }

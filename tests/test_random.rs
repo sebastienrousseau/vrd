@@ -5,7 +5,7 @@
 
 #[cfg(test)]
 mod tests {
-    use rand::RngCore;
+    use rand::{RngCore, SeedableRng};
     use vrd::random::Random;
 
     // Initialization tests
@@ -616,6 +616,100 @@ mod tests {
 
         for _ in 0..100 {
             assert_eq!(rng1.rand(), rng2.rand());
+        }
+    }
+
+    #[test]
+    fn test_from_seed_generates_deterministic_rng() {
+        let seed = [0xABu8; 16];
+        let mut rng1 = Random::from_seed(seed);
+        let mut rng2 = Random::from_seed(seed);
+
+        assert_eq!(rng1.mt, rng2.mt);
+        assert_eq!(rng1.mti, rng2.mti);
+
+        // Test that both RNGs produce the same sequence of numbers
+        for _ in 0..10 {
+            assert_eq!(rng1.next_u32(), rng2.next_u32());
+        }
+    }
+
+    #[test]
+    fn test_from_different_seeds_generates_different_rngs() {
+        let seed1 = [0xABu8; 16];
+        let seed2 = [0xCDu8; 16];
+        let mut rng1 = Random::from_seed(seed1);
+        let mut rng2 = Random::from_seed(seed2);
+
+        // Print the initial state for debugging
+        println!("rng1.mt: {:?}", &rng1.mt[0..10]); // print the first 10 values for brevity
+        println!("rng2.mt: {:?}", &rng2.mt[0..10]);
+
+        // Test that both RNGs produce different sequences of numbers
+        let mut different = false;
+        for _ in 0..10 {
+            let val1 = rng1.next_u32();
+            let val2 = rng2.next_u32();
+            println!(
+                "rng1.next_u32(): {}, rng2.next_u32(): {}",
+                val1, val2
+            ); // Debug output
+            if val1 != val2 {
+                different = true;
+                break;
+            }
+        }
+        assert!(different, "RNGs with different seeds should produce different sequences");
+    }
+
+    #[test]
+    fn test_seed_size_incorrect() {
+        // This test will not compile because the SeedableRng trait ensures the correct seed size.
+        // It is included here to demonstrate the intention behind testing.
+        // let incorrect_seed = [0xABu8; 15]; // Should be of size 16
+        // let rng = Random::from_seed(incorrect_seed);
+        // assert!(false, "This should not compile");
+    }
+
+    #[test]
+    fn test_reseeding_changes_rng_state() {
+        let seed1 = [0xABu8; 16];
+        let seed2 = [0xCDu8; 16];
+        let mut rng = Random::from_seed(seed1);
+
+        let initial_state = rng.mt;
+
+        // Reseed with a different seed
+        rng = Random::from_seed(seed2);
+        let reseeded_state = rng.mt;
+
+        assert_ne!(
+            initial_state, reseeded_state,
+            "Reseeding should change the RNG state"
+        );
+    }
+
+    #[test]
+    fn test_from_seed_with_extreme_values() {
+        let min_seed = [0x00u8; 16];
+        let max_seed = [0xFFu8; 16];
+
+        let mut rng_min = Random::from_seed(min_seed);
+        let mut rng_max = Random::from_seed(max_seed);
+
+        // Test that RNGs produce sequences of numbers (no need to compare, just ensure no panics)
+        for _ in 0..10 {
+            let val_min = rng_min.next_u32();
+            let val_max = rng_max.next_u32();
+
+            assert!(
+                val_min != 0xFFFFFFFF,
+                "RNG with all-zero seed should not produce all ones"
+            );
+            assert!(
+                val_max != 0,
+                "RNG with all-ones seed should not produce all zeroes"
+            );
         }
     }
 }
