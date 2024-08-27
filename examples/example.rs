@@ -263,26 +263,28 @@ fn main() {
     };
 
     // Creating a custom Mersenne Twister configuration.
-    let config = MersenneTwisterConfig::new_custom(624, 397, params);
-    println!("🦀 Custom MersenneTwisterConfig: {}", config);
+    let config_result =
+        MersenneTwisterConfig::<624, 397>::new_custom(params);
+    match config_result {
+        Ok(config) => {
+            println!("🦀 Custom MersenneTwisterConfig: {}", config);
 
-    // Serialize to a file
-    if let Err(e) =
-        MersenneTwisterConfig::serialize_to_file(&config, "config.json")
-    {
-        eprintln!("🔴 Error serializing to file: {}", e);
-    } else {
-        println!("🦀 Serialized MersenneTwisterConfig to file");
-    }
+            // Serialize to a file
+            if let Err(e) = config.serialize_to_file("config.json") {
+                eprintln!("🔴 Error serializing to file: {}", e);
+            } else {
+                println!("🦀 Serialized MersenneTwisterConfig to file");
+            }
 
-    // Deserialize from a file
-    let deserialized_config =
-        MersenneTwisterConfig::deserialize_from_file("config.json");
-    match deserialized_config {
-        Ok(deserialized) => println!(
-            "🦀 Deserialized MersenneTwisterConfig from file: {:?}",
-            deserialized
-        ),
-        Err(e) => eprintln!("🔴 Deserialization error: {}", e),
+            // Deserialize from a file
+            let deserialized_config = MersenneTwisterConfig::<624, 397>::deserialize_from_file("config.json");
+            match deserialized_config {
+                Ok(deserialized) => println!("🦀 Deserialized MersenneTwisterConfig from file: {:?}", deserialized),
+                Err(e) => eprintln!("🔴 Deserialization error: {}", e),
+            }
+        }
+        Err(e) => {
+            eprintln!("🔴 Error creating MersenneTwisterConfig: {}", e)
+        }
     }
 }

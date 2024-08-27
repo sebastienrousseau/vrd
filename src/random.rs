@@ -364,9 +364,11 @@ impl Random {
     /// - This method updates the internal state of the random number generator each time it is called.
     /// - If the internal index (`mti`) reaches the threshold, it automatically reinitializes the internal state array.
     pub fn rand(&mut self) -> u32 {
-        let config = MersenneTwisterConfig::default();
-        if self.mti >= config.n {
-            if self.mti == config.n + 1 {
+        const N: usize = 624;
+        const M: usize = 397;
+        let config = MersenneTwisterConfig::<N, M>::default();
+        if self.mti >= N {
+            if self.mti == N + 1 {
                 self.seed(5489);
             }
             self.twist();
@@ -488,18 +490,17 @@ impl Random {
     /// # Notes
     /// - This method modifies the internal state array, ensuring that future random numbers generated are different from the previous ones.
     pub fn twist(&mut self) {
-        let config = MersenneTwisterConfig::default();
-        for i in 0..config.n {
+        const N: usize = 624;
+        const M: usize = 397;
+        let config = MersenneTwisterConfig::<N, M>::default();
+        for i in 0..N {
             let x = (self.mt[i] & config.params.upper_mask)
-                + (self.mt[(i + 1) % config.n]
-                    & config.params.lower_mask);
+                + (self.mt[(i + 1) % N] & config.params.lower_mask);
             let x_a = x >> 1;
             self.mt[i] = if x % 2 != 0 {
-                self.mt[(i + config.m) % config.n]
-                    ^ x_a
-                    ^ config.params.matrix_a
+                self.mt[(i + M) % N] ^ x_a ^ config.params.matrix_a
             } else {
-                self.mt[(i + config.m) % config.n] ^ x_a
+                self.mt[(i + M) % N] ^ x_a
             };
         }
         self.mti = 0;

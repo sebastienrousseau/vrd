@@ -50,7 +50,9 @@ serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 serde-big-array =  "0.5.1"
 tokio = { version = "1.39.3", features = ["full"] }
-uuid ={ version = "1.10.0", features = ["v4"] }
+uuid = { version = "1.10.0", features = ["v4"] }
+serde_yml = { version = "0.0.12", optional = true }
+toml = { version = "0.8.19", optional = true }
 
 [build-dependencies]
 # Dependencies for build scripts.
@@ -63,14 +65,14 @@ criterion = "0.5.1"
 
 [lib]
 crate-type = ["lib"]
-doc-scrape-examples = false
 name = "vrd"
 path = "src/lib.rs"
-required-features = []
 
 [features]
 # No default features
 default = []
+yaml = ["serde_yml"]
+toml = ["dep:toml"]
 
 [package.metadata.docs.rs]
 # Specify arguments for rustdoc to enhance documentation quality.
