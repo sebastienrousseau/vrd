@@ -3,6 +3,7 @@ name: 🧪 Document
 on:
   push:
     branches:
+      - master
       - feat/vrd
   pull_request:
     branches:
@@ -13,16 +14,16 @@ on:
 jobs:
   all:
     name: Document
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
-      - uses: hecrj/setup-rust-action@v2
+      - uses: hecrj/setup-rust-action@v2.0.1
         with:
           rust-version: nightly
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.7
 
       - name: Update libssl
         run: |
@@ -37,7 +38,7 @@ jobs:
             echo '<html><head><meta http-equiv="refresh" content="0; url=/vrd/"></head><body></body></html>' > ./target/doc/index.html
 
       - name: Deploy
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.6
         with:
           name: documentation
           path: target/doc
@@ -45,15 +46,15 @@ jobs:
           retention-days: 1
 
       - name: Write CNAME file
-        run: echo 'docs.vrdlib.com' > ./target/doc/CNAME
+        run: echo 'doc.vrd.com' > ./target/doc/CNAME
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v4.0.0
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+          publish_branch: gh-pages
           cname: true
           commit_message: Deploy documentation at ${{ github.sha }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./target/doc
-          user_email: actions@users.noreply.github.com
           user_name: github-actions
+          user_email: actions@users.noreply.github.com
