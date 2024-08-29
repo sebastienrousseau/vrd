@@ -758,6 +758,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "rlg"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9642def4a7784be0bf61d46a094019aad2b00dfa9582da3eb2a37c9b8928706f"
+dependencies = [
+ "dtt 0.0.6",
+ "hostname 0.4.0",
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_yml",
+ "thiserror",
+ "tokio",
+ "toml",
+ "version_check",
+ "vrd 0.0.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -896,6 +916,26 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
+
+[[package]]
+name = "thiserror"
+version = "1.0.63"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0342370b38b6a11b6cc11d6a805569958d54cfa061a29969c3b5ce2ea405724"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.63"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4558b58466b9ad7ca0f102865eccc95938dca1a74a856f2b57b6629050da261"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "time"
@@ -1046,13 +1086,31 @@ dependencies = [
  "criterion",
  "dtt 0.0.6",
  "rand",
- "rlg 0.0.4",
+ "rlg 0.0.5",
  "serde",
  "serde-big-array",
  "serde_json",
  "serde_yml",
  "tokio",
  "toml",
+ "uuid",
+ "version_check",
+]
+
+[[package]]
+name = "vrd"
+version = "0.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46865c0eccde4965b89ced6849abf44ffe603dd838a3666dfff3cc2d9437549d"
+dependencies = [
+ "bitflags",
+ "dtt 0.0.6",
+ "rand",
+ "rlg 0.0.4",
+ "serde",
+ "serde-big-array",
+ "serde_json",
+ "tokio",
  "uuid",
  "version_check",
 ]
