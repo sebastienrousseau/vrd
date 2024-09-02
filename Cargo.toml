@@ -43,7 +43,7 @@ debug = true
 [dependencies]
 # Dependencies are only used for building.
 bitflags = "2.6.0"
-dtt = "0.0.6"
+dtt = "0.0.7"
 rand = "0.8.5"
 rlg = "0.0.4"
 serde = { version = "1.0.209", features = ["derive"] }
