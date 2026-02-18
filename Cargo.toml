@@ -53,6 +53,7 @@ tokio = { version = "1.39.3", features = ["full"] }
 uuid = { version = "1.10.0", features = ["v4"] }
 serde_yml = { version = "0.0.12", optional = true }
 toml = { version = "0.8.19", optional = true }
+commons = { git = "https://github.com/sebastienrousseau/commons", tag = "v0.0.1", default-features = false, features = ["id", "error"] }
 
 [build-dependencies]
 # Dependencies for build scripts.
