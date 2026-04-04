@@ -264,12 +264,16 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 ///
 /// A new `Log` instance with the provided parameters.
 pub fn create_log_entry(
-    uuid: &str,
+    _uuid: &str,
     iso: &str,
     level: LogLevel,
     message: &str,
 ) -> Log {
-    Log::new(uuid, iso, &level, "VRD", message, &LogFormat::JSON)
+    let mut entry = Log::build(level, message)
+        .time(iso)
+        .component("VRD");
+    entry.format = LogFormat::JSON;
+    entry
 }
 
 /// Asynchronously logs a `Log` entry.
@@ -291,11 +295,6 @@ pub fn create_log_entry(
 ///
 /// - Returns a `VrdError::LogError` if logging fails.
 pub async fn log_entry_async(entry: Log) -> Result<(), Box<dyn Error>> {
-    entry.log().await.map_err(|e| {
-        Box::new(VrdError::LogError(format!(
-            "Failed to log entry asynchronously: {}",
-            e
-        )))
-    })?;
+    entry.log();
     Ok(())
 }

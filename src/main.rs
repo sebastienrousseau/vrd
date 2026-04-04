@@ -52,8 +52,8 @@ fn main() {
     // Directly generating a new UUID without matching against a Result
     let uuid = Uuid::new_v4().to_string();
 
-    // Extracting ISO 8601 format from DateTime
-    let iso = date.iso_8601;
+    // Format DateTime as ISO 8601 string
+    let iso = date.to_string();
 
     // Create a single Tokio runtime instance
     let runtime = tokio::runtime::Builder::new_current_thread()

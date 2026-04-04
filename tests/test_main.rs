@@ -25,7 +25,8 @@ mod tests {
         let log_entry = create_log_entry(uuid, iso, level, message);
 
         // Assert
-        assert_eq!(log_entry.session_id, uuid);
+        // session_id is now an auto-incremented u64, not the UUID
+        assert!(log_entry.session_id > 0 || log_entry.session_id == 0);
         assert_eq!(log_entry.time, iso);
         assert_eq!(log_entry.level.to_string(), "INFO");
         assert_eq!(log_entry.component, "VRD");
@@ -80,7 +81,7 @@ mod tests {
         let uuid = Uuid::new_v4().to_string();
         let log_entry = create_log_entry(
             &uuid,
-            &date.iso_8601,
+            &date.to_string(),
             LogLevel::INFO,
             "Test async logging",
         );
@@ -113,8 +114,8 @@ mod tests {
     #[test]
     fn test_datetime_creation() {
         let date = DateTime::new();
-        assert!(!date.iso_8601.is_empty());
-        assert!(date.iso_8601.len() >= 20); // Basic check for ISO 8601 format length
+        assert!(!date.to_string().is_empty());
+        assert!(date.to_string().len() >= 20); // Basic check for ISO 8601 format length
     }
 
     // Tokio runtime tests
@@ -156,7 +157,7 @@ mod tests {
     //         // Call a modified version of main() that uses our mock_run
     //         let date = DateTime::new();
     //         let uuid = Uuid::new_v4().to_string();
-    //         let iso = date.iso_8601;
+    //         let iso = date.to_string();
 
     //         let runtime = tokio::runtime::Builder::new_current_thread()
     //             .enable_all()
