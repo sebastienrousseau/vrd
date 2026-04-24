@@ -40,7 +40,7 @@ impl Random {
     ///
     /// # Arguments
     /// * `probability` - A `f64` value representing the probability of the function returning `true`.
-    ///                   This should be a value between 0.0 and 1.0, where 0.0 always returns `false` and 1.0 always returns `true`.
+    ///   This should be a value between 0.0 and 1.0, where 0.0 always returns `false` and 1.0 always returns `true`.
     ///
     /// # Examples
     /// ```

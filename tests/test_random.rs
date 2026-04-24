@@ -3,6 +3,8 @@
 // This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
+//! Integration tests for `vrd::random::Random`.
+
 #[cfg(test)]
 mod tests {
     use rand::{RngCore, SeedableRng};

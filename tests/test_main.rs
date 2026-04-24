@@ -3,6 +3,8 @@
 // This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
+//! Integration tests for the `vrd` binary's `create_log_entry` helper.
+
 #[cfg(test)]
 mod tests {
     use dtt::DateTime;
@@ -25,8 +27,6 @@ mod tests {
         let log_entry = create_log_entry(uuid, iso, level, message);
 
         // Assert
-        // session_id is now an auto-incremented u64, not the UUID
-        assert!(log_entry.session_id > 0 || log_entry.session_id == 0);
         assert_eq!(log_entry.time, iso);
         assert_eq!(log_entry.level.to_string(), "INFO");
         assert_eq!(log_entry.component, "VRD");

@@ -1,3 +1,5 @@
+//! Integration tests for the Mersenne Twister configuration types.
+
 #[cfg(test)]
 mod tests {
     use vrd::mersenne_twister::{
