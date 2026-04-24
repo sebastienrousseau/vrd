@@ -50,7 +50,7 @@
 //!
 //!```toml
 //![dependencies]
-//!vrd = "0.0.8"
+//!vrd = "0.0.9"
 //!serde = { version = "1.0.209", features = ["derive"] }
 //!```
 //!
@@ -149,7 +149,7 @@
 //![divider]: https://kura.pro/common/images/elements/divider.svg "divider"
 //![docs-badge]: https://img.shields.io/docsrs/vrd.svg?style=for-the-badge 'Docs.rs badge'
 //![github-badge]: https://img.shields.io/badge/github-sebastienrousseau/vrd-8da0cb?style=for-the-badge&labelColor=555555&logo=github "GitHub"
-//![libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.8-orange.svg?style=for-the-badge 'Lib.rs badge'
+//![libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.9-orange.svg?style=for-the-badge 'Lib.rs badge'
 //![made-with-rust]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust 'Made With Rust'
 //!
 //!
@@ -269,9 +269,8 @@ pub fn create_log_entry(
     level: LogLevel,
     message: &str,
 ) -> Log {
-    let mut entry = Log::build(level, message)
-        .time(iso)
-        .component("VRD");
+    let mut entry =
+        Log::build(level, message).time(iso).component("VRD");
     entry.format = LogFormat::JSON;
     entry
 }

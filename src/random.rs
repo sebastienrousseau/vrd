@@ -114,7 +114,10 @@ impl Random {
     /// # Returns
     /// An `Option<&T>` which is `Some(&T)` if the slice is not empty, containing a randomly chosen element from the slice.
     /// Returns `None` if the slice is empty.
-    pub fn choose<'a, T>(&'a mut self, values: &'a [T]) -> Option<&T> {
+    pub fn choose<'a, T>(
+        &'a mut self,
+        values: &'a [T],
+    ) -> Option<&'a T> {
         if values.is_empty() {
             return None;
         }
@@ -709,7 +712,7 @@ impl Random {
         &'a mut self,
         slice: &'a [T],
         amount: usize,
-    ) -> Vec<&T> {
+    ) -> Vec<&'a T> {
         let mut result = Vec::with_capacity(amount);
         let mut indices: Vec<usize> = (0..slice.len()).collect();
         for _ in 0..amount {
@@ -742,7 +745,7 @@ impl Random {
         &'a mut self,
         slice: &'a [T],
         amount: usize,
-    ) -> Vec<&T> {
+    ) -> Vec<&'a T> {
         let mut result = Vec::with_capacity(amount);
         for _ in 0..amount {
             let index =
@@ -887,7 +890,7 @@ impl SeedableRng for Random {
         // Further mix in the seed into the state array
         let mut i = 1;
         let mut j = 0;
-        for _ in 0..624.max(16) {
+        for _ in 0..624 {
             mt[i] = (mt[i]
                 ^ ((mt[i - 1] ^ (mt[i - 1] >> 30))
                     .wrapping_mul(0x6C078965u32)))
