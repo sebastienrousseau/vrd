@@ -1,15 +1,12 @@
 [package]
-# Metadata about the package.
 authors = ["The Random (VRD) Contributors"]
 build = "build.rs"
-categories = ['algorithms', 'encoding','parser-implementations','data-structures']
-description = "A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm"
+categories = ["algorithms", "no-std", "embedded"]
+description = "A lightweight, no_std-friendly random number generator backed by Xoshiro256++ with optional Mersenne Twister support."
 documentation = "https://docs.rs/vrd"
 edition = "2021"
 exclude = ["/.git/*", "/.github/*", "/.gitignore", "/.vscode/*"]
 homepage = "https://vrdlib.com"
-
-# Included and excluded files
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
@@ -22,81 +19,64 @@ include = [
     "/src/**",
     "/tests/**"
 ]
-keywords = ["entropy", "rand", "random-number", "random", "vrd"]
+keywords = ["rng", "random", "no-std", "xoshiro", "mersenne-twister"]
 license = "MIT OR Apache-2.0"
 name = "vrd"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/vrd"
-rust-version = "1.56.0"
+rust-version = "1.70"
 version = "0.0.10"
 
 [[bench]]
-# [[bench]] sections define benchmarks.
 name = "benchmark"
 harness = false
 path = "benches/criterion.rs"
 
 [profile.bench]
-# Profile for benchmarks.
 debug = true
 
 [dependencies]
-# Dependencies are only used for building.
-bitflags = "2.11"
-dtt = "0.0.9"
-rand = "0.10"
-rlg = "0.0.8"
-serde = { version = "1.0.209", features = ["derive"] }
-serde_json = "1.0.127"
-serde-big-array =  "0.5.1"
-tokio = { version = "1.52", features = ["full"] }
-uuid = { version = "1.23", features = ["v4"] }
-serde_yml = { version = "0.0.12", optional = true }
-toml = { version = "0.8.19", optional = true }
-commons = { git = "https://github.com/sebastienrousseau/commons", tag = "v0.0.1", default-features = false, features = ["id", "error"] }
+rand = { version = "0.10", default-features = false }
+libm = { version = "0.2", default-features = false }
+serde = { version = "1.0.209", default-features = false, features = ["derive"], optional = true }
+serde-big-array = { version = "0.5.1", default-features = false, optional = true }
 
 [build-dependencies]
-# Dependencies for build scripts.
-version_check = "0.9.5" # Check the Rust version used to compile the package.
+version_check = "0.9.5"
 
 [dev-dependencies]
-# Development dependencies are only used for testing and building.
 assert_cmd = "2.2"
 criterion = "0.5.1"
+fastrand = "2"
+serde_json = "1.0.127"
 
 [lib]
 crate-type = ["lib"]
 name = "vrd"
 path = "src/lib.rs"
 
+[[bin]]
+name = "vrd"
+path = "src/main.rs"
+required-features = ["std"]
+
 [features]
-# No default features
-default = []
-yaml = ["serde_yml"]
-toml = ["dep:toml"]
+default = ["std"]
+std = ["alloc", "serde?/std", "rand/std", "rand/thread_rng"]
+alloc = ["rand/alloc", "serde?/alloc"]
+serde = ["dep:serde", "dep:serde-big-array"]
 
 [package.metadata.docs.rs]
-# Specify arguments for rustdoc to enhance documentation quality.
-rustdoc-args = [
-    "--generate-link-to-definition",
-    "--cfg", "docsrs",
-    "--document-private-items",
-    "--display-warnings"
-]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
 
 # Linting config
 [lints.rust]
-
-## Warn
-# box_pointers = "warn"
 missing_copy_implementations = "warn"
 missing_docs = "warn"
 unstable_features = "warn"
-# unused_crate_dependencies = "warn"
 unused_extern_crates = "warn"
-# unused_results = "warn"
 
-## Allow
 bare_trait_objects = "allow"
 elided_lifetimes_in_paths = "allow"
 non_camel_case_types = "allow"
@@ -104,13 +84,10 @@ non_upper_case_globals = "allow"
 trivial_bounds = "allow"
 unsafe_code = "allow"
 
-## Forbid
-# missing_docs = "warn"
 missing_debug_implementations = "forbid"
 non_ascii_idents = "forbid"
 unreachable_pub = "forbid"
 
-## Deny
 dead_code = "deny"
 deprecated_in_future = "deny"
 ellipsis_inclusive_range_patterns = "deny"
@@ -160,7 +137,7 @@ debug = false
 debug-assertions = false
 incremental = false
 lto = true
-opt-level = "s"
+opt-level = 3
 overflow-checks = false
 panic = "abort"
 rpath = false

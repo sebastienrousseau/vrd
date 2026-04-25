@@ -5,7 +5,7 @@
 <h1 align="center">Random (VRD)</h1>
 
 <p align="center">
-  <strong>A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm.</strong>
+  <strong>A lightweight, <code>no_std</code>-friendly random number generator backed by Xoshiro256++, with optional Mersenne Twister support.</strong>
 </p>
 
 <p align="center">
@@ -24,70 +24,120 @@
 cargo add vrd
 ```
 
-Or add to `Cargo.toml`:
+Or in `Cargo.toml`:
 
 ```toml
 [dependencies]
 vrd = "0.0.10"
 ```
 
-You need [Rust](https://rustup.rs/) 1.56.0 or later. Works on macOS, Linux, and Windows.
+Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, and `no_std` embedded targets (Cortex-M validated in CI).
 
 ---
 
-## Overview
+## Highlights
 
-VRD generates random and pseudo-random numbers using the Mersenne Twister (MT19937) algorithm.
+- **Xoshiro256++ default** — 32-byte state, 2^256 - 1 period, high statistical quality, faster than MT19937 in practice.
+- **Mersenne Twister opt-in** — keep MT19937 for legacy reproducibility via `Random::new_mersenne_twister()` (requires the `alloc` feature).
+- **`no_std` ready** — pure-core build with no allocator: `Random::from_seed([u8; 32])` gives you a working RNG on any embedded target.
+- **Unbiased bounded sampling** — `int`, `uint`, `random_range`, `bounded` use Lemire's nearly-divisionless method, not modulo.
+- **Bit-precise floats** — `float()` carries 24 mantissa bits (the f32 maximum); `double()` / `f64()` carry 53 (the f64 maximum). Always `[0.0, 1.0)`.
+- **Distributions** — `normal`, `exponential`, `poisson` (`std`-free, via `libm`).
+- **`rand 0.10` traits** — implements `TryRng` (and the auto-derived `Rng`) plus `SeedableRng`, so vrd plugs into the wider `rand` ecosystem.
 
-- **MT19937 implementation** for high-quality pseudo-random output
-- **Seedable generator** for deterministic sequences
-- **Range generation** within specified bounds
-- **Cross-platform** — consistent output everywhere
+## Feature flags
+
+| Flag | Default? | What it does |
+| :--- | :--- | :--- |
+| `std` | yes | Entropy seeding via `rand::rng()`; `std::error::Error` impls. |
+| `alloc` | via `std` | `Random::bytes`, `Random::string`, `Random::sample`, the heap-stored Mersenne Twister backend. |
+| `serde` | no | `Serialize` / `Deserialize` derives for the public types. |
+
+Disable defaults to ship into `no_std`:
+
+```toml
+vrd = { version = "0.0.10", default-features = false }            # core only
+vrd = { version = "0.0.10", default-features = false, features = ["alloc"] }  # core + alloc
+```
 
 ---
 
-## Features
-
-| | |
-| :--- | :--- |
-| **Mersenne Twister** | MT19937 pseudo-random number generator |
-| **Seedable** | Deterministic output with configurable seeds |
-| **Distributions** | Uniform, normal, and other distributions |
-| **Range generation** | Generate numbers within specified ranges |
-| **Cross-platform** | Consistent output across macOS, Linux, and Windows |
-
----
-
-## Usage
+## Quickstart
 
 ```rust
 use vrd::Random;
 
 fn main() {
-    let mut rng = Random::new();
-    println!("Random u32: {}", rng.rand());
-    println!("Random in range [1, 100]: {}", rng.int(1, 100));
-    println!("Random float: {}", rng.float());
+    let mut rng = Random::new();              // entropy-seeded Xoshiro256++
+
+    println!("u32:        {}", rng.rand());
+    println!("u64:        {}", rng.u64());
+    println!("[1, 100]:   {}", rng.int(1, 100));
+    println!("[0.0, 1.0): {}", rng.float());
 }
 ```
+
+### Deterministic sequences
+
+```rust
+use vrd::Random;
+
+let mut rng = Random::from_u64_seed(0xCAFE_BABE);
+let a = rng.rand();
+let b = rng.rand();
+// Re-seed with the same value to reproduce.
+```
+
+### `no_std` embedded usage
+
+```rust
+use vrd::Random;
+
+// Allocation-free; works on any target — including Cortex-M.
+let mut rng = Random::from_seed([0x42u8; 32]);
+let n = rng.rand();
+```
+
+### Mersenne Twister (legacy reproducibility)
+
+```rust
+use vrd::Random;
+
+let mut mt = Random::new_mersenne_twister();   // alloc + std
+let v = mt.rand();
+```
+
+---
+
+## Migrating from earlier 0.0.x
+
+The 0.0.10 release modernizes the architecture. Breaking changes:
+
+- `Random` now defaults to **Xoshiro256++**, not Mersenne Twister. Use `Random::new_mersenne_twister()` if you need MT.
+- The `pseudo()` method is gone (XOR-folding RNG outputs is statistically a no-op; the operation was misleading).
+- The generic `fill()` method is gone — use `Random::try_fill_bytes(&mut [u8])` from the `rand_core::TryRng` trait, or build types from `rand()` / `u64()`.
+- `int`, `uint`, `random_range` are now **unbiased** — outputs are uniformly distributed even when the requested range doesn't divide `2^32` cleanly. Outputs differ from prior versions for the same seed.
+- `MersenneTwisterError` lost its `IoError` and `SerializationError` variants — direct `serde_json` / `serde_yml` / `toml` helpers were removed. Use `serde` directly with the `serde` feature for that.
+- `VrdError::GeneralError` now carries `&'static str` instead of `String` — `no_std`-friendly.
+- The `logging` feature and `create_log_entry` helper are gone — vrd is no longer a log-formatting library.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full diff.
 
 ---
 
 ## Development
 
 ```bash
-cargo build        # Build the project
-cargo test         # Run all tests
-cargo clippy       # Lint with Clippy
-cargo fmt          # Format with rustfmt
+cargo build                                                          # default features (std)
+cargo build --no-default-features                                    # pure no_std
+cargo build --no-default-features --features alloc                   # no_std + alloc
+cargo test --all-features                                            # all tests
+cargo clippy --all-targets --all-features -- -D warnings             # lint clean
+cargo bench                                                          # comparative criterion benches
+cargo check --target thumbv7em-none-eabihf --no-default-features     # embedded smoke check
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, signed commits, and PR guidelines.
-
----
-
-**THE ARCHITECT** \u1d2b [Sebastien Rousseau](https://sebastienrousseau.com)
-**THE ENGINE** \u1d5e [EUXIS](https://euxis.co) \u1d2b Enterprise Unified Execution Intelligence System
 
 ---
 

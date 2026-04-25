@@ -29,7 +29,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "n must be at least 1")]
+    #[should_panic(expected = "N must be at least 1")]
     fn test_new_custom_invalid_n() {
         let params = MersenneTwisterParams::default();
         let config_result =
@@ -38,7 +38,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "m must be at least 1 and less than n")]
+    #[should_panic(expected = "M must be at least 1 and less than N")]
     fn test_new_custom_invalid_m() {
         let params = MersenneTwisterParams::default();
         let config_result =
@@ -160,7 +160,7 @@ mod tests {
     #[test]
     fn test_display() {
         let config = MersenneTwisterConfig::<624, 397>::new().unwrap();
-        let expected = "MersenneTwisterConfig { params: MersenneTwisterParams { matrix_a: 0x9908b0df, upper_mask: 0x80000000, lower_mask: 0x7fffffff, tempering_mask_b: 0x9d2c5680, tempering_mask_c: 0xefc60000 } }";
+        let expected = "MersenneTwisterConfig { matrix_a: 0x9908b0df, upper_mask: 0x80000000, lower_mask: 0x7fffffff, tempering_mask_b: 0x9d2c5680, tempering_mask_c: 0xefc60000 }";
 
         assert_eq!(format!("{}", config), expected);
     }
@@ -174,7 +174,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "n must be at least 1")]
+    #[should_panic(expected = "N must be at least 1")]
     fn test_validate_invalid_n() {
         let params = MersenneTwisterParams::default();
         let validation_result =
@@ -183,7 +183,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "m must be at least 1 and less than n")]
+    #[should_panic(expected = "M must be at least 1 and less than N")]
     fn test_validate_invalid_m() {
         let params = MersenneTwisterParams::default();
         let validation_result =

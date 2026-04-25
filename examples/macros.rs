@@ -41,7 +41,7 @@ use vrd::{
 
 fn main() {
     // Example: Generate a random boolean value with a 50% probability
-    let mut rng = vrd::random::Random::new();
+    let mut rng = vrd::Random::new();
     let bool_value = rand_bool!(rng, 0.5);
     println!("🦀 Random boolean (50% true): {}", bool_value);
 

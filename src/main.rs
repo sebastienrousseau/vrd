@@ -1,93 +1,44 @@
-// Copyright © 2023-2024 Random (VRD) library. All rights reserved.
+// Copyright © 2023-2026 Random (VRD) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-// This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
-// See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
-//! # Random (VRD) Library
+//! # vrd CLI
 //!
-//! The `Random (VRD)` library is a Rust implementation of the Mersenne Twister random number generator.
-//! It provides functionality for generating random numbers and performing various operations related to randomness.
+//! Tiny command-line driver. Prints `count` random `u32`s, one per line.
 //!
-//! ## Features
-//!
-//! - Mersenne Twister random number generation
-//! - UUID generation
-//! - DateTime creation
-//! - Logging with configurable log levels
-//!
-//! ## Usage
-//!
-//! Add the following to your `Cargo.toml` file:
-//!
-//! ```toml
-//! [dependencies]
-//! vrd = "0.0.1"
+//! ```text
+//! vrd            # 1 random u32
+//! vrd 16         # 16 random u32s, one per line
+//! vrd 8 0xCAFE   # 8 random u32s, deterministically seeded with 0xCAFE
 //! ```
-//!
-//! Then, use the library in your Rust code:
-//!
-//! ```rust
-//! use vrd::{create_log_entry, log_entry_async, run};
-//! ```
-//!
-//! For more detailed usage and examples, please refer to the documentation of individual modules and functions.
-//!
-//! ## License
-//!
-//! This library is licensed under either of the following, at your option:
-//!
-//! - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE.md))
-//! - MIT License ([LICENSE-MIT](LICENSE-MIT.md))
-//!
-use dtt::DateTime;
-use rlg::log_level::LogLevel;
-use std::process;
-use uuid::Uuid;
-use vrd::{create_log_entry, log_entry_async};
+
+use std::env;
+use std::io::{self, BufWriter, Write};
+
+use vrd::Random;
+
+fn parse_int(arg: &str) -> Option<u64> {
+    if let Some(stripped) = arg.strip_prefix("0x") {
+        u64::from_str_radix(stripped, 16).ok()
+    } else {
+        arg.parse::<u64>().ok()
+    }
+}
 
 fn main() {
-    // Directly creating a new DateTime instance without matching against a Result
-    let date = DateTime::new();
+    let args: Vec<String> = env::args().skip(1).collect();
+    let count: usize = args
+        .first()
+        .and_then(|a| parse_int(a))
+        .unwrap_or(1) as usize;
 
-    // Directly generating a new UUID without matching against a Result
-    let uuid = Uuid::new_v4().to_string();
+    let mut rng = match args.get(1).and_then(|a| parse_int(a)) {
+        Some(seed) => Random::from_u64_seed(seed),
+        None => Random::new(),
+    };
 
-    // Format DateTime as ISO 8601 string
-    let iso = date.to_string();
-
-    // Create a single Tokio runtime instance
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap_or_else(|e| {
-            eprintln!("Failed to build Tokio runtime: {}", e);
-            process::exit(1);
-        });
-
-    // Adjusted error handling for vrd::run()
-    if let Err(run_error) = vrd::run() {
-        let error_message =
-            format!("Unexpected error running vrd: {:?}", run_error);
-        let log_entry = create_log_entry(
-            &uuid,
-            &iso,
-            LogLevel::ERROR,
-            &error_message,
-        );
-
-        match runtime
-            .block_on(async { log_entry_async(log_entry).await })
-        {
-            Ok(_) => {
-                // Logging successful
-                println!("Error logged successfully.");
-            }
-            Err(e) => {
-                // Logging failed
-                eprintln!("Failed to log error: {}", e);
-            }
-        }
-
-        process::exit(1);
+    let stdout = io::stdout();
+    let mut out = BufWriter::new(stdout.lock());
+    for _ in 0..count {
+        let _ = writeln!(out, "{}", rng.rand());
     }
 }

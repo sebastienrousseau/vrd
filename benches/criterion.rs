@@ -1,115 +1,115 @@
-// Copyright © 2023-2024 Random (VRD) library. All rights reserved.
+// Copyright © 2023-2026 Random (VRD) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-// This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
-// See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
-//! Benchmarks using the `criterion` crate.
-//!
-//! This file contains benchmarks that use the `criterion` crate for performance testing.
-//! It imports the `Random` trait from the `vrd` crate and uses the `criterion` macros and types.
-//! The benchmarks showcase the performance of various functions in the `Random` trait.
-//!
-//! # Example
-//!
-//! ```
-//! extern crate criterion;
-//! extern crate vrd;
-//!
-//! use self::vrd::Random;
-//! use criterion::{black_box, criterion_group, criterion_main, Criterion};
-//!
-//! /// Benchmarks the random number generation functions provided by the `Random` trait.
-//! ///
-//! /// This function measures the performance of various functions in the `Random` trait,
-//! /// such as `bool`, `bytes`, `char`, `choose`, `float`, `int`, `new`, `pseudo`,
-//! /// `rand`, and `range`.
-//! fn benchmark_random(c: &mut Criterion) {
-//!     // Benchmark implementation goes here
-//! }
-//!
-//! criterion_group!(benches, benchmark_random);
-//! criterion_main!(benches);
-//! ```
 #![allow(missing_docs)]
-use self::vrd::random::Random;
+//! Comparative benchmarks for the `vrd` random number generators.
+//!
+//! Compares:
+//! - `vrd::Random` on Xoshiro256++ (the default)
+//! - `vrd::Random` on Mersenne Twister
+//! - `fastrand` (top-level helpers)
+//! - `rand` (`rand::rng()` thread-local)
+//!
+//! Run with `cargo bench`.
+
 use criterion::{
     black_box, criterion_group, criterion_main, Criterion,
 };
-use vrd;
+use rand::rand_core::Rng;
+use vrd::Random;
 
-/// Benchmarks the random number generation functions provided by the `Random` trait.
-///
-/// This function measures the performance of various functions in the `Random` trait,
-/// such as `bool`, `bytes`, `char`, `choose`, `float`, `int`, `new`, `pseudo`,
-/// `rand`, and `range`.
-///
-/// # Arguments
-///
-/// * `c` - A mutable reference to the `Criterion` struct used for benchmarking.
-///
-fn benchmark_random(c: &mut Criterion) {
-    // Benchmark the random bool function
-    c.bench_function("Random bool", |b| {
-        b.iter(|| Random::bool(&mut Random::new(), black_box(0.5)))
-    });
+/// `u32` generation throughput across the four backends.
+fn bench_rng_u32(c: &mut Criterion) {
+    let mut group = c.benchmark_group("u32");
 
-    // Benchmark the random bytes function
-    c.bench_function("Random bytes", |b| {
-        b.iter(|| Random::bytes(&mut Random::new(), black_box(1000)))
-    });
-
-    // Benchmark the random char function
-    c.bench_function("Random char", |b| {
-        b.iter(|| Random::char(&mut Random::new()))
-    });
-
-    // Benchmark the random choose function
-    c.bench_function("Random choose", |b| {
-        b.iter(|| {
-            let mut rng = Random::new();
-            let values = vec![1, 2, 3, 4, 5];
-            Random::choose(&mut rng, &values);
-        })
-    });
-
-    // Benchmark the random float function
-    c.bench_function("Random float", |b| {
-        b.iter(|| Random::float(&mut Random::new()))
-    });
-
-    // Benchmark the random int function
-    c.bench_function("Random int", |b| {
-        b.iter(|| {
-            Random::int(
-                &mut Random::new(),
-                black_box(0),
-                black_box(100),
-            )
-        })
-    });
-
-    // Benchmark the random new function
-    c.bench_function("Random new", |b| b.iter(|| Random::new));
-
-    // Benchmark the random pseudo function
-    c.bench_function("Random pseudo", |b| {
+    group.bench_function("vrd::Random / Xoshiro256++ (default)", |b| {
         let mut rng = Random::new();
-        b.iter(|| rng.pseudo())
+        b.iter(|| black_box(rng.rand()));
     });
 
-    // Benchmark the random function
-    c.bench_function("Random random", |b| {
-        let mut rng = Random::new();
-        b.iter(|| rng.rand())
+    group.bench_function("vrd::Random / MersenneTwister", |b| {
+        let mut rng = Random::new_mersenne_twister();
+        b.iter(|| black_box(rng.rand()));
     });
 
-    // Benchmark the random range function
-    c.bench_function("Random range", |b| {
-        let mut rng = Random::new();
-        b.iter(|| rng.range(black_box(0), black_box(100)))
+    group.bench_function("fastrand", |b| {
+        b.iter(|| black_box(fastrand::u32(..)));
     });
+
+    group.bench_function("rand::rng()", |b| {
+        b.iter(|| black_box(rand::rng().next_u32()));
+    });
+
+    group.finish();
 }
 
-// Groups the benchmarks and runs them using the `criterion_group` macro.
-criterion_group!(benches, benchmark_random);
+/// `u64` generation — exercises Xoshiro's native 64-bit path versus the
+/// MT path that concatenates two `u32`s.
+fn bench_rng_u64(c: &mut Criterion) {
+    let mut group = c.benchmark_group("u64");
+
+    group.bench_function("vrd::Random / Xoshiro256++ (default)", |b| {
+        let mut rng = Random::new();
+        b.iter(|| black_box(rng.u64()));
+    });
+
+    group.bench_function("vrd::Random / MersenneTwister", |b| {
+        let mut rng = Random::new_mersenne_twister();
+        b.iter(|| black_box(rng.u64()));
+    });
+
+    group.bench_function("fastrand", |b| {
+        b.iter(|| black_box(fastrand::u64(..)));
+    });
+
+    group.bench_function("rand::rng()", |b| {
+        b.iter(|| black_box(rand::rng().next_u64()));
+    });
+
+    group.finish();
+}
+
+/// 1 KiB byte-fill — exercises the bulk byte generation path.
+fn bench_fill_bytes(c: &mut Criterion) {
+    let mut group = c.benchmark_group("fill_1024_bytes");
+
+    group.bench_function("vrd::Random / Xoshiro256++ (default)", |b| {
+        let mut rng = Random::new();
+        let mut buf = [0u8; 1024];
+        b.iter(|| {
+            use rand::rand_core::TryRng;
+            let _ = rng.try_fill_bytes(black_box(&mut buf));
+        });
+    });
+
+    group.finish();
+}
+
+/// Distribution sampling cost for the statistical helpers.
+fn bench_distributions(c: &mut Criterion) {
+    let mut group = c.benchmark_group("distributions");
+    let mut rng = Random::new();
+
+    group.bench_function("normal(0, 1)", |b| {
+        b.iter(|| black_box(rng.normal(0.0, 1.0)));
+    });
+
+    group.bench_function("exponential(1)", |b| {
+        b.iter(|| black_box(rng.exponential(1.0)));
+    });
+
+    group.bench_function("poisson(3)", |b| {
+        b.iter(|| black_box(rng.poisson(3.0)));
+    });
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_rng_u32,
+    bench_rng_u64,
+    bench_fill_bytes,
+    bench_distributions,
+);
 criterion_main!(benches);
