@@ -28,7 +28,7 @@ name = "vrd"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/vrd"
 rust-version = "1.56.0"
-version = "0.0.9"
+version = "0.0.10"
 
 [[bench]]
 # [[bench]] sections define benchmarks.
