@@ -7,7 +7,7 @@
 
 #[cfg(test)]
 mod tests {
-    use rand::{RngCore, SeedableRng};
+    use rand::rand_core::{Rng, SeedableRng, TryRng};
     use vrd::random::Random;
 
     // Initialization tests

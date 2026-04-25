@@ -42,15 +42,15 @@ debug = true
 
 [dependencies]
 # Dependencies are only used for building.
-bitflags = "2.6.0"
+bitflags = "2.11"
 dtt = "0.0.9"
-rand = "0.8.5"
+rand = "0.10"
 rlg = "0.0.8"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 serde-big-array =  "0.5.1"
-tokio = { version = "1.44", features = ["full"] }
-uuid = { version = "1.15", features = ["v4"] }
+tokio = { version = "1.52", features = ["full"] }
+uuid = { version = "1.23", features = ["v4"] }
 serde_yml = { version = "0.0.12", optional = true }
 toml = { version = "0.8.19", optional = true }
 commons = { git = "https://github.com/sebastienrousseau/commons", tag = "v0.0.1", default-features = false, features = ["id", "error"] }
@@ -61,7 +61,7 @@ version_check = "0.9.5" # Check the Rust version used to compile the package.
 
 [dev-dependencies]
 # Development dependencies are only used for testing and building.
-assert_cmd = "2.0.16"
+assert_cmd = "2.2"
 criterion = "0.5.1"
 
 [lib]

@@ -4,7 +4,8 @@
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
 use crate::MersenneTwisterConfig;
-use rand::{RngCore, SeedableRng};
+use core::convert::Infallible;
+use rand::rand_core::{SeedableRng, TryRng};
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
@@ -159,7 +160,9 @@ impl Random {
     /// # Returns
     /// A new instance of `Random` with its internal state initialized for random number generation using a non-deterministic seed.
     pub fn from_entropy() -> Self {
-        let seed = rand::thread_rng().next_u32();
+        let seed = rand::rng()
+            .try_next_u32()
+            .expect("OS entropy source failed");
         let mut rng = Random::new();
         rng.seed(seed);
         rng
@@ -310,7 +313,9 @@ impl Random {
             mt: [0; N],
             mti: N + 1,
         };
-        let seed = rand::thread_rng().next_u32();
+        let seed = rand::rng()
+            .try_next_u32()
+            .expect("OS entropy source failed");
         rng.mt[0] = seed;
         for i in 1..N {
             let previous_value = rng.mt[i - 1];
@@ -713,13 +718,15 @@ impl Random {
         slice: &'a [T],
         amount: usize,
     ) -> Vec<&'a T> {
+        // Partial Fisher-Yates with swap_remove: O(amount) draws,
+        // each O(1), rather than O(n) from Vec::remove on every pick.
         let mut result = Vec::with_capacity(amount);
         let mut indices: Vec<usize> = (0..slice.len()).collect();
         for _ in 0..amount {
             let index =
                 self.random_range(0, indices.len() as u32) as usize;
-            result.push(&slice[indices[index]]);
-            indices.remove(index);
+            let chosen = indices.swap_remove(index);
+            result.push(&slice[chosen]);
         }
         result
     }
@@ -826,48 +833,28 @@ impl Default for Random {
     }
 }
 
-impl RngCore for Random {
-    /// Generates the next random `u32` value.
-    ///
-    /// # Returns
-    /// A `u32` representing a randomly generated 32-bit unsigned integer.
-    fn next_u32(&mut self) -> u32 {
-        self.rand()
+// rand 0.10 replaces the old `RngCore` trait with `TryRng` (and a
+// blanket-impl'd `Rng` sub-trait for `TryRng<Error = Infallible>`).
+// Implementing `TryRng` with `Infallible` gives us both traits for free.
+impl TryRng for Random {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        Ok(self.rand())
     }
 
-    /// Generates the next random `u64` value.
-    ///
-    /// # Returns
-    /// A `u64` representing a randomly generated 64-bit unsigned integer.
-    fn next_u64(&mut self) -> u64 {
-        self.u64()
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.u64())
     }
 
-    /// Fills `dest` with random data.
-    ///
-    /// # Arguments
-    /// * `dest` - The byte slice to be filled with random data.
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
+    fn try_fill_bytes(
+        &mut self,
+        dest: &mut [u8],
+    ) -> Result<(), Self::Error> {
         for chunk in dest.chunks_mut(4) {
             let random_value = self.rand().to_le_bytes();
             chunk.copy_from_slice(&random_value[..chunk.len()]);
         }
-    }
-
-    /// Attempts to fill `dest` with random data.
-    ///
-    /// This method will never fail for this implementation, so it always returns `Ok(())`.
-    ///
-    /// # Arguments
-    /// * `dest` - The byte slice to be filled with random data.
-    ///
-    /// # Returns
-    /// A `Result<(), Error>` which is always `Ok(())` for this implementation.
-    fn try_fill_bytes(
-        &mut self,
-        dest: &mut [u8],
-    ) -> Result<(), rand::Error> {
-        self.fill_bytes(dest);
         Ok(())
     }
 }
