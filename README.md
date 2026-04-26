@@ -18,21 +18,6 @@
 
 ---
 
-## TL;DR
-
-`vrd` is a fast, `no_std`-friendly random number generator for Rust. The
-default backend is **Xoshiro256++** (32-byte state, period 2^256 - 1);
-**Mersenne Twister (MT19937)** is available behind a feature flag for
-legacy reproducibility. Bounded integer sampling is unbiased (Lemire's
-nearly-divisionless method), floats carry full mantissa precision, and the
-crate compiles for embedded targets such as Cortex-M with no allocator.
-
-> **Heads up:** `vrd` is **not** a cryptographic RNG. For credentials,
-> tokens, or anything security-sensitive, reach for `rand::rngs::OsRng` or
-> the `getrandom` crate.
-
----
-
 ## Install
 
 ```bash
