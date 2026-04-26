@@ -14,14 +14,20 @@ mod tests {
     /// Tests the `new` method to ensure that the RNG is initialized correctly.
     #[test]
     fn test_new() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         assert_ne!(rng.rand(), rng.rand());
     }
 
     /// Tests the `seed` method to ensure that seeding produces consistent random numbers.
     #[test]
     fn test_seed() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         rng.seed(42);
         let val1 = rng.rand();
         rng.seed(42);
@@ -33,7 +39,10 @@ mod tests {
     /// Tests the `int` method to ensure it generates integers within the specified range.
     #[test]
     fn test_int() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         rng.seed(20);
         for _ in 0..100 {
             let random_int = rng.int(1, 10);
@@ -44,7 +53,10 @@ mod tests {
     /// Tests the `int` method to ensure it handles cases where min and max are equal.
     #[test]
     fn test_int_min_max_equal() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         assert_eq!(rng.int(5, 5), 5);
     }
 
@@ -52,14 +64,20 @@ mod tests {
     #[test]
     #[should_panic(expected = "min must be <= max for int")]
     fn test_int_min_greater_than_max() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         rng.int(10, 5);
     }
 
     /// Tests the `uint` method to ensure it handles cases where min and max are equal.
     #[test]
     fn test_uint_min_max_equal() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         assert_eq!(rng.uint(5, 5), 5);
     }
 
@@ -67,7 +85,10 @@ mod tests {
     /// Tests the `float` method to ensure it generates floating-point numbers within the correct range.
     #[test]
     fn test_float() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         rng.seed(42);
         let result = rng.float();
         assert!((0.0..1.0).contains(&result));
@@ -76,7 +97,10 @@ mod tests {
     /// Tests the `double` method to ensure it generates double-precision floating-point numbers within the correct range.
     #[test]
     fn test_double() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         rng.seed(42);
         let result = rng.double();
         assert!((0.0..1.0).contains(&result));
@@ -84,6 +108,7 @@ mod tests {
 
     // Backend specific tests
     #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
     fn test_mersenne_twister_backend() {
         let mut rng = Random::new_mersenne_twister();
         rng.seed(12345);
@@ -94,7 +119,10 @@ mod tests {
 
     #[test]
     fn test_xoshiro_backend() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         rng.seed(12345);
         assert_eq!(rng.mti(), 0); // Xoshiro should return 0 for mti
         let val = rng.rand();
@@ -111,7 +139,10 @@ mod tests {
 
     #[test]
     fn test_try_fill_bytes() {
-        let mut rng = Random::new();
+        #[cfg(feature = "std")]
+    let mut rng = Random::new();
+    #[cfg(not(feature = "std"))]
+    let mut rng = Random::from_u64_seed(0);
         let mut dest = [0u8; 32];
         rng.try_fill_bytes(&mut dest).unwrap();
         assert!(dest.iter().any(|&x| x != 0));

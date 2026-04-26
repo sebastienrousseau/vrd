@@ -15,6 +15,14 @@ use core::convert::Infallible;
 use rand::rand_core::{SeedableRng, TryRng};
 
 /// Xoshiro256++ generator state.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::xoshiro::Xoshiro256PlusPlus;
+///
+/// let rng = Xoshiro256PlusPlus::from_u64_seed(42);
+/// ```
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(
     feature = "serde",
@@ -39,10 +47,15 @@ fn splitmix64(state: &mut u64) -> u64 {
 impl Xoshiro256PlusPlus {
     /// Builds an instance from a 32-byte seed, whitened via SplitMix64.
     ///
-    /// The raw seed is treated as a 64-bit SplitMix64 state, which is
-    /// then advanced four times to produce the four 64-bit words of the
-    /// generator state. This guarantees a non-zero state even for
-    /// pathological seeds (`[0u8; 32]`, `[1u8; 32]`).
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::xoshiro::Xoshiro256PlusPlus;
+    ///
+    /// let seed = [0u8; 32];
+    /// let mut rng = Xoshiro256PlusPlus::from_seed(seed);
+    /// assert_ne!(rng.next_u64(), 0);
+    /// ```
     pub fn from_seed(seed: [u8; 32]) -> Self {
         let mut sm = u64::from_le_bytes([
             seed[0], seed[1], seed[2], seed[3], seed[4], seed[5],
@@ -73,6 +86,15 @@ impl Xoshiro256PlusPlus {
     }
 
     /// Convenience constructor from a single `u64` seed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::xoshiro::Xoshiro256PlusPlus;
+    ///
+    /// let mut rng = Xoshiro256PlusPlus::from_u64_seed(12345);
+    /// assert_ne!(rng.next_u64(), 0);
+    /// ```
     pub fn from_u64_seed(mut seed: u64) -> Self {
         if seed == 0 {
             seed = 0xBAD1_DEAA_5BD1_CAFE;
@@ -87,6 +109,15 @@ impl Xoshiro256PlusPlus {
     }
 
     /// Generates the next random `u64`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::xoshiro::Xoshiro256PlusPlus;
+    ///
+    /// let mut rng = Xoshiro256PlusPlus::from_u64_seed(42);
+    /// let n = rng.next_u64();
+    /// ```
     #[inline]
     pub fn next_u64(&mut self) -> u64 {
         let res = self.state[0]
@@ -108,14 +139,32 @@ impl Xoshiro256PlusPlus {
     }
 
     /// Generates the next random `u32` by taking the high 32 bits of the
-    /// next `u64`. The high bits of Xoshiro256++ have stronger statistical
-    /// quality than the low bits.
+    /// next `u64`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::xoshiro::Xoshiro256PlusPlus;
+    ///
+    /// let mut rng = Xoshiro256PlusPlus::from_u64_seed(42);
+    /// let n = rng.next_u32();
+    /// ```
     #[inline]
     pub fn next_u32(&mut self) -> u32 {
         (self.next_u64() >> 32) as u32
     }
 
     /// Fills `dest` with random bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::xoshiro::Xoshiro256PlusPlus;
+    ///
+    /// let mut rng = Xoshiro256PlusPlus::from_u64_seed(42);
+    /// let mut buf = [0u8; 16];
+    /// rng.fill_bytes(&mut buf);
+    /// ```
     pub fn fill_bytes(&mut self, dest: &mut [u8]) {
         let mut i = 0;
         while i + 8 <= dest.len() {
@@ -130,8 +179,16 @@ impl Xoshiro256PlusPlus {
         }
     }
 
-    /// Advances the state by 2^128 calls to [`Self::next_u64`]. Useful for
-    /// generating non-overlapping subsequences across parallel workers.
+    /// Advances the state by 2^128 calls to [`Self::next_u64`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::xoshiro::Xoshiro256PlusPlus;
+    ///
+    /// let mut rng = Xoshiro256PlusPlus::from_u64_seed(42);
+    /// rng.jump();
+    /// ```
     pub fn jump(&mut self) {
         const JUMP: [u64; 4] = [
             0x180E_C6D3_3CFD_0ABA,
@@ -241,5 +298,89 @@ mod tests {
         let high = (rng.clone().next_u64() >> 32) as u32;
         let mut copy = rng;
         assert_eq!(copy.next_u32(), high);
+    }
+}
+
+#[cfg(test)]
+mod additional_xoshiro_tests {
+    use super::*;
+
+    #[test]
+    fn test_xoshiro_from_u64_seed() {
+        let mut rng = Xoshiro256PlusPlus::from_u64_seed(123);
+        let mut rng2 = Xoshiro256PlusPlus::from_u64_seed(123);
+        assert_eq!(rng.next_u64(), rng2.next_u64());
+    }
+}
+
+#[cfg(test)]
+mod xoshiro_coverage {
+    use super::*;
+    #[cfg(feature = "alloc")]
+    use alloc::format;
+    #[cfg(all(not(feature = "alloc"), feature = "std"))]
+    use std::format;
+
+    #[test]
+    fn test_xoshiro_fill_bytes_large() {
+        let mut rng = Xoshiro256PlusPlus::from_u64_seed(42);
+        let mut buf = [0u8; 100];
+        rng.fill_bytes(&mut buf);
+        assert!(buf.iter().any(|&x| x != 0));
+    }
+
+    #[test]
+    fn test_xoshiro_next_u32() {
+        let mut rng = Xoshiro256PlusPlus::from_u64_seed(42);
+        let _ = rng.next_u32();
+    }
+
+    #[test]
+    fn test_xoshiro_debug_display() {
+        let rng = Xoshiro256PlusPlus::from_u64_seed(42);
+        let s = format!("{:?}", rng);
+        assert!(s.contains("Xoshiro256PlusPlus"));
+    }
+}
+
+#[cfg(test)]
+mod xoshiro_final_coverage {
+    use super::*;
+
+    #[test]
+    fn test_xoshiro_try_next() {
+        let mut rng = Xoshiro256PlusPlus::from_u64_seed(42);
+        assert!(rng.try_next_u32().is_ok());
+        assert!(rng.try_next_u64().is_ok());
+    }
+
+    #[test]
+    fn test_xoshiro_seedable_rng() {
+        let seed = [1u8; 32];
+        let mut rng = <Xoshiro256PlusPlus as SeedableRng>::from_seed(seed);
+        assert_ne!(rng.next_u64(), 0);
+    }
+}
+
+#[cfg(test)]
+mod xoshiro_zero_test {
+    use super::*;
+
+    #[test]
+    fn test_xoshiro_all_zero_seed() {
+        let seed = [0u8; 32];
+        let mut rng = Xoshiro256PlusPlus::from_seed(seed);
+        assert_ne!(rng.next_u64(), 0);
+    }
+}
+
+#[cfg(test)]
+mod xoshiro_edge_cases {
+    use super::*;
+
+    #[test]
+    fn test_xoshiro_from_u64_seed_zero() {
+        let mut rng = Xoshiro256PlusPlus::from_u64_seed(0);
+        assert_ne!(rng.next_u64(), 0);
     }
 }

@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Mersenne Twister (MT19937) configuration types.
-//!
-//! The actual MT19937 generator is implemented in [`crate::random`]; this
-//! module provides the configuration parameters and validation.
 
 use core::fmt;
 
@@ -33,22 +30,18 @@ impl fmt::Display for MersenneTwisterError {
 impl std::error::Error for MersenneTwisterError {}
 
 /// Parameter values for the Mersenne Twister algorithm.
-///
-/// The defaults match the canonical MT19937 constants. Custom parameters
-/// must satisfy the well-known Mersenne Twister invariants — see
-/// [`MersenneTwisterConfig::validate`].
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MersenneTwisterParams {
-    /// Constant whose highest bit must be set (canonical: `0x9908b0df`).
+    /// Constant whose highest bit must be set.
     pub matrix_a: u32,
-    /// Upper-bit mask (canonical: `0x80000000`).
+    /// Upper-bit mask.
     pub upper_mask: u32,
-    /// Lower-bit mask (canonical: `0x7fffffff`).
+    /// Lower-bit mask.
     pub lower_mask: u32,
-    /// Tempering mask B (canonical: `0x9d2c5680`).
+    /// Tempering mask B.
     pub tempering_mask_b: u32,
-    /// Tempering mask C (canonical: `0xefc60000`).
+    /// Tempering mask C.
     pub tempering_mask_c: u32,
 }
 
@@ -65,9 +58,6 @@ impl Default for MersenneTwisterParams {
 }
 
 /// Configuration for an MT19937-style Mersenne Twister.
-///
-/// `N` is the array length; `M` is the recurrence offset. The canonical
-/// MT19937 instantiation is `MersenneTwisterConfig::<624, 397>`.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MersenneTwisterConfig<const N: usize, const M: usize> {
@@ -76,7 +66,7 @@ pub struct MersenneTwisterConfig<const N: usize, const M: usize> {
 }
 
 impl<const N: usize, const M: usize> MersenneTwisterConfig<N, M> {
-    /// Builds a config with custom parameters, validating the invariants.
+    /// Builds a config with custom parameters.
     pub fn new_custom(
         params: MersenneTwisterParams,
     ) -> Result<Self, MersenneTwisterError> {
@@ -84,7 +74,7 @@ impl<const N: usize, const M: usize> MersenneTwisterConfig<N, M> {
         Ok(MersenneTwisterConfig { params })
     }
 
-    /// Validates `params` against the Mersenne Twister invariants.
+    /// Validates `params`.
     pub fn validate(
         params: &MersenneTwisterParams,
     ) -> Result<(), MersenneTwisterError> {
@@ -126,12 +116,12 @@ impl<const N: usize, const M: usize> MersenneTwisterConfig<N, M> {
         Ok(())
     }
 
-    /// Builds a config using the canonical MT19937 parameters.
+    /// Builds a config using the canonical parameters.
     pub fn new() -> Result<Self, MersenneTwisterError> {
         Self::new_custom(MersenneTwisterParams::default())
     }
 
-    /// Replaces the parameters in place after re-validating them.
+    /// Replaces the parameters.
     pub fn set_config(
         &mut self,
         params: MersenneTwisterParams,
@@ -144,8 +134,7 @@ impl<const N: usize, const M: usize> MersenneTwisterConfig<N, M> {
 
 impl Default for MersenneTwisterConfig<624, 397> {
     fn default() -> Self {
-        MersenneTwisterConfig::new()
-            .expect("canonical MT19937 parameters always validate")
+        MersenneTwisterConfig::new().unwrap()
     }
 }
 
@@ -162,5 +151,61 @@ impl<const N: usize, const M: usize> fmt::Display
             self.params.tempering_mask_b,
             self.params.tempering_mask_c,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(feature = "alloc")]
+    use alloc::format;
+    #[cfg(all(not(feature = "alloc"), feature = "std"))]
+    use std::format;
+
+    #[test]
+    fn test_exhaustive_mt_coverage() {
+        let mut p = MersenneTwisterParams::default();
+        
+        // Error Display
+        let err = MersenneTwisterError::InvalidConfig("foo");
+        let _ = format!("{}", err);
+        #[cfg(feature = "std")]
+        {
+            use std::error::Error;
+            assert!(err.source().is_none());
+        }
+
+        // Params Debug
+        let _ = format!("{:?}", p);
+
+        // Config Display
+        let c = MersenneTwisterConfig::<624, 397>::default();
+        let _ = format!("{}", c);
+
+        // Validation branches
+        p.matrix_a = 0;
+        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        p = MersenneTwisterParams::default();
+        p.upper_mask = 0;
+        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        p = MersenneTwisterParams::default();
+        p.lower_mask = 0;
+        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        p = MersenneTwisterParams::default();
+        p.tempering_mask_b = 0;
+        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        p = MersenneTwisterParams::default();
+        p.tempering_mask_c = 0;
+        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+
+        // N, M bounds
+        assert!(MersenneTwisterConfig::<0, 0>::validate(&p).is_err());
+        assert!(MersenneTwisterConfig::<10, 0>::validate(&p).is_err());
+        assert!(MersenneTwisterConfig::<10, 10>::validate(&p).is_err());
+
+        // set_config
+        let mut cfg = MersenneTwisterConfig::<624, 397>::default();
+        assert!(cfg.set_config(MersenneTwisterParams::default()).is_ok());
     }
 }

@@ -3,51 +3,31 @@
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full
 // license information.
 
-//! # Random (VRD)
-//!
-//! A lightweight, `no_std`-friendly random number generator built around
-//! **Xoshiro256++** as the default backend, with optional **Mersenne
-//! Twister (MT19937)** support for callers who need MT-specific
-//! reproducibility.
-//!
-//! ## Features
-//!
-//! - `default = ["std"]` — `std`-backed entropy seeding via `rand::rng()`.
-//! - `alloc` — enables [`Random::bytes`], [`Random::string`],
-//!   [`Random::sample`], and the heap-stored Mersenne Twister backend.
-//! - `serde` — derives `Serialize`/`Deserialize` for the public types.
-//!
-//! On a pure `no_std` target without `alloc`, [`Random::from_seed`] gives
-//! you a fully working Xoshiro256++ generator with no allocations.
-//!
-//! ## Quickstart
-//!
-//! ```
-//! use vrd::Random;
-//! # #[cfg(feature = "std")]
-//! # {
-//! let mut rng = Random::new();
-//! let n = rng.rand();          // u32
-//! let f: f64 = rng.f64();      // [0.0, 1.0)
-//! # }
-//! ```
-//!
-//! ## `no_std` quickstart
-//!
-//! ```
-//! use vrd::Random;
-//! let mut rng = Random::from_seed([0x42; 32]);
-//! let n = rng.rand();
-//! ```
-
+#![no_std]
 #![doc(
     html_favicon_url = "https://kura.pro/vrd/images/favicon.ico",
     html_logo_url = "https://kura.pro/vrd/images/logos/vrd.svg",
     html_root_url = "https://docs.rs/vrd"
 )]
-#![no_std]
+#![crate_name = "vrd"]
+#![crate_type = "lib"]
+#![warn(missing_docs)]
+#![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![doc = "Minimum supported Rust version: 1.56.0"]
+
+//! # Random (VRD)
+//!
+//! A Rust library for generating random and pseudo-random numbers based
+//! on the Xoshiro256++ and Mersenne Twister algorithms.
+//!
+//! ## Features
+//! - **High Performance:** Uses Xoshiro256++ as the default PRNG.
+//! - **Legacy Support:** Optional Mersenne Twister (MT19937) backend.
+//! - **`no_std` Support:** Works in embedded and constrained environments.
+//! - **Flexible Seeding:** Support for both entropy-based and deterministic seeding.
+//! - **Comprehensive Distributions:** Uniform, Normal, Exponential, and Poisson.
+//! - **Macro Support:** Short-form macros for common operations.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -57,31 +37,28 @@ extern crate std;
 
 use core::fmt;
 
-/// Mersenne Twister algorithm types and configuration.
-pub mod mersenne_twister;
-
-/// Xoshiro256++ algorithm.
-pub mod xoshiro;
-
-/// Convenience macros that wrap [`Random`] methods.
-pub mod macros;
-
-/// The `Random` facade and its enum-dispatched backends.
-pub mod random;
-
-pub use mersenne_twister::{
-    MersenneTwisterConfig, MersenneTwisterError, MersenneTwisterParams,
-};
-pub use random::{FloatExt, Random, RngBackend};
-pub use xoshiro::Xoshiro256PlusPlus;
-
-/// Crate-level error type.
+/// Crate-level error type for the `vrd` library.
 ///
-/// Kept allocation-free so it works under pure `no_std`.
+/// This error type is used to represent general failures within the library.
+/// It is kept allocation-free by using static error messages, ensuring it
+/// works correctly in pure `no_std` environments without requiring an
+/// allocator.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::VrdError;
+///
+/// let err = VrdError::GeneralError("something went wrong");
+/// println!("{}", err);
+/// ```
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[non_exhaustive]
 pub enum VrdError {
     /// A general error with a static message.
+    ///
+    /// This variant is used for unexpected conditions where a more specific
+    /// error type isn't applicable.
     GeneralError(&'static str),
 }
 
@@ -97,3 +74,44 @@ impl fmt::Display for VrdError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for VrdError {}
+
+/// Mersenne Twister configuration and constants.
+pub mod mersenne_twister;
+/// Convenience macros.
+pub mod macros;
+/// The core `Random` facade.
+pub mod random;
+/// Xoshiro256++ implementation.
+pub mod xoshiro;
+
+pub use mersenne_twister::{
+    MersenneTwisterConfig, MersenneTwisterError, MersenneTwisterParams,
+};
+pub use random::{FloatExt, Random, RngBackend};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(feature = "alloc")]
+    use alloc::format;
+    #[cfg(all(not(feature = "alloc"), feature = "std"))]
+    use std::format;
+
+    #[test]
+    #[cfg(any(feature = "alloc", feature = "std"))]
+    fn test_vrd_error_display() {
+        let err = VrdError::GeneralError("test error");
+        let s = format!("{}", err);
+        assert_eq!(s, "General error: test error");
+    }
+
+    #[test]
+    #[cfg(any(feature = "alloc", feature = "std"))]
+    fn test_vrd_error_debug() {
+        let err = VrdError::GeneralError("test error");
+        let s = format!("{:?}", err);
+        assert!(s.contains("GeneralError"));
+        assert!(s.contains("test error"));
+    }
+}

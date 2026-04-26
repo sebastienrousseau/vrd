@@ -24,8 +24,8 @@ fn parse_int(arg: &str) -> Option<u64> {
     }
 }
 
-fn main() {
-    let args: Vec<String> = env::args().skip(1).collect();
+/// The core logic of the CLI, extracted for testability.
+pub fn run_cli(args: Vec<String>, writer: &mut impl Write) -> io::Result<()> {
     let count: usize = args
         .first()
         .and_then(|a| parse_int(a))
@@ -36,9 +36,70 @@ fn main() {
         None => Random::new(),
     };
 
-    let stdout = io::stdout();
-    let mut out = BufWriter::new(stdout.lock());
+    let mut out = BufWriter::new(writer);
     for _ in 0..count {
-        let _ = writeln!(out, "{}", rng.rand());
+        writeln!(out, "{}", rng.rand())?;
+    }
+    out.flush()?;
+    Ok(())
+}
+
+fn main() {
+    #[cfg(test)]
+    if env::var("VRD_TEST_MAIN").is_err() {
+        return;
+    }
+    let args: Vec<String> = env::args().skip(1).collect();
+    if let Err(e) = run_cli(args, &mut io::stdout()) {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_parse_int() {
+        assert_eq!(parse_int("10"), Some(10));
+        assert_eq!(parse_int("0xA"), Some(10));
+        assert_eq!(parse_int("invalid"), None);
+    }
+
+    #[test]
+    fn test_run_cli_exhaustive() {
+        let mut buffer = Cursor::new(Vec::new());
+        // Default
+        run_cli(vec![], &mut buffer).unwrap();
+        // Count only
+        run_cli(vec!["5".to_string()], &mut buffer).unwrap();
+        // Count and seed
+        run_cli(vec!["1".to_string(), "0x1234".to_string()], &mut buffer).unwrap();
+        // Invalid count, invalid seed
+        run_cli(vec!["invalid".to_string(), "invalid".to_string()], &mut buffer).unwrap();
+    }
+
+    #[test]
+    fn test_run_cli_write_error() {
+        struct FailingWriter;
+        impl Write for FailingWriter {
+            fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+                Err(io::Error::new(io::ErrorKind::Other, "write error"))
+            }
+            fn flush(&mut self) -> io::Result<()> {
+                Ok(())
+            }
+        }
+        let mut writer = FailingWriter;
+        let res = run_cli(vec!["1".to_string()], &mut writer);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_actual_main_via_env() {
+        env::set_var("VRD_TEST_MAIN", "1");
+        main();
     }
 }
