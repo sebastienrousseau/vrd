@@ -39,7 +39,6 @@ need to make a few small changes — see *Migration* below.
 
 ### Removed
 
-- **`Random::pseudo`** — XOR-folding 32 RNG outputs is statistically equivalent to one output. The function was misleading and 32× slower.
 - **`Random::fill<T>`** — generic `T: Default + RemAssign<u32> + BitOrAssign<u32>` API was opaque and produced output that was effectively `T::default() | rand`. Use `Random::try_fill_bytes(&mut [u8])` for bulk randomness.
 - **`Random::new_xoshiro`** — superseded by `Random::new`, which now *is* Xoshiro.
 - **`create_log_entry` and the `logging` feature** — vrd is an RNG library, not a log formatter.
@@ -64,7 +63,6 @@ need to make a few small changes — see *Migration* below.
 | `use rand::{RngCore, SeedableRng};` | `use rand::rand_core::{Rng, SeedableRng};` (or `TryRng` for fallible variants) |
 | `Random::new()` (MT-backed) | `Random::new_mersenne_twister()` to keep MT; otherwise `Random::new()` is now Xoshiro |
 | `Random::new_xoshiro()` | `Random::new()` |
-| `rng.pseudo()` | `rng.rand()` (single call has the same statistical quality) |
 | `rng.fill(&mut buf)` | `use rand::rand_core::TryRng; rng.try_fill_bytes(&mut buf)` |
 | `MersenneTwisterError::IoError(_)` / `SerializationError(_)` | Use `serde` directly; the helpers have moved out of vrd |
 | `VrdError::GeneralError("…".to_string())` | `VrdError::GeneralError("…")` (`&'static str`) |

@@ -147,4 +147,101 @@ mod tests {
         rng.try_fill_bytes(&mut dest).unwrap();
         assert!(dest.iter().any(|&x| x != 0));
     }
+
+    /// Display impl on the MT-backed `Random` includes the `mti` index;
+    /// previous suite only exercised the Xoshiro Display branch.
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    fn test_display_mersenne_backend() {
+        let rng = Random::new_mersenne_twister_with_seed(42);
+        let s = format!("{rng}");
+        assert!(s.contains("MersenneTwister"), "got: {s}");
+        assert!(s.contains("mti:"), "got: {s}");
+    }
+
+    /// `set_mti` and `twist` are no-ops on the Xoshiro backend; verify
+    /// we don't silently corrupt subsequent draws.
+    #[test]
+    fn test_set_mti_and_twist_noop_on_xoshiro() {
+        let mut a = Random::from_u64_seed(123);
+        let baseline = a.rand();
+
+        let mut b = Random::from_u64_seed(123);
+        b.set_mti(999);
+        b.twist();
+        assert_eq!(b.rand(), baseline);
+    }
+
+    /// `set_mti` on MT actually moves the index.
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    fn test_set_mti_on_mt() {
+        let mut rng = Random::new_mersenne_twister_with_seed(0);
+        rng.set_mti(0);
+        assert_eq!(rng.mti(), 0);
+    }
+
+    /// Walks every public `Random` method on the Mersenne-Twister
+    /// backend end-to-end. Pure smoke coverage — asserts only that
+    /// each call produces a finite/in-range result, since the
+    /// statistical guarantees are tested via the Xoshiro-default suite.
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    fn test_full_api_on_mersenne_backend() {
+        let mut rng = Random::new_mersenne_twister_with_seed(2024);
+
+        // raw output
+        let _ = rng.rand();
+        let _ = rng.u64();
+        let _ = rng.i64();
+        let _ = rng.float();
+        let _ = rng.double();
+        let _ = rng.f64();
+
+        // bounded
+        assert!(rng.bounded(100) < 100);
+        assert!((1..=10).contains(&rng.int(1, 10)));
+        assert!((1..=10).contains(&rng.uint(1, 10)));
+        assert!((1..=10).contains(&rng.range(1, 10)));
+        assert!(rng.random_range(0, 100) < 100);
+
+        // bools/chars/strings
+        let _ = rng.bool(0.5);
+        assert!(rng.char().is_ascii_lowercase());
+        assert_eq!(rng.string(8).len(), 8);
+        assert_eq!(rng.bytes(16).len(), 16);
+
+        // slice ops
+        let pool = [10, 20, 30, 40, 50];
+        assert!(rng.choose(&pool).is_some());
+        let mut shuf = [1, 2, 3, 4, 5];
+        rng.shuffle(&mut shuf);
+        assert_eq!(rng.sample(&pool, 3).len(), 3);
+        assert_eq!(rng.sample_with_replacement(&pool, 5).len(), 5);
+        assert!(rng.rand_slice(&pool, 2).is_ok());
+
+        // distributions
+        assert!(rng.normal(0.0, 1.0).is_finite());
+        assert!(rng.exponential(1.0) >= 0.0);
+        let _ = rng.poisson(3.0);
+
+        // TryRng path
+        let mut buf = [0u8; 24];
+        rng.try_fill_bytes(&mut buf).unwrap();
+        assert!(buf.iter().any(|&b| b != 0));
+
+        // MT-specific helpers
+        rng.seed(99);
+        let pre_twist_mti = rng.mti();
+        rng.twist();
+        let post_twist_mti = rng.mti();
+        assert!(post_twist_mti < pre_twist_mti);
+        rng.set_mti(0);
+        assert_eq!(rng.mti(), 0);
+
+        // Display + backend introspection
+        let s = format!("{rng}");
+        assert!(s.contains("MersenneTwister"));
+        let _ = rng.backend();
+    }
 }
