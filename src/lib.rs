@@ -18,16 +18,33 @@
 
 //! # Random (VRD)
 //!
-//! A Rust library for generating random and pseudo-random numbers based
-//! on the Xoshiro256++ and Mersenne Twister algorithms.
+//! [![Crates.io](https://img.shields.io/crates/v/vrd.svg)](https://crates.io/crates/vrd)
+//! [![Docs.rs](https://img.shields.io/docsrs/vrd.svg)](https://docs.rs/vrd)
+//! [![License](https://img.shields.io/badge/license-MIT_or_Apache--2.0-blue.svg)](https://github.com/sebastienrousseau/vrd#license)
+//!
+//! A lightweight, `no_std`-friendly random number generator backed by
+//! **Xoshiro256++**, with optional **Mersenne Twister (MT19937)** support.
 //!
 //! ## Features
-//! - **High Performance:** Uses Xoshiro256++ as the default PRNG.
-//! - **Legacy Support:** Optional Mersenne Twister (MT19937) backend.
-//! - **`no_std` Support:** Works in embedded and constrained environments.
-//! - **Flexible Seeding:** Support for both entropy-based and deterministic seeding.
-//! - **Comprehensive Distributions:** Uniform, Normal, Exponential, and Poisson.
-//! - **Macro Support:** Short-form macros for common operations.
+//! - **High performance:** Xoshiro256++ default — 32-byte state, period
+//!   2^256 - 1, SplitMix64 seed whitening.
+//! - **Legacy reproducibility:** opt-in MT19937 backend behind the `alloc`
+//!   feature.
+//! - **`no_std` ready:** pure-core build with `default-features = false`,
+//!   validated on `thumbv7em-none-eabihf` (Cortex-M) in CI.
+//! - **Unbiased sampling:** `int`, `uint`, `random_range`, and the public
+//!   `bounded` use Lemire's nearly-divisionless method.
+//! - **Bit-precise floats:** `float()` carries 24 mantissa bits, `double()`
+//!   carries 53. Always `[0.0, 1.0)`.
+//! - **Distributions:** uniform, normal, exponential, Poisson — `std`-free
+//!   via `libm`.
+//! - **`rand 0.10` traits:** `TryRng`, the blanket-implemented `Rng`, and
+//!   `SeedableRng`.
+//!
+//! ## Not a CSPRNG
+//!
+//! `Random` is **not** cryptographically secure. For credentials or
+//! security-sensitive randomness, use `rand::rngs::OsRng` or `getrandom`.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

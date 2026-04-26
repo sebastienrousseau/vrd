@@ -150,6 +150,7 @@ cargo test --all-features                                            # all tests
 cargo clippy --all-targets --all-features -- -D warnings             # lint clean
 cargo bench                                                          # comparative criterion benches
 cargo check --target thumbv7em-none-eabihf --no-default-features     # embedded smoke check
+cargo run --example all                                              # run every demo in examples/
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, signed commits, and PR guidelines.
