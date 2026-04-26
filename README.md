@@ -18,6 +18,21 @@
 
 ---
 
+## TL;DR
+
+`vrd` is a fast, `no_std`-friendly random number generator for Rust. The
+default backend is **Xoshiro256++** (32-byte state, period 2^256 - 1);
+**Mersenne Twister (MT19937)** is available behind a feature flag for
+legacy reproducibility. Bounded integer sampling is unbiased (Lemire's
+nearly-divisionless method), floats carry full mantissa precision, and the
+crate compiles for embedded targets such as Cortex-M with no allocator.
+
+> **Heads up:** `vrd` is **not** a cryptographic RNG. For credentials,
+> tokens, or anything security-sensitive, reach for `rand::rngs::OsRng` or
+> the `getrandom` crate.
+
+---
+
 ## Install
 
 ```bash
@@ -138,6 +153,33 @@ cargo check --target thumbv7em-none-eabihf --no-default-features     # embedded 
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, signed commits, and PR guidelines.
+
+---
+
+## When to reach for `vrd`
+
+**Use `vrd` when** you want a fast, dependency-light RNG that compiles into `no_std` targets, or you need MT19937 for bit-for-bit legacy reproducibility against existing test vectors.
+
+**Don't use `vrd` when** you need a CSPRNG (use `rand::rngs::OsRng` or `getrandom`), a richer distribution catalogue (use `rand_distr`), or seamless ecosystem fit with `rand`-based libraries (use `rand` directly).
+
+---
+
+## FAQ
+
+### Is `vrd` cryptographically secure?
+No. `Random` is a non-cryptographic PRNG built on Xoshiro256++. For credentials, tokens, or anything security-sensitive, use a CSPRNG such as `rand::rngs::OsRng` or the `getrandom` crate.
+
+### Does `vrd` work without `std`?
+Yes. With `default-features = false`, `vrd` compiles for pure `no_std` targets. Add the `alloc` feature for `Vec`/`String`/`Box`-backed APIs (`bytes`, `string`, `sample`, the Mersenne Twister backend).
+
+### Can I get the same sequence on two machines?
+Yes — use `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)`. Both are deterministic and allocation-free.
+
+### Why ship Mersenne Twister at all if Xoshiro is the default?
+Reproducibility against existing MT-generated test vectors. Reach for `Random::new_mersenne_twister()` only when you need bit-for-bit MT19937 output.
+
+### How fast is it?
+`cargo bench` runs head-to-head benchmarks against `fastrand` and `rand::rng()` on `u32`, `u64`, byte fills, and distribution sampling. Run them locally — numbers are workload-dependent.
 
 ---
 
