@@ -63,6 +63,24 @@ jobs:
       - name: cargo check (alloc only)
         run: cargo check --target thumbv7em-none-eabihf --no-default-features --features alloc
 
+  # Compile-only check on the criterion bench suite. Catches accidental
+  # bench breakage from API refactors without paying for a full timing
+  # run on every PR.
+  bench-build:
+    name: Bench (compile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo bench --no-run
+        run: cargo bench --no-run
+
   # Nightly toolchain tests (optional, continue on error).
   test-nightly:
     name: Test (nightly)

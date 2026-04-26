@@ -153,6 +153,33 @@ cargo check --target thumbv7em-none-eabihf --no-default-features     # embedded 
 cargo run --example all                                              # run every demo in examples/
 ```
 
+### Squeezing more performance
+
+The default release profile (`opt-level = 3`, `lto = true`, `codegen-units = 1`) gets vrd to ~1.1 ns per `u32` on Apple Silicon. Two extra knobs are available to downstream consumers who want every cycle:
+
+**Native CPU targeting** — enables AArch64 NEON or x86 AVX/AVX-512 codegen for whichever host you're running on:
+
+```toml
+# .cargo/config.toml in your binary crate
+[build]
+rustflags = ["-C", "target-cpu=native"]
+```
+
+`target-cpu=native` is **not** baked into vrd's release profile because it would break `cargo install` for users on machines that download crates as binaries. Set it in the consuming crate.
+
+**Profile-Guided Optimization (PGO)** — typically yields 5–15% on hot loops:
+
+```bash
+# 1. Instrumented build that emits .profraw counters
+RUSTFLAGS="-Cprofile-generate=/tmp/pgo" cargo build --release
+# 2. Run a representative workload to populate the profile
+./target/release/your-app
+# 3. Merge into a single .profdata
+$(rustc --print sysroot)/lib/rustlib/*/bin/llvm-profdata merge -o /tmp/pgo/merged.profdata /tmp/pgo
+# 4. Rebuild with the profile applied
+RUSTFLAGS="-Cprofile-use=/tmp/pgo/merged.profdata" cargo build --release
+```
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, signed commits, and PR guidelines.
 
 ---

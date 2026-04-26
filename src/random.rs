@@ -645,16 +645,26 @@ impl Random {
     #[inline]
     pub fn bounded(&mut self, range: u32) -> u32 {
         assert!(range > 0, "range must be greater than zero");
-        let mut x =
-            u64::from(self.rand()).wrapping_mul(u64::from(range));
-        let mut l = x as u32;
+        let x = u64::from(self.rand()).wrapping_mul(u64::from(range));
+        let l = x as u32;
         if l < range {
-            let t = range.wrapping_neg() % range;
-            while l < t {
-                x = u64::from(self.rand())
-                    .wrapping_mul(u64::from(range));
-                l = x as u32;
-            }
+            // Rejection branch hits <1% for ranges < 2^30; pulled
+            // out so the hot path stays small in i-cache.
+            return self.bounded_reject(range, x);
+        }
+        (x >> 32) as u32
+    }
+
+    /// Rejection-loop tail of [`Self::bounded`]. Marked `#[cold]` and
+    /// never inlined so the common-path bytes in `bounded` stay tight.
+    #[cold]
+    #[inline(never)]
+    fn bounded_reject(&mut self, range: u32, mut x: u64) -> u32 {
+        let t = range.wrapping_neg() % range;
+        let mut l = x as u32;
+        while l < t {
+            x = u64::from(self.rand()).wrapping_mul(u64::from(range));
+            l = x as u32;
         }
         (x >> 32) as u32
     }

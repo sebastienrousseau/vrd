@@ -16,6 +16,7 @@ use criterion::{
     black_box, criterion_group, criterion_main, Criterion,
 };
 use rand::rand_core::Rng;
+use vrd::xoshiro::Xoshiro256PlusPlus;
 use vrd::Random;
 
 /// `u32` generation throughput across the four backends.
@@ -105,11 +106,42 @@ fn bench_distributions(c: &mut Criterion) {
     group.finish();
 }
 
+/// Pins the `Random` enum-dispatch overhead against raw
+/// `Xoshiro256PlusPlus`. Both columns should land within criterion noise
+/// — if a refactor regresses this group, the wrapper has stopped being
+/// inlined.
+fn bench_wrapper_overhead(c: &mut Criterion) {
+    let mut group = c.benchmark_group("wrapper_overhead");
+
+    group.bench_function("u32 raw Xoshiro256PlusPlus", |b| {
+        let mut rng = Xoshiro256PlusPlus::from_u64_seed(1);
+        b.iter(|| black_box(rng.next_u32()));
+    });
+
+    group.bench_function("u32 vrd::Random (Xoshiro)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.rand()));
+    });
+
+    group.bench_function("u64 raw Xoshiro256PlusPlus", |b| {
+        let mut rng = Xoshiro256PlusPlus::from_u64_seed(1);
+        b.iter(|| black_box(rng.next_u64()));
+    });
+
+    group.bench_function("u64 vrd::Random (Xoshiro)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.u64()));
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_rng_u32,
     bench_rng_u64,
     bench_fill_bytes,
     bench_distributions,
+    bench_wrapper_overhead,
 );
 criterion_main!(benches);
