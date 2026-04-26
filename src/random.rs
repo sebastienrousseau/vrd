@@ -866,14 +866,31 @@ impl Random {
 
     // ---------------------- statistical distributions -----------------------
 
-    /// Standard normal sample.
+    /// Standard normal sample, parameterized by `(mu, sigma)`.
+    ///
+    /// Uses the **Marsaglia polar method**: rejection-sample two uniforms
+    /// inside the unit disc, then transform to a normal sample without
+    /// trigonometry. Acceptance probability is π/4 ≈ 78.5%, so the inner
+    /// loop runs ~1.27 times on average. Faster than Box-Muller (no
+    /// `cos` call) for the same statistical guarantees.
+    ///
+    /// For an even faster `normal()` based on the Ziggurat algorithm
+    /// (~3 ns/sample), see issue tracker — Ziggurat needs build-time
+    /// table generation and lives behind a `fast-distributions` feature
+    /// in a future release.
     pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
-        let u1 = self.f64();
-        let u2 = self.f64();
-        let u1 = if u1 == 0.0 { f64::MIN_POSITIVE } else { u1 };
-        let z0 = FloatExt::sqrt(-2.0 * FloatExt::ln(u1))
-            * FloatExt::cos(2.0 * core::f64::consts::PI * u2);
-        mu + sigma * z0
+        loop {
+            // Map u, v from [0, 1) to (-1, 1).
+            let u = 2.0 * self.f64() - 1.0;
+            let v = 2.0 * self.f64() - 1.0;
+            let s = u * u + v * v;
+            // Reject pairs that fall outside the open unit disc, plus
+            // the (origin) case where ln would diverge.
+            if s > 0.0 && s < 1.0 {
+                let factor = FloatExt::sqrt(-2.0 * FloatExt::ln(s) / s);
+                return mu + sigma * (u * factor);
+            }
+        }
     }
 
     /// Exponential sample.

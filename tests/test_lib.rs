@@ -214,6 +214,40 @@ mod tests {
         assert!(sample.is_finite());
     }
 
+    /// Statistical sanity check on the polar-method `normal()`. With
+    /// 50 000 samples the empirical mean and stddev should land within
+    /// ±0.05 of the parameters; that tolerance is generous enough to
+    /// avoid flakes while still catching gross distribution bugs (e.g.
+    /// dropping the `2.0 * self.f64() - 1.0` re-centering, or losing
+    /// the `sqrt`).
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_normal_distribution_shape() {
+        let mut rng = get_rng();
+        let mu = 1.5;
+        let sigma = 2.0;
+        let n = 50_000usize;
+
+        let samples: Vec<f64> =
+            (0..n).map(|_| rng.normal(mu, sigma)).collect();
+        assert!(samples.iter().all(|s| s.is_finite()));
+
+        let mean: f64 = samples.iter().sum::<f64>() / n as f64;
+        let var: f64 =
+            samples.iter().map(|x| (x - mean).powi(2)).sum::<f64>()
+                / n as f64;
+        let std = var.sqrt();
+
+        assert!(
+            (mean - mu).abs() < 0.05,
+            "empirical mean {mean} is too far from {mu}"
+        );
+        assert!(
+            (std - sigma).abs() < 0.05,
+            "empirical stddev {std} is too far from {sigma}"
+        );
+    }
+
     #[test]
     fn test_exponential() {
         let mut rng = get_rng();
