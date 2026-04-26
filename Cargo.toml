@@ -1,6 +1,7 @@
 [package]
 authors = ["The Random (VRD) Contributors"]
 build = "build.rs"
+autoexamples = false
 categories = ["algorithms", "no-std", "embedded"]
 description = "A lightweight, no_std-friendly random number generator backed by Xoshiro256++ with optional Mersenne Twister support."
 documentation = "https://docs.rs/vrd"
@@ -59,6 +60,110 @@ path = "src/lib.rs"
 name = "vrd"
 path = "src/main.rs"
 required-features = ["std"]
+
+# Examples — single-word names per the noyalib convention. `support.rs` is
+# a shared helper module imported via `#[path = "support.rs"]` and is not
+# itself an example.
+[[example]]
+name = "hello"
+path = "examples/hello.rs"
+[[example]]
+name = "basics"
+path = "examples/basics.rs"
+[[example]]
+name = "seed"
+path = "examples/seed.rs"
+[[example]]
+name = "bytes"
+path = "examples/bytes.rs"
+[[example]]
+name = "floats"
+path = "examples/floats.rs"
+[[example]]
+name = "bools"
+path = "examples/bools.rs"
+[[example]]
+name = "chars"
+path = "examples/chars.rs"
+[[example]]
+name = "strings"
+path = "examples/strings.rs"
+[[example]]
+name = "bounded"
+path = "examples/bounded.rs"
+[[example]]
+name = "unbiased"
+path = "examples/unbiased.rs"
+[[example]]
+name = "normal"
+path = "examples/normal.rs"
+[[example]]
+name = "exponential"
+path = "examples/exponential.rs"
+[[example]]
+name = "poisson"
+path = "examples/poisson.rs"
+[[example]]
+name = "choose"
+path = "examples/choose.rs"
+[[example]]
+name = "shuffle"
+path = "examples/shuffle.rs"
+[[example]]
+name = "sample"
+path = "examples/sample.rs"
+[[example]]
+name = "slice"
+path = "examples/slice.rs"
+[[example]]
+name = "weighted"
+path = "examples/weighted.rs"
+[[example]]
+name = "xoshiro"
+path = "examples/xoshiro.rs"
+[[example]]
+name = "mersenne"
+path = "examples/mersenne.rs"
+[[example]]
+name = "backends"
+path = "examples/backends.rs"
+[[example]]
+name = "traits"
+path = "examples/traits.rs"
+[[example]]
+name = "seedable"
+path = "examples/seedable.rs"
+[[example]]
+name = "macros"
+path = "examples/macros.rs"
+[[example]]
+name = "dice"
+path = "examples/dice.rs"
+[[example]]
+name = "lottery"
+path = "examples/lottery.rs"
+[[example]]
+name = "passwords"
+path = "examples/passwords.rs"
+[[example]]
+name = "monte"
+path = "examples/monte.rs"
+[[example]]
+name = "errors"
+path = "examples/errors.rs"
+[[example]]
+name = "config"
+path = "examples/config.rs"
+[[example]]
+name = "nostd"
+path = "examples/nostd.rs"
+[[example]]
+name = "serde"
+path = "examples/serde.rs"
+required-features = ["serde"]
+[[example]]
+name = "all"
+path = "examples/all.rs"
 
 [features]
 default = ["std"]
