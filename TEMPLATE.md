@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD033 MD041 -->
 
-<img src="https://kura.pro/vrd/images/logos/vrd.svg"
+<img src="https://cloudcdn.pro/vrd/v1/logos/vrd.svg"
 alt="Random (VRD) logo" width="66" align="right" />
 
 <!-- markdownlint-enable MD033 MD041 -->

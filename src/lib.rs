@@ -5,8 +5,8 @@
 
 #![no_std]
 #![doc(
-    html_favicon_url = "https://kura.pro/vrd/images/favicon.ico",
-    html_logo_url = "https://kura.pro/vrd/images/logos/vrd.svg",
+    html_favicon_url = "https://cloudcdn.pro/vrd/v1/favicon.ico",
+    html_logo_url = "https://cloudcdn.pro/vrd/v1/logos/vrd.svg",
     html_root_url = "https://docs.rs/vrd"
 )]
 #![crate_name = "vrd"]

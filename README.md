@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://kura.pro/vrd/images/logos/vrd.svg" alt="Random (VRD) logo" width="128" />
+  <img src="https://cloudcdn.pro/vrd/v1/logos/vrd.svg" alt="Random (VRD) logo" width="128" />
 </p>
 
 <h1 align="center">Random (VRD)</h1>

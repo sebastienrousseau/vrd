@@ -39,7 +39,7 @@ debug = true
 [dependencies]
 rand = { version = "0.10", default-features = false }
 libm = { version = "0.2", default-features = false }
-serde = { version = "1.0.209", default-features = false, features = ["derive"], optional = true }
+serde = { version = "1.0.228", default-features = false, features = ["derive"], optional = true }
 serde-big-array = { version = "0.5.1", default-features = false, optional = true }
 
 [build-dependencies]
