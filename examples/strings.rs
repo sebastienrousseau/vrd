@@ -13,14 +13,14 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- strings");
 
-    support::task_with_output("string(n) generates lowercase ASCII", || {
-        let mut rng = Random::from_u64_seed(0xABCD);
-        let s = rng.string(20);
-        vec![
-            format!("len = {}", s.len()),
-            format!("\"{s}\""),
-        ]
-    });
+    support::task_with_output(
+        "string(n) generates lowercase ASCII",
+        || {
+            let mut rng = Random::from_u64_seed(0xABCD);
+            let s = rng.string(20);
+            vec![format!("len = {}", s.len()), format!("\"{s}\"")]
+        },
+    );
 
     support::task_with_output("Length 0 is an empty string", || {
         let mut rng = Random::from_u64_seed(0);

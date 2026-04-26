@@ -37,7 +37,10 @@ fn main() {
             format!("int(-10, 10) inclusive   = {}", rng.int(-10, 10)),
             format!("uint(1, 100) inclusive   = {}", rng.uint(1, 100)),
             format!("range(1, 6) inclusive    = {}", rng.range(1, 6)),
-            format!("random_range(0, 1000)    = {}", rng.random_range(0, 1000)),
+            format!(
+                "random_range(0, 1000)    = {}",
+                rng.random_range(0, 1000)
+            ),
             format!("bounded(42)              = {}", rng.bounded(42)),
         ]
     });

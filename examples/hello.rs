@@ -13,14 +13,17 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- hello");
 
-    support::task_with_output("Random::new() — entropy-seeded Xoshiro", || {
-        let mut rng = Random::new();
-        vec![
-            format!("u32 = {}", rng.rand()),
-            format!("u64 = {}", rng.u64()),
-            format!("f64 = {:.6}", rng.double()),
-        ]
-    });
+    support::task_with_output(
+        "Random::new() — entropy-seeded Xoshiro",
+        || {
+            let mut rng = Random::new();
+            vec![
+                format!("u32 = {}", rng.rand()),
+                format!("u64 = {}", rng.u64()),
+                format!("f64 = {:.6}", rng.double()),
+            ]
+        },
+    );
 
     support::task_with_output("Default backend display", || {
         let rng = Random::new();

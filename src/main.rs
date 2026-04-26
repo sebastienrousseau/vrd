@@ -25,11 +25,12 @@ fn parse_int(arg: &str) -> Option<u64> {
 }
 
 /// The core logic of the CLI, extracted for testability.
-pub fn run_cli(args: Vec<String>, writer: &mut impl Write) -> io::Result<()> {
-    let count: usize = args
-        .first()
-        .and_then(|a| parse_int(a))
-        .unwrap_or(1) as usize;
+pub fn run_cli(
+    args: Vec<String>,
+    writer: &mut impl Write,
+) -> io::Result<()> {
+    let count: usize =
+        args.first().and_then(|a| parse_int(a)).unwrap_or(1) as usize;
 
     let mut rng = match args.get(1).and_then(|a| parse_int(a)) {
         Some(seed) => Random::from_u64_seed(seed),
@@ -76,9 +77,17 @@ mod tests {
         // Count only
         run_cli(vec!["5".to_string()], &mut buffer).unwrap();
         // Count and seed
-        run_cli(vec!["1".to_string(), "0x1234".to_string()], &mut buffer).unwrap();
+        run_cli(
+            vec!["1".to_string(), "0x1234".to_string()],
+            &mut buffer,
+        )
+        .unwrap();
         // Invalid count, invalid seed
-        run_cli(vec!["invalid".to_string(), "invalid".to_string()], &mut buffer).unwrap();
+        run_cli(
+            vec!["invalid".to_string(), "invalid".to_string()],
+            &mut buffer,
+        )
+        .unwrap();
     }
 
     #[test]

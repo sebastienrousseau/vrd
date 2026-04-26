@@ -56,7 +56,9 @@ fn main() {
         alphabet.extend_from_slice(lower);
         alphabet.extend_from_slice(digits);
         (0..5)
-            .map(|i| format!("token-{i}: {}", make(&mut rng, &alphabet, 8)))
+            .map(|i| {
+                format!("token-{i}: {}", make(&mut rng, &alphabet, 8))
+            })
             .collect()
     });
 

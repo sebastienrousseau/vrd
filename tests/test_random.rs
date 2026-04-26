@@ -15,9 +15,9 @@ mod tests {
     #[test]
     fn test_new() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         assert_ne!(rng.rand(), rng.rand());
     }
 
@@ -25,9 +25,9 @@ mod tests {
     #[test]
     fn test_seed() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         rng.seed(42);
         let val1 = rng.rand();
         rng.seed(42);
@@ -40,9 +40,9 @@ mod tests {
     #[test]
     fn test_int() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         rng.seed(20);
         for _ in 0..100 {
             let random_int = rng.int(1, 10);
@@ -54,9 +54,9 @@ mod tests {
     #[test]
     fn test_int_min_max_equal() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         assert_eq!(rng.int(5, 5), 5);
     }
 
@@ -65,9 +65,9 @@ mod tests {
     #[should_panic(expected = "min must be <= max for int")]
     fn test_int_min_greater_than_max() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         rng.int(10, 5);
     }
 
@@ -75,9 +75,9 @@ mod tests {
     #[test]
     fn test_uint_min_max_equal() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         assert_eq!(rng.uint(5, 5), 5);
     }
 
@@ -86,9 +86,9 @@ mod tests {
     #[test]
     fn test_float() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         rng.seed(42);
         let result = rng.float();
         assert!((0.0..1.0).contains(&result));
@@ -98,9 +98,9 @@ mod tests {
     #[test]
     fn test_double() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         rng.seed(42);
         let result = rng.double();
         assert!((0.0..1.0).contains(&result));
@@ -120,9 +120,9 @@ mod tests {
     #[test]
     fn test_xoshiro_backend() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         rng.seed(12345);
         assert_eq!(rng.mti(), 0); // Xoshiro should return 0 for mti
         let val = rng.rand();
@@ -140,9 +140,9 @@ mod tests {
     #[test]
     fn test_try_fill_bytes() {
         #[cfg(feature = "std")]
-    let mut rng = Random::new();
-    #[cfg(not(feature = "std"))]
-    let mut rng = Random::from_u64_seed(0);
+        let mut rng = Random::new();
+        #[cfg(not(feature = "std"))]
+        let mut rng = Random::from_u64_seed(0);
         let mut dest = [0u8; 32];
         rng.try_fill_bytes(&mut dest).unwrap();
         assert!(dest.iter().any(|&x| x != 0));

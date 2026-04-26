@@ -75,10 +75,10 @@ impl fmt::Display for VrdError {
 #[cfg(feature = "std")]
 impl std::error::Error for VrdError {}
 
-/// Mersenne Twister configuration and constants.
-pub mod mersenne_twister;
 /// Convenience macros.
 pub mod macros;
+/// Mersenne Twister configuration and constants.
+pub mod mersenne_twister;
 /// The core `Random` facade.
 pub mod random;
 /// Xoshiro256++ implementation.

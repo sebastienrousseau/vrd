@@ -166,7 +166,7 @@ mod tests {
     #[test]
     fn test_exhaustive_mt_coverage() {
         let mut p = MersenneTwisterParams::default();
-        
+
         // Error Display
         let err = MersenneTwisterError::InvalidConfig("foo");
         let _ = format!("{}", err);
@@ -185,19 +185,29 @@ mod tests {
 
         // Validation branches
         p.matrix_a = 0;
-        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        assert!(
+            MersenneTwisterConfig::<624, 397>::validate(&p).is_err()
+        );
         p = MersenneTwisterParams::default();
         p.upper_mask = 0;
-        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        assert!(
+            MersenneTwisterConfig::<624, 397>::validate(&p).is_err()
+        );
         p = MersenneTwisterParams::default();
         p.lower_mask = 0;
-        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        assert!(
+            MersenneTwisterConfig::<624, 397>::validate(&p).is_err()
+        );
         p = MersenneTwisterParams::default();
         p.tempering_mask_b = 0;
-        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        assert!(
+            MersenneTwisterConfig::<624, 397>::validate(&p).is_err()
+        );
         p = MersenneTwisterParams::default();
         p.tempering_mask_c = 0;
-        assert!(MersenneTwisterConfig::<624, 397>::validate(&p).is_err());
+        assert!(
+            MersenneTwisterConfig::<624, 397>::validate(&p).is_err()
+        );
 
         // N, M bounds
         assert!(MersenneTwisterConfig::<0, 0>::validate(&p).is_err());
@@ -206,6 +216,8 @@ mod tests {
 
         // set_config
         let mut cfg = MersenneTwisterConfig::<624, 397>::default();
-        assert!(cfg.set_config(MersenneTwisterParams::default()).is_ok());
+        assert!(cfg
+            .set_config(MersenneTwisterParams::default())
+            .is_ok());
     }
 }

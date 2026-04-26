@@ -14,24 +14,30 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- bytes");
 
-    support::task_with_output("Random::bytes(n) returns a fresh Vec<u8>", || {
-        let mut rng = Random::from_u64_seed(0xB17E5);
-        let buf = rng.bytes(16);
-        vec![
-            format!("len = {}", buf.len()),
-            format!("hex = {}", to_hex(&buf)),
-        ]
-    });
+    support::task_with_output(
+        "Random::bytes(n) returns a fresh Vec<u8>",
+        || {
+            let mut rng = Random::from_u64_seed(0xB17E5);
+            let buf = rng.bytes(16);
+            vec![
+                format!("len = {}", buf.len()),
+                format!("hex = {}", to_hex(&buf)),
+            ]
+        },
+    );
 
-    support::task_with_output("try_fill_bytes fills any &mut [u8]", || {
-        let mut rng = Random::from_u64_seed(0xB17E5);
-        let mut buf = [0u8; 24];
-        rng.try_fill_bytes(&mut buf).unwrap();
-        vec![
-            format!("len (unaligned to 8) = {}", buf.len()),
-            format!("hex = {}", to_hex(&buf)),
-        ]
-    });
+    support::task_with_output(
+        "try_fill_bytes fills any &mut [u8]",
+        || {
+            let mut rng = Random::from_u64_seed(0xB17E5);
+            let mut buf = [0u8; 24];
+            rng.try_fill_bytes(&mut buf).unwrap();
+            vec![
+                format!("len (unaligned to 8) = {}", buf.len()),
+                format!("hex = {}", to_hex(&buf)),
+            ]
+        },
+    );
 
     support::task_with_output("Same seed -> same bytes", || {
         let mut a = Random::from_u64_seed(7);
@@ -49,5 +55,8 @@ fn main() {
 }
 
 fn to_hex(b: &[u8]) -> String {
-    b.iter().map(|x| format!("{x:02x}")).collect::<Vec<_>>().join("")
+    b.iter()
+        .map(|x| format!("{x:02x}"))
+        .collect::<Vec<_>>()
+        .join("")
 }

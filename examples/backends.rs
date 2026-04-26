@@ -13,15 +13,19 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- backends");
 
-    support::task_with_output("Same seed yields different streams per backend", || {
-        let mut xs = Random::from_u64_seed(42);
-        let mut mt = Random::new_mersenne_twister_with_seed(42);
-        vec![
-            format!("Xoshiro256++  : {}", xs.rand()),
-            format!("MersenneTwister: {}", mt.rand()),
-            "(streams differ — they are different algorithms)".into(),
-        ]
-    });
+    support::task_with_output(
+        "Same seed yields different streams per backend",
+        || {
+            let mut xs = Random::from_u64_seed(42);
+            let mut mt = Random::new_mersenne_twister_with_seed(42);
+            vec![
+                format!("Xoshiro256++  : {}", xs.rand()),
+                format!("MersenneTwister: {}", mt.rand()),
+                "(streams differ — they are different algorithms)"
+                    .into(),
+            ]
+        },
+    );
 
     support::task_with_output("State sizes", || {
         vec![

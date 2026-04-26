@@ -32,8 +32,10 @@ fn main() {
         },
     );
 
-    support::task_with_output("Configuring vrd for `no_std` projects", || {
-        vec![
+    support::task_with_output(
+        "Configuring vrd for `no_std` projects",
+        || {
+            vec![
             "[dependencies]".into(),
             "vrd = { version = \"0.0.10\", default-features = false }".into(),
             "".into(),
@@ -42,7 +44,8 @@ fn main() {
             "use vrd::Random;".into(),
             "let mut rng = Random::from_seed([0u8; 32]);".into(),
         ]
-    });
+        },
+    );
 
     support::task_with_output(
         "When you need heap APIs (bytes, sample, MT backend)",

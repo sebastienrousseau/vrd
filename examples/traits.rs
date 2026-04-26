@@ -15,29 +15,35 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- traits");
 
-    support::task_with_output("Rng methods (next_u32, next_u64, fill_bytes)", || {
-        let mut rng = Random::from_u64_seed(1);
-        let u32_v = rng.next_u32();
-        let u64_v = rng.next_u64();
-        let mut buf = [0u8; 8];
-        rng.fill_bytes(&mut buf);
-        vec![
-            format!("next_u32  = {u32_v}"),
-            format!("next_u64  = {u64_v}"),
-            format!("fill_bytes = {buf:02x?}"),
-        ]
-    });
+    support::task_with_output(
+        "Rng methods (next_u32, next_u64, fill_bytes)",
+        || {
+            let mut rng = Random::from_u64_seed(1);
+            let u32_v = rng.next_u32();
+            let u64_v = rng.next_u64();
+            let mut buf = [0u8; 8];
+            rng.fill_bytes(&mut buf);
+            vec![
+                format!("next_u32  = {u32_v}"),
+                format!("next_u64  = {u64_v}"),
+                format!("fill_bytes = {buf:02x?}"),
+            ]
+        },
+    );
 
-    support::task_with_output("TryRng methods (try_next_u32, try_fill_bytes)", || {
-        let mut rng = Random::from_u64_seed(1);
-        let v = rng.try_next_u32().expect("Infallible");
-        let mut buf = [0u8; 8];
-        rng.try_fill_bytes(&mut buf).expect("Infallible");
-        vec![
-            format!("try_next_u32 = {v}"),
-            format!("try_fill_bytes -> {buf:02x?}"),
-        ]
-    });
+    support::task_with_output(
+        "TryRng methods (try_next_u32, try_fill_bytes)",
+        || {
+            let mut rng = Random::from_u64_seed(1);
+            let v = rng.try_next_u32().expect("Infallible");
+            let mut buf = [0u8; 8];
+            rng.try_fill_bytes(&mut buf).expect("Infallible");
+            vec![
+                format!("try_next_u32 = {v}"),
+                format!("try_fill_bytes -> {buf:02x?}"),
+            ]
+        },
+    );
 
     support::task_with_output(
         "SeedableRng plugs Random into the wider rand ecosystem",

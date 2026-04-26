@@ -26,17 +26,20 @@ fn main() {
         vec![format!("d20 = {}", roll(&mut rng, 20))]
     });
 
-    support::task_with_output("4d6 — drop the lowest (D&D ability rolls)", || {
-        let mut rng = Random::from_u64_seed(0xD6D6);
-        (0..6)
-            .map(|i| {
-                let mut rolls = roll_n(&mut rng, 4, 6);
-                rolls.sort_unstable();
-                let total: i32 = rolls.iter().skip(1).sum();
-                format!("ability {i}: {rolls:?} -> {total}")
-            })
-            .collect()
-    });
+    support::task_with_output(
+        "4d6 — drop the lowest (D&D ability rolls)",
+        || {
+            let mut rng = Random::from_u64_seed(0xD6D6);
+            (0..6)
+                .map(|i| {
+                    let mut rolls = roll_n(&mut rng, 4, 6);
+                    rolls.sort_unstable();
+                    let total: i32 = rolls.iter().skip(1).sum();
+                    format!("ability {i}: {rolls:?} -> {total}")
+                })
+                .collect()
+        },
+    );
 
     support::task_with_output("Histogram of 10,000 d6 rolls", || {
         let mut rng = Random::from_u64_seed(7);

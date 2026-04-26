@@ -101,6 +101,8 @@ where
 /// Final summary line.
 pub(crate) fn summary(count: usize) {
     println!();
-    println!("  \x1b[1;32m{CHECK} {count} operations completed.\x1b[0m");
+    println!(
+        "  \x1b[1;32m{CHECK} {count} operations completed.\x1b[0m"
+    );
     println!();
 }

@@ -13,27 +13,33 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- seed");
 
-    support::task_with_output("from_u64_seed reproduces the sequence", || {
-        let mut a = Random::from_u64_seed(0xCAFE_BABE);
-        let mut b = Random::from_u64_seed(0xCAFE_BABE);
-        (0..4)
+    support::task_with_output(
+        "from_u64_seed reproduces the sequence",
+        || {
+            let mut a = Random::from_u64_seed(0xCAFE_BABE);
+            let mut b = Random::from_u64_seed(0xCAFE_BABE);
+            (0..4)
             .map(|i| {
                 let av = a.rand();
                 let bv = b.rand();
                 format!("draw {i}: a = {av:>10}, b = {bv:>10}, equal = {}", av == bv)
             })
             .collect()
-    });
+        },
+    );
 
-    support::task_with_output("from_seed accepts a 32-byte seed", || {
-        let seed = *b"vrd-deterministic-32-byte-seed!!";
-        let mut rng = Random::from_seed(seed);
-        vec![
-            format!("seed = {} bytes", seed.len()),
-            format!("first  = {}", rng.rand()),
-            format!("second = {}", rng.rand()),
-        ]
-    });
+    support::task_with_output(
+        "from_seed accepts a 32-byte seed",
+        || {
+            let seed = *b"vrd-deterministic-32-byte-seed!!";
+            let mut rng = Random::from_seed(seed);
+            vec![
+                format!("seed = {} bytes", seed.len()),
+                format!("first  = {}", rng.rand()),
+                format!("second = {}", rng.rand()),
+            ]
+        },
+    );
 
     support::task_with_output("Re-seeding rewinds the stream", || {
         let mut rng = Random::from_u64_seed(1);

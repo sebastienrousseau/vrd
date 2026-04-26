@@ -218,9 +218,7 @@ impl MersenneTwister {
                 + (self.mt[(i + 1) % N] & config.params.lower_mask);
             let x_a = x >> 1;
             self.mt[i] = if x % 2 != 0 {
-                self.mt[(i + M) % N]
-                    ^ x_a
-                    ^ config.params.matrix_a
+                self.mt[(i + M) % N] ^ x_a ^ config.params.matrix_a
             } else {
                 self.mt[(i + M) % N] ^ x_a
             };
@@ -647,7 +645,8 @@ impl Random {
     #[inline]
     pub fn bounded(&mut self, range: u32) -> u32 {
         assert!(range > 0, "range must be greater than zero");
-        let mut x = u64::from(self.rand()).wrapping_mul(u64::from(range));
+        let mut x =
+            u64::from(self.rand()).wrapping_mul(u64::from(range));
         let mut l = x as u32;
         if l < range {
             let t = range.wrapping_neg() % range;
@@ -744,10 +743,7 @@ impl Random {
     }
 
     /// Picks a random reference into `values`.
-    pub fn choose<'a, T>(
-        &mut self,
-        values: &'a [T],
-    ) -> Option<&'a T> {
+    pub fn choose<'a, T>(&mut self, values: &'a [T]) -> Option<&'a T> {
         if values.is_empty() {
             return None;
         }
@@ -933,7 +929,10 @@ impl Default for Random {
 }
 
 impl core::fmt::Display for Random {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut core::fmt::Formatter<'_>,
+    ) -> core::fmt::Result {
         match &self.backend {
             RngBackend::Xoshiro256PlusPlus(_) => {
                 write!(f, "Random {{ backend: Xoshiro256PlusPlus }}")
@@ -1123,7 +1122,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "choices and weights must have the same length")]
+    #[should_panic(
+        expected = "choices and weights must have the same length"
+    )]
     fn test_weighted_choice_diff_length() {
         let mut rng = Random::from_u64_seed(42);
         let choices = [1, 2];

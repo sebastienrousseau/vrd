@@ -24,25 +24,24 @@ fn maybe_fail(flag: bool) -> Result<u32, VrdError> {
 fn main() {
     support::header("vrd -- errors");
 
-    support::task_with_output("VrdError carries a &'static str (no_std-friendly)", || {
-        let ok = maybe_fail(false);
-        let err = maybe_fail(true);
-        vec![
-            format!("ok  = {ok:?}"),
-            format!("err = {err:?}"),
-            format!(
-                "display = \"{}\"",
-                err.unwrap_err()
-            ),
-        ]
-    });
+    support::task_with_output(
+        "VrdError carries a &'static str (no_std-friendly)",
+        || {
+            let ok = maybe_fail(false);
+            let err = maybe_fail(true);
+            vec![
+                format!("ok  = {ok:?}"),
+                format!("err = {err:?}"),
+                format!("display = \"{}\"", err.unwrap_err()),
+            ]
+        },
+    );
 
     support::task_with_output(
         "MersenneTwisterError is returned by validate()",
         || {
             // Invalid: M >= N
-            let bad =
-                MersenneTwisterConfig::<624, 700>::new();
+            let bad = MersenneTwisterConfig::<624, 700>::new();
             let msg = match bad {
                 Err(MersenneTwisterError::InvalidConfig(m)) => m,
                 _ => "BUG: should have failed",

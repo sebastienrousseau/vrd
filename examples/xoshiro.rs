@@ -23,15 +23,22 @@ fn main() {
         ]
     });
 
-    support::task_with_output("SplitMix64 whitens low-entropy seeds", || {
-        let mut zeros = Xoshiro256PlusPlus::from_seed([0u8; 32]);
-        let mut ones = Xoshiro256PlusPlus::from_seed([1u8; 32]);
-        vec![
-            format!("seed [0;32]: first u64 = {}", zeros.next_u64()),
-            format!("seed [1;32]: first u64 = {}", ones.next_u64()),
-            "Both non-zero — proves SplitMix64 whitening works.".into(),
-        ]
-    });
+    support::task_with_output(
+        "SplitMix64 whitens low-entropy seeds",
+        || {
+            let mut zeros = Xoshiro256PlusPlus::from_seed([0u8; 32]);
+            let mut ones = Xoshiro256PlusPlus::from_seed([1u8; 32]);
+            vec![
+                format!(
+                    "seed [0;32]: first u64 = {}",
+                    zeros.next_u64()
+                ),
+                format!("seed [1;32]: first u64 = {}", ones.next_u64()),
+                "Both non-zero — proves SplitMix64 whitening works."
+                    .into(),
+            ]
+        },
+    );
 
     support::task_with_output(
         "jump() advances by 2^128, partitioning sequences",
@@ -48,19 +55,25 @@ fn main() {
         },
     );
 
-    support::task_with_output("fill_bytes handles unaligned lengths", || {
-        let mut rng = Xoshiro256PlusPlus::from_u64_seed(7);
-        let mut buf = [0u8; 17];
-        rng.fill_bytes(&mut buf);
-        vec![
-            format!("len = {}", buf.len()),
-            format!("hex = {}", hex(&buf)),
-        ]
-    });
+    support::task_with_output(
+        "fill_bytes handles unaligned lengths",
+        || {
+            let mut rng = Xoshiro256PlusPlus::from_u64_seed(7);
+            let mut buf = [0u8; 17];
+            rng.fill_bytes(&mut buf);
+            vec![
+                format!("len = {}", buf.len()),
+                format!("hex = {}", hex(&buf)),
+            ]
+        },
+    );
 
     support::summary(4);
 }
 
 fn hex(b: &[u8]) -> String {
-    b.iter().map(|x| format!("{x:02x}")).collect::<Vec<_>>().join("")
+    b.iter()
+        .map(|x| format!("{x:02x}"))
+        .collect::<Vec<_>>()
+        .join("")
 }

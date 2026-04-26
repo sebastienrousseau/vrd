@@ -60,16 +60,13 @@ impl Xoshiro256PlusPlus {
         let mut sm = u64::from_le_bytes([
             seed[0], seed[1], seed[2], seed[3], seed[4], seed[5],
             seed[6], seed[7],
-        ])
-        ^ u64::from_le_bytes([
+        ]) ^ u64::from_le_bytes([
             seed[8], seed[9], seed[10], seed[11], seed[12], seed[13],
             seed[14], seed[15],
-        ])
-        ^ u64::from_le_bytes([
+        ]) ^ u64::from_le_bytes([
             seed[16], seed[17], seed[18], seed[19], seed[20], seed[21],
             seed[22], seed[23],
-        ])
-        ^ u64::from_le_bytes([
+        ]) ^ u64::from_le_bytes([
             seed[24], seed[25], seed[26], seed[27], seed[28], seed[29],
             seed[30], seed[31],
         ]);
@@ -357,7 +354,8 @@ mod xoshiro_final_coverage {
     #[test]
     fn test_xoshiro_seedable_rng() {
         let seed = [1u8; 32];
-        let mut rng = <Xoshiro256PlusPlus as SeedableRng>::from_seed(seed);
+        let mut rng =
+            <Xoshiro256PlusPlus as SeedableRng>::from_seed(seed);
         assert_ne!(rng.next_u64(), 0);
     }
 }

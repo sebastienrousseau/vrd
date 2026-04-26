@@ -13,19 +13,22 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- shuffle");
 
-    support::task_with_output("shuffle reorders without dropping elements", || {
-        let mut rng = Random::from_u64_seed(7);
-        let mut deck: Vec<u32> = (1..=10).collect();
-        let original: Vec<_> = deck.to_vec();
-        rng.shuffle(&mut deck);
-        let mut sorted = deck.clone();
-        sorted.sort_unstable();
-        vec![
-            format!("original = {original:?}"),
-            format!("shuffled = {deck:?}"),
-            format!("multiset preserved = {}", sorted == original),
-        ]
-    });
+    support::task_with_output(
+        "shuffle reorders without dropping elements",
+        || {
+            let mut rng = Random::from_u64_seed(7);
+            let mut deck: Vec<u32> = (1..=10).collect();
+            let original: Vec<_> = deck.to_vec();
+            rng.shuffle(&mut deck);
+            let mut sorted = deck.clone();
+            sorted.sort_unstable();
+            vec![
+                format!("original = {original:?}"),
+                format!("shuffled = {deck:?}"),
+                format!("multiset preserved = {}", sorted == original),
+            ]
+        },
+    );
 
     support::task_with_output("Same seed -> same shuffle", || {
         let mut a = Random::from_u64_seed(42);

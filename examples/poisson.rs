@@ -13,22 +13,22 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- poisson");
 
-    support::task_with_output("poisson(3.0) — first 12 samples", || {
-        let mut rng = Random::from_u64_seed(0xF15);
-        (0..12)
-            .map(|_| format!("{}", rng.poisson(3.0)))
-            .collect()
-    });
+    support::task_with_output(
+        "poisson(3.0) — first 12 samples",
+        || {
+            let mut rng = Random::from_u64_seed(0xF15);
+            (0..12).map(|_| format!("{}", rng.poisson(3.0))).collect()
+        },
+    );
 
     support::task_with_output("Mean approaches lambda", || {
         let n = 30_000usize;
         let mut lines = Vec::new();
         for &lambda in &[0.5, 1.0, 3.0, 7.0] {
             let mut rng = Random::from_u64_seed(0xF15);
-            let mean: f64 = (0..n)
-                .map(|_| rng.poisson(lambda) as f64)
-                .sum::<f64>()
-                / n as f64;
+            let mean: f64 =
+                (0..n).map(|_| rng.poisson(lambda) as f64).sum::<f64>()
+                    / n as f64;
             lines.push(format!(
                 "lambda = {lambda:.1} -> mean = {mean:.4}",
             ));

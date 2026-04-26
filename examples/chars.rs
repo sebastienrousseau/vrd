@@ -25,17 +25,21 @@ fn main() {
         ]
     });
 
-    support::task_with_output("rand_alphanumeric! covers upper, lower, digits", || {
-        let mut rng = Random::from_u64_seed(2024);
-        let s: String = (0..32).map(|_| rand_alphanumeric!(rng)).collect();
-        vec![
-            format!("32 chars = {s}"),
-            format!(
-                "all alphanumeric = {}",
-                s.chars().all(|c| c.is_ascii_alphanumeric())
-            ),
-        ]
-    });
+    support::task_with_output(
+        "rand_alphanumeric! covers upper, lower, digits",
+        || {
+            let mut rng = Random::from_u64_seed(2024);
+            let s: String =
+                (0..32).map(|_| rand_alphanumeric!(rng)).collect();
+            vec![
+                format!("32 chars = {s}"),
+                format!(
+                    "all alphanumeric = {}",
+                    s.chars().all(|c| c.is_ascii_alphanumeric())
+                ),
+            ]
+        },
+    );
 
     support::summary(2);
 }

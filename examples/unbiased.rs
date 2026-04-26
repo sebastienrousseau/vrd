@@ -28,14 +28,17 @@ fn main() {
         report(n, &counts)
     });
 
-    support::task_with_output("Naive `rand() % 7` for comparison", || {
-        let mut rng = Random::from_u64_seed(0xD15EA5E);
-        let mut counts = [0u64; 7];
-        for _ in 0..n {
-            counts[(rng.rand() % range) as usize] += 1;
-        }
-        report(n, &counts)
-    });
+    support::task_with_output(
+        "Naive `rand() % 7` for comparison",
+        || {
+            let mut rng = Random::from_u64_seed(0xD15EA5E);
+            let mut counts = [0u64; 7];
+            for _ in 0..n {
+                counts[(rng.rand() % range) as usize] += 1;
+            }
+            report(n, &counts)
+        },
+    );
 
     support::summary(2);
 }
