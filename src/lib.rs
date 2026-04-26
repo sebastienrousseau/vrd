@@ -14,7 +14,7 @@
 #![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
-#![doc = "Minimum supported Rust version: 1.56.0"]
+#![doc = "Minimum supported Rust version: 1.70.0"]
 
 //! # Random (VRD)
 //!
