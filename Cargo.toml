@@ -1,5 +1,5 @@
 [package]
-authors = ["The Random (VRD) Contributors"]
+authors = ["The vrd Contributors"]
 build = "build.rs"
 autoexamples = false
 categories = ["algorithms", "no-std", "embedded"]

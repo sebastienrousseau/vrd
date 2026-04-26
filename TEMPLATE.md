@@ -1,11 +1,11 @@
 <!-- markdownlint-disable MD033 MD041 -->
 
 <img src="https://cloudcdn.pro/vrd/v1/logos/vrd.svg"
-alt="Random (VRD) logo" width="66" align="right" />
+alt="vrd logo" width="66" align="right" />
 
 <!-- markdownlint-enable MD033 MD041 -->
 
-# Random (VRD)
+# Versatile Random Distributions (VRD)
 
 A lightweight, `no_std`-friendly random number generator backed by Xoshiro256++,
 with optional Mersenne Twister support.
@@ -36,7 +36,7 @@ Bounded integer sampling is unbiased (Lemire's nearly-divisionless method);
 floats carry full 24-bit (`f32`) and 53-bit (`f64`) mantissa precision; the
 crate compiles for `no_std` targets such as Cortex-M with no allocator.
 
-[00]: https://vrdlib.com "Random (VRD)"
+[00]: https://vrdlib.com "vrd"
 [03]: https://github.com/sebastienrousseau/vrd/issues "Issues"
 [04]: https://github.com/sebastienrousseau/vrd/blob/main/CONTRIBUTING.md "Contributing Instructions"
 [06]: https://crates.io/crates/vrd "Crates.io"

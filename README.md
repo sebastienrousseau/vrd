@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://cloudcdn.pro/vrd/v1/logos/vrd.svg" alt="Random (VRD) logo" width="128" />
+  <img src="https://cloudcdn.pro/vrd/v1/logos/vrd.svg" alt="vrd logo" width="128" />
 </p>
 
-<h1 align="center">Random (VRD)</h1>
+<h1 align="center">Versatile Random Distributions (VRD)</h1>
 
 <p align="center">
   <strong>A lightweight, <code>no_std</code>-friendly random number generator backed by Xoshiro256++, with optional Mersenne Twister support.</strong>

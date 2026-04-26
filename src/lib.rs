@@ -1,4 +1,4 @@
-// Copyright © 2023-2026 Random (VRD) library. All rights reserved.
+// Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full
 // license information.
@@ -16,7 +16,7 @@
 #![forbid(unsafe_code)]
 #![doc = "Minimum supported Rust version: 1.70.0"]
 
-//! # Random (VRD)
+//! # Versatile Random Distributions (VRD)
 //!
 //! [![Crates.io](https://img.shields.io/crates/v/vrd.svg)](https://crates.io/crates/vrd)
 //! [![Docs.rs](https://img.shields.io/docsrs/vrd.svg)](https://docs.rs/vrd)

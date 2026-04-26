@@ -1,4 +1,4 @@
-// Copyright © 2023-2026 Random (VRD) library. All rights reserved.
+// Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Tour of the most-used `Random` methods in one place.
