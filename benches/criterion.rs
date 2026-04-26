@@ -136,6 +136,112 @@ fn bench_wrapper_overhead(c: &mut Criterion) {
     group.finish();
 }
 
+/// Bounded integer sampling — the foundation of `int`/`uint`/
+/// `random_range`/`range`/`choose`/`shuffle`/`sample`. All routes
+/// land here, so a regression on `bounded` shows up everywhere.
+fn bench_bounded_sampling(c: &mut Criterion) {
+    let mut group = c.benchmark_group("bounded_sampling");
+
+    group.bench_function("bounded(7) — Lemire rejection ~hot", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.bounded(7)));
+    });
+
+    group.bench_function("bounded(1024) — power of two", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.bounded(1024)));
+    });
+
+    group.bench_function("int(-1000, 1000)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.int(-1000, 1000)));
+    });
+
+    group.bench_function("uint(0, 1000)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.uint(0, 1000)));
+    });
+
+    group.bench_function("random_range(0, 1000)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.random_range(0, 1000)));
+    });
+
+    group.finish();
+}
+
+/// Slice operations on the fixed allocation-free path: `choose`,
+/// `shuffle`, `sample`, `sample_with_replacement`, `rand_slice`.
+fn bench_slice_ops(c: &mut Criterion) {
+    let mut group = c.benchmark_group("slice_ops");
+
+    let pool: Vec<u32> = (0..256).collect();
+
+    group.bench_function("choose (256 elements)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.choose(&pool)));
+    });
+
+    group.bench_function("shuffle (32 elements)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        let mut deck: Vec<u32> = (0..32).collect();
+        b.iter(|| {
+            rng.shuffle(black_box(&mut deck));
+        });
+    });
+
+    group.bench_function("sample 8 from 256 (no replacement)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.sample(&pool, 8)));
+    });
+
+    group.bench_function("sample_with_replacement 8 from 256", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.sample_with_replacement(&pool, 8)));
+    });
+
+    group.bench_function("rand_slice (window of 16 from 256)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.rand_slice(&pool, 16)));
+    });
+
+    group.finish();
+}
+
+/// Float, bool, and char output. Confirms the bit-precise scaling
+/// (24 mantissa bits on `f32`, 53 on `f64`) doesn't add measurable
+/// overhead vs. the underlying `u32`/`u64` draw.
+fn bench_scalar_misc(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalar_misc");
+
+    group.bench_function("float() — f32 in [0, 1)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.float()));
+    });
+
+    group.bench_function("double() — f64 in [0, 1)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.double()));
+    });
+
+    group.bench_function("bool(0.5)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.bool(0.5)));
+    });
+
+    group.bench_function("char()", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.char()));
+    });
+
+    group.bench_function("string(16)", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.string(16)));
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_rng_u32,
@@ -143,5 +249,8 @@ criterion_group!(
     bench_fill_bytes,
     bench_distributions,
     bench_wrapper_overhead,
+    bench_bounded_sampling,
+    bench_slice_ops,
+    bench_scalar_misc,
 );
 criterion_main!(benches);
