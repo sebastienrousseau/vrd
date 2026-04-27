@@ -474,6 +474,41 @@ pub struct Random {
     backend: RngBackend,
 }
 
+/// Iterator returned by [`Random::iter_bytes`].
+///
+/// Buffers a `u64` per 8 bytes, so cost-per-byte matches
+/// [`Random::try_fill_bytes`].
+///
+/// # Examples
+///
+/// ```
+/// use vrd::Random;
+///
+/// let mut rng = Random::from_u64_seed(1);
+/// let mut iter = rng.iter_bytes();
+/// let _: u8 = iter.next().unwrap();
+/// ```
+#[derive(Debug)]
+pub struct ByteIter<'a> {
+    rng: &'a mut Random,
+    buf: [u8; 8],
+    idx: u8,
+}
+
+impl Iterator for ByteIter<'_> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<u8> {
+        if self.idx >= 8 {
+            self.buf = self.rng.u64().to_le_bytes();
+            self.idx = 0;
+        }
+        let b = self.buf[self.idx as usize];
+        self.idx += 1;
+        Some(b)
+    }
+}
+
 impl Random {
     // ----------------------------- constructors -----------------------------
 
@@ -1001,6 +1036,257 @@ impl Random {
     #[cfg(feature = "alloc")]
     pub fn string(&mut self, length: usize) -> String {
         (0..length).map(|_| self.char()).collect()
+    }
+
+    // -------------------------- iterator adapters ---------------------------
+
+    /// Returns an unbounded iterator yielding random `u32` values.
+    ///
+    /// The iterator borrows `self` mutably; collect-into-Vec or
+    /// `.take(n)` to bound it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let xs: Vec<u32> = rng.iter_u32().take(5).collect();
+    /// assert_eq!(xs.len(), 5);
+    /// # }
+    /// ```
+    pub fn iter_u32(&mut self) -> impl Iterator<Item = u32> + '_ {
+        core::iter::from_fn(move || Some(self.rand()))
+    }
+
+    /// Returns an unbounded iterator yielding random `u64` values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let xs: Vec<u64> = rng.iter_u64().take(5).collect();
+    /// assert_eq!(xs.len(), 5);
+    /// # }
+    /// ```
+    pub fn iter_u64(&mut self) -> impl Iterator<Item = u64> + '_ {
+        core::iter::from_fn(move || Some(self.u64()))
+    }
+
+    /// Returns an unbounded iterator yielding random bytes.
+    ///
+    /// Internally buffers a `u64` per 8 bytes — the same throughput as
+    /// [`Self::try_fill_bytes`], but ergonomic for `take`/`collect` use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let bytes: Vec<u8> = rng.iter_bytes().take(16).collect();
+    /// assert_eq!(bytes.len(), 16);
+    /// # }
+    /// ```
+    pub fn iter_bytes(&mut self) -> ByteIter<'_> {
+        ByteIter {
+            rng: self,
+            buf: [0u8; 8],
+            idx: 8,
+        }
+    }
+
+    // ----------------------------- UUIDs / tokens ---------------------------
+
+    /// Generates a random 16-byte buffer formatted as an RFC 4122
+    /// **version 4** UUID. Allocation-free.
+    ///
+    /// Variant bits and version bits are set per spec; the remaining
+    /// 122 bits come from the active backend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let bytes = rng.uuid_v4_bytes();
+    /// // Version 4: high nibble of byte 6 is 0x4.
+    /// assert_eq!(bytes[6] >> 4, 0x4);
+    /// // Variant 10x: high two bits of byte 8 are 0b10.
+    /// assert_eq!(bytes[8] >> 6, 0b10);
+    /// ```
+    pub fn uuid_v4_bytes(&mut self) -> [u8; 16] {
+        let mut bytes = [0u8; 16];
+        // try_fill_bytes is infallible for both backends.
+        let _ = TryRng::try_fill_bytes(self, &mut bytes);
+        // RFC 4122 §4.4: version 4 in the high nibble of byte 6.
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        // RFC 4122 §4.1.1: variant 10x in the top two bits of byte 8.
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        bytes
+    }
+
+    /// Generates a random RFC 4122 v4 UUID as a hyphenated lowercase
+    /// `String`. Requires the `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let s = rng.uuid_v4();
+    /// assert_eq!(s.len(), 36);
+    /// // Hyphens at the canonical 8-4-4-4-12 positions.
+    /// assert_eq!(s.as_bytes()[8], b'-');
+    /// assert_eq!(s.as_bytes()[13], b'-');
+    /// assert_eq!(s.as_bytes()[18], b'-');
+    /// assert_eq!(s.as_bytes()[23], b'-');
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn uuid_v4(&mut self) -> String {
+        let b = self.uuid_v4_bytes();
+        let mut s = String::with_capacity(36);
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+        let push_hex = |byte: u8, s: &mut String| {
+            s.push(HEX[(byte >> 4) as usize] as char);
+            s.push(HEX[(byte & 0x0f) as usize] as char);
+        };
+        for (i, &byte) in b.iter().enumerate() {
+            if matches!(i, 4 | 6 | 8 | 10) {
+                s.push('-');
+            }
+            push_hex(byte, &mut s);
+        }
+        s
+    }
+
+    /// Generates a lowercase hex token of `byte_len` bytes (so the
+    /// returned string has length `byte_len * 2`). Requires `alloc`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let token = rng.hex_token(16);
+    /// assert_eq!(token.len(), 32);
+    /// assert!(token.chars().all(|c| c.is_ascii_hexdigit()));
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn hex_token(&mut self, byte_len: usize) -> String {
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+        let mut s = String::with_capacity(byte_len * 2);
+        for _ in 0..byte_len {
+            let byte = self.rand() as u8;
+            s.push(HEX[(byte >> 4) as usize] as char);
+            s.push(HEX[(byte & 0x0f) as usize] as char);
+        }
+        s
+    }
+
+    /// Generates an unpadded URL-safe **base64** token of `byte_len`
+    /// random bytes. The returned string has length
+    /// `((byte_len + 2) / 3) * 4`, minus padding. Alphabet per
+    /// RFC 4648 §5: `A-Z a-z 0-9 - _`. Requires `alloc`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let token = rng.base64_token(15);
+    /// assert_eq!(token.len(), 20); // 15 bytes -> 20 base64 chars (no padding)
+    /// assert!(token.chars().all(|c| matches!(c,
+    ///     'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_'
+    /// )));
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn base64_token(&mut self, byte_len: usize) -> String {
+        const ALPHABET: &[u8; 64] =
+            b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+        let mut bytes = alloc::vec![0u8; byte_len];
+        let _ = TryRng::try_fill_bytes(self, &mut bytes);
+        let n = bytes.len();
+        let chunks = n / 3;
+        let rem = n % 3;
+        let mut out = String::with_capacity(((n + 2) / 3) * 4);
+        for i in 0..chunks {
+            let a = bytes[i * 3];
+            let b = bytes[i * 3 + 1];
+            let c = bytes[i * 3 + 2];
+            out.push(ALPHABET[(a >> 2) as usize] as char);
+            out.push(
+                ALPHABET[(((a & 0x03) << 4) | (b >> 4)) as usize]
+                    as char,
+            );
+            out.push(
+                ALPHABET[(((b & 0x0f) << 2) | (c >> 6)) as usize]
+                    as char,
+            );
+            out.push(ALPHABET[(c & 0x3f) as usize] as char);
+        }
+        if rem == 1 {
+            let a = bytes[chunks * 3];
+            out.push(ALPHABET[(a >> 2) as usize] as char);
+            out.push(ALPHABET[((a & 0x03) << 4) as usize] as char);
+        } else if rem == 2 {
+            let a = bytes[chunks * 3];
+            let b = bytes[chunks * 3 + 1];
+            out.push(ALPHABET[(a >> 2) as usize] as char);
+            out.push(
+                ALPHABET[(((a & 0x03) << 4) | (b >> 4)) as usize]
+                    as char,
+            );
+            out.push(ALPHABET[((b & 0x0f) << 2) as usize] as char);
+        }
+        out
+    }
+
+    // ------------------------ uniform float in (low, high) -------------------
+
+    /// Generates an `f64` uniformly distributed in `[low, high)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.uniform(-3.0, 3.0);
+    /// assert!((-3.0..3.0).contains(&x));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `low >= high` or if either bound is non-finite.
+    pub fn uniform(&mut self, low: f64, high: f64) -> f64 {
+        assert!(
+            low.is_finite() && high.is_finite(),
+            "bounds must be finite"
+        );
+        assert!(low < high, "low must be < high");
+        low + (high - low) * self.f64()
     }
 
     // ------------------------------ shuffling -------------------------------

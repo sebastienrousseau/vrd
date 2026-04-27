@@ -42,6 +42,30 @@ jobs:
       type: rust
       redirect-crate: vrd
 
+  # WebAssembly check — confirms the no_std core compiles for the
+  # browser/wasm runtime path. We test default-off and `alloc` only;
+  # the `std` path on `wasm32-unknown-unknown` requires getrandom's
+  # `js` shim and is downstream's responsibility, not ours.
+  wasm:
+    name: WebAssembly (wasm32-unknown-unknown)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable + wasm32-unknown-unknown
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo check (no defaults)
+        run: cargo check --target wasm32-unknown-unknown --no-default-features
+
+      - name: cargo check (alloc only)
+        run: cargo check --target wasm32-unknown-unknown --no-default-features --features alloc
+
   # no_std embedded target build — confirms the crate stays portable.
   embedded:
     name: no_std (thumbv7em-none-eabihf)

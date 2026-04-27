@@ -48,6 +48,10 @@ const EXAMPLES: &[&str] = &[
     "errors",
     "config",
     "nostd",
+    // Convenience helpers
+    "iterators",
+    "uuid",
+    "tokens",
 ];
 
 fn main() {
