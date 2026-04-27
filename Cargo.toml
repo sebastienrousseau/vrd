@@ -61,7 +61,7 @@ version_check = "0.9.5" # Check the Rust version used to compile the package.
 [dev-dependencies]
 # Development dependencies are only used for testing and building.
 assert_cmd = "2.0.16"
-criterion = "0.5.1"
+criterion = "0.8.2"
 
 [lib]
 crate-type = ["lib"]
