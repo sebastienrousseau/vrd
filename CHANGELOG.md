@@ -47,6 +47,7 @@ breaking changes; everything below is additive or documentation.
 - **100% rustdoc + 100% doctest examples** across every public item: 110 documented items, 97 with `# Examples` blocks, 99 doctests passing (was 53). `# Errors` and `# Panics` sections added on every fallible/panicking method.
 - README **TL;DR section removed** (information was already in the tagline, Highlights, and FAQ).
 - README **PGO + `target-cpu=native` documentation** — opt-in performance knobs documented for downstream consumers.
+- **Coverage policy in `CONTRIBUTING.md`** — canonical `cargo llvm-cov` command (`--ignore-filename-regex='main\.rs'`), exclusion rationale for the `process::exit` shim, and the documented `random.rs` stable-toolchain ceiling at ~96.4% regions (mechanical llvm-cov accounting, not behavioural gap).
 - **Strategic roadmap captured as GitHub issues** under two milestones:
   - [v0.0.11 — Performance follow-ups](https://github.com/sebastienrousseau/vrd/milestone/1): SIMD `fill_bytes` (#88), Ziggurat normal (#89).
   - [v0.1.0 — Strategic differentiators](https://github.com/sebastienrousseau/vrd/milestone/2): ChaCha20 CSPRNG (#90), quasi-random sequences (#91), `Random::split()` (#92), PractRand validation (#93), `fill_array<const N>` (#94), PCG backend (#95).

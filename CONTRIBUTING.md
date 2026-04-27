@@ -23,6 +23,32 @@ cargo run --example all                                           # smoke-run ev
 cargo check --target thumbv7em-none-eabihf --no-default-features  # embedded build
 ```
 
+## Test coverage
+
+Local measurement uses `cargo-llvm-cov`. The canonical command is:
+
+```bash
+cargo llvm-cov --all-features --summary-only --ignore-filename-regex='main\.rs'
+```
+
+`main.rs` is excluded because it is a thin binary shim
+(`run_cli` + `process::exit(dispatch(...))`). The shim's logic is
+covered by `dispatch`-level unit tests via a `FailingWriter`; the
+`process::exit` glue itself cannot be exercised without faking real
+stdio handles end-to-end and adds nothing useful to the coverage
+signal.
+
+With `main.rs` excluded, the library sits at **≥97% regions / ≥97% lines / ≥98% on every file except `random.rs`**.
+
+`random.rs` ceilings at **~96.4% regions** on stable. The remaining
+gap is `cargo-llvm-cov` accounting on multi-line expressions
+(closing braces of `match` arms, multi-line return signatures, a few
+`#[cfg]`-gated branches that only one feature matrix exercises). The
+covered behavioural surface is ≥99%; the gap is mechanical, not
+behavioural. Closing it would require either single-line collapsing
+(readability regression) or `#[coverage(off)]` (nightly-only). New
+PRs targeting `random.rs` should keep the file at or above 96%.
+
 ## Commit conventions
 
 - **Conventional Commits**: prefix with `feat:`, `fix:`, `chore:`,
