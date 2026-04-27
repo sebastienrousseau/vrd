@@ -12,9 +12,8 @@
 //!
 //! Run with `cargo bench`.
 
-use criterion::{
-    black_box, criterion_group, criterion_main, Criterion,
-};
+use core::hint::black_box;
+use criterion::{criterion_group, criterion_main, Criterion};
 use rand::rand_core::Rng;
 use vrd::xoshiro::Xoshiro256PlusPlus;
 use vrd::Random;
