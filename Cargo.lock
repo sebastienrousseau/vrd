@@ -1467,7 +1467,7 @@ dependencies = [
  "serde_json",
  "serde_yml",
  "tokio",
- "toml 0.8.23",
+ "toml 1.1.2+spec-1.1.0",
  "uuid",
  "version_check",
 ]
