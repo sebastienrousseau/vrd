@@ -40,12 +40,44 @@ use serde_big_array::BigArray;
 /// ```
 pub trait FloatExt {
     /// Natural logarithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// let n: f64 = std::f64::consts::E;
+    /// assert!((FloatExt::ln(n) - 1.0).abs() < 1e-12);
+    /// ```
     fn ln(self) -> Self;
+
     /// Square root.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// assert!((FloatExt::sqrt(4.0_f64) - 2.0).abs() < 1e-12);
+    /// ```
     fn sqrt(self) -> Self;
+
     /// Cosine.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// assert!(FloatExt::cos(0.0_f64) - 1.0 < 1e-12);
+    /// ```
     fn cos(self) -> Self;
+
     /// Exponential.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// assert!((FloatExt::exp(0.0_f64) - 1.0).abs() < 1e-12);
+    /// ```
     fn exp(self) -> Self;
 }
 
@@ -117,10 +149,32 @@ impl FloatExt for f64 {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MersenneTwister {
-    /// Internal state vector.
+    /// Internal MT19937 state vector — 624 32-bit words.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mt = MersenneTwister::new();
+    /// assert_eq!(mt.mt.len(), 624);
+    /// ```
     #[cfg_attr(feature = "serde", serde(with = "BigArray"))]
     pub mt: [u32; 624],
-    /// Current index into `mt`.
+
+    /// Current index into [`Self::mt`]. Reaches `624` and triggers
+    /// the next twist; an unseeded generator starts at `625`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mut mt = MersenneTwister::new();
+    /// assert_eq!(mt.mti, 625); // unseeded sentinel
+    /// mt.seed(1);
+    /// assert_eq!(mt.mti, 624);
+    /// ```
     pub mti: usize,
 }
 
@@ -361,9 +415,33 @@ impl SeedableRng for MersenneTwister {
 #[non_exhaustive]
 pub enum RngBackend {
     /// Xoshiro256++ — fast, small-state, statistically strong.
+    /// Default backend produced by [`Random::new`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::{Random, RngBackend};
+    ///
+    /// let rng = Random::from_u64_seed(1);
+    /// assert!(matches!(rng.backend(), RngBackend::Xoshiro256PlusPlus(_)));
+    /// ```
     Xoshiro256PlusPlus(Xoshiro256PlusPlus),
+
     /// Mersenne Twister (MT19937) — for callers needing legacy
-    /// reproducibility. Requires the `alloc` feature.
+    /// reproducibility. Requires the `alloc` feature; produced by
+    /// [`Random::new_mersenne_twister_with_seed`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::{Random, RngBackend};
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let rng = Random::new_mersenne_twister_with_seed(1);
+    /// assert!(matches!(rng.backend(), RngBackend::MersenneTwister(_)));
+    /// # }
+    /// ```
     #[cfg(feature = "alloc")]
     MersenneTwister(Box<MersenneTwister>),
 }
@@ -717,11 +795,35 @@ impl Random {
     }
 
     /// Inclusive alias for [`Self::int`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let n = rng.range(1, 10);
+    /// assert!((1..=10).contains(&n));
+    /// ```
     pub fn range(&mut self, min: i32, max: i32) -> i32 {
         self.int(min, max)
     }
 
     /// Generates an unbiased `u32` in `[min, max]` (inclusive).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let n = rng.uint(1, 100);
+    /// assert!((1..=100).contains(&n));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `min > max`.
     pub fn uint(&mut self, min: u32, max: u32) -> u32 {
         assert!(min <= max, "min must be <= max for uint");
         if min == max {
@@ -737,7 +839,23 @@ impl Random {
 
     // --------------------------- bools, chars ------------------------------
 
-    /// Generates a random `bool`.
+    /// Generates a random `bool` whose probability of `true` is
+    /// `probability`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let _coin: bool = rng.bool(0.5);
+    /// assert!(!rng.bool(0.0));
+    /// assert!( rng.bool(1.0));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `probability` is outside `[0.0, 1.0]`.
     pub fn bool(&mut self, probability: f64) -> bool {
         assert!(
             (0.0..=1.0).contains(&probability),
@@ -746,13 +864,38 @@ impl Random {
         self.f64() < probability
     }
 
-    /// Generates a lowercase ASCII character.
+    /// Generates a lowercase ASCII character in `'a'..='z'`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let c = rng.char();
+    /// assert!(c.is_ascii_lowercase());
+    /// ```
     pub fn char(&mut self) -> char {
         let v = self.bounded(26) as u8;
         (b'a' + v) as char
     }
 
-    /// Picks a random reference into `values`.
+    /// Picks a random reference into `values`. Returns `None` if the
+    /// slice is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool = [10, 20, 30, 40, 50];
+    /// let pick = rng.choose(&pool).unwrap();
+    /// assert!(pool.contains(pick));
+    ///
+    /// let empty: [i32; 0] = [];
+    /// assert!(rng.choose(&empty).is_none());
+    /// ```
     pub fn choose<'a, T>(&mut self, values: &'a [T]) -> Option<&'a T> {
         if values.is_empty() {
             return None;
@@ -763,14 +906,36 @@ impl Random {
 
     // ------------------------------ floats ---------------------------------
 
-    /// Generates an `f32` in `[0.0, 1.0)`.
+    /// Generates an `f32` in `[0.0, 1.0)` with full 24-bit mantissa
+    /// precision.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.float();
+    /// assert!((0.0..1.0).contains(&x));
+    /// ```
     #[inline]
     pub fn float(&mut self) -> f32 {
         const SCALE: f32 = 1.0 / ((1u32 << 24) as f32);
         ((self.rand() >> 8) as f32) * SCALE
     }
 
-    /// Generates an `f64` in `[0.0, 1.0)`.
+    /// Generates an `f64` in `[0.0, 1.0)` with full 53-bit mantissa
+    /// precision.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.double();
+    /// assert!((0.0..1.0).contains(&x));
+    /// ```
     #[inline]
     pub fn double(&mut self) -> f64 {
         const SCALE: f64 = 1.0 / ((1u64 << 53) as f64);
@@ -778,6 +943,16 @@ impl Random {
     }
 
     /// Alias for [`Self::double`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.f64();
+    /// assert!((0.0..1.0).contains(&x));
+    /// ```
     #[inline]
     pub fn f64(&mut self) -> f64 {
         self.double()
@@ -785,7 +960,21 @@ impl Random {
 
     // -------------------------- byte / Vec output --------------------------
 
-    /// Returns a fresh `Vec<u8>`.
+    /// Returns a fresh `Vec<u8>` of `len` random bytes. Requires the
+    /// `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let buf = rng.bytes(16);
+    /// assert_eq!(buf.len(), 16);
+    /// # }
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn bytes(&mut self, len: usize) -> Vec<u8> {
         let mut buf = alloc::vec![0u8; len];
@@ -793,7 +982,22 @@ impl Random {
         buf
     }
 
-    /// Returns a fresh `String`.
+    /// Returns a fresh `String` of `length` lowercase ASCII chars.
+    /// Requires the `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let s = rng.string(8);
+    /// assert_eq!(s.len(), 8);
+    /// assert!(s.chars().all(|c| c.is_ascii_lowercase()));
+    /// # }
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn string(&mut self, length: usize) -> String {
         (0..length).map(|_| self.char()).collect()
@@ -801,7 +1005,21 @@ impl Random {
 
     // ------------------------------ shuffling -------------------------------
 
-    /// Fisher-Yates shuffle.
+    /// Fisher-Yates shuffle in place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let mut deck = [1, 2, 3, 4, 5];
+    /// rng.shuffle(&mut deck);
+    /// // The shuffled array is a permutation of the original.
+    /// let mut sorted = deck;
+    /// sorted.sort_unstable();
+    /// assert_eq!(sorted, [1, 2, 3, 4, 5]);
+    /// ```
     pub fn shuffle<T>(&mut self, slice: &mut [T]) {
         if slice.len() < 2 {
             return;
@@ -812,7 +1030,29 @@ impl Random {
         }
     }
 
-    /// Sample `amount` references without replacement.
+    /// Sample `amount` references without replacement via partial
+    /// Fisher-Yates with `swap_remove` — O(amount) draws, each O(1).
+    /// Requires the `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool: Vec<u32> = (1..=20).collect();
+    /// let picks = rng.sample(&pool, 5);
+    /// assert_eq!(picks.len(), 5);
+    /// // No duplicates.
+    /// let mut as_vals: Vec<u32> = picks.iter().map(|r| **r).collect();
+    /// as_vals.sort_unstable();
+    /// let mut deduped = as_vals.clone();
+    /// deduped.dedup();
+    /// assert_eq!(as_vals, deduped);
+    /// # }
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn sample<'a, T>(
         &mut self,
@@ -829,7 +1069,26 @@ impl Random {
         result
     }
 
-    /// Sample `amount` references with replacement.
+    /// Sample `amount` references with replacement. Requires the
+    /// `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool = ["alpha", "beta", "gamma"];
+    /// let picks = rng.sample_with_replacement(&pool, 5);
+    /// assert_eq!(picks.len(), 5);
+    /// // Every pick is one of the pool entries (duplicates allowed).
+    /// for p in picks {
+    ///     assert!(pool.contains(p));
+    /// }
+    /// # }
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn sample_with_replacement<'a, T>(
         &mut self,
@@ -844,7 +1103,25 @@ impl Random {
         result
     }
 
-    /// Returns a contiguous random subslice.
+    /// Returns a contiguous random subslice of `length` from `slice`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool = [1, 2, 3, 4, 5, 6, 7, 8];
+    /// let window = rng.rand_slice(&pool, 3).unwrap();
+    /// assert_eq!(window.len(), 3);
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(&'static str)` when:
+    /// - the input slice is empty,
+    /// - `length` is `0`, or
+    /// - `length` exceeds `slice.len()`.
     pub fn rand_slice<'a, T>(
         &mut self,
         slice: &'a [T],
@@ -878,6 +1155,16 @@ impl Random {
     /// (~3 ns/sample), see issue tracker — Ziggurat needs build-time
     /// table generation and lives behind a `fast-distributions` feature
     /// in a future release.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let z = rng.normal(0.0, 1.0);
+    /// assert!(z.is_finite());
+    /// ```
     pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
         loop {
             // Map u, v from [0, 1) to (-1, 1).
@@ -893,7 +1180,22 @@ impl Random {
         }
     }
 
-    /// Exponential sample.
+    /// Exponential sample with the given `rate` (λ). Mean of the
+    /// distribution is `1.0 / rate`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.exponential(1.5);
+    /// assert!(x >= 0.0);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `rate <= 0.0`.
     pub fn exponential(&mut self, rate: f64) -> f64 {
         assert!(rate > 0.0, "rate must be positive");
         let u = 1.0 - self.f64();
@@ -901,7 +1203,20 @@ impl Random {
         -FloatExt::ln(u) / rate
     }
 
-    /// Poisson sample.
+    /// Poisson sample with the given `mean` (λ). Uses Knuth's
+    /// multiplicative algorithm; cost is O(λ).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let k = rng.poisson(3.0);
+    /// // k is a non-negative count; with mean 3.0, values cluster
+    /// // near 3 but the tail is unbounded.
+    /// let _: u64 = k;
+    /// ```
     pub fn poisson(&mut self, mean: f64) -> u64 {
         let l = FloatExt::exp(-mean);
         let mut k = 0u64;
@@ -918,7 +1233,17 @@ impl Random {
 
     // ------------------- MT-specific helpers (no-op on Xoshiro) ------------
 
-    /// Returns MT index.
+    /// Returns the current Mersenne-Twister state index. Returns `0`
+    /// when the active backend is Xoshiro256++.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let rng = Random::from_u64_seed(1);
+    /// assert_eq!(rng.mti(), 0); // Xoshiro backend
+    /// ```
     pub fn mti(&self) -> usize {
         match &self.backend {
             #[cfg(feature = "alloc")]
@@ -927,7 +1252,18 @@ impl Random {
         }
     }
 
-    /// Sets MT index.
+    /// Sets the Mersenne-Twister state index. No-op on the Xoshiro
+    /// backend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// rng.set_mti(0); // no-op on Xoshiro; mti() still returns 0
+    /// assert_eq!(rng.mti(), 0);
+    /// ```
     pub fn set_mti(&mut self, value: usize) {
         match &mut self.backend {
             #[cfg(feature = "alloc")]
@@ -938,7 +1274,17 @@ impl Random {
         }
     }
 
-    /// Forces MT twist.
+    /// Forces a Mersenne-Twister state-vector twist. No-op on the
+    /// Xoshiro backend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// rng.twist(); // no-op on Xoshiro
+    /// ```
     pub fn twist(&mut self) {
         match &mut self.backend {
             #[cfg(feature = "alloc")]
