@@ -42,7 +42,8 @@ Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Wi
 - **`no_std` ready** — pure-core build with no allocator: `Random::from_seed([u8; 32])` gives you a working RNG on any embedded target.
 - **Unbiased bounded sampling** — `int`, `uint`, `random_range`, `bounded` use Lemire's nearly-divisionless method, not modulo.
 - **Bit-precise floats** — `float()` carries 24 mantissa bits (the f32 maximum); `double()` / `f64()` carry 53 (the f64 maximum). Always `[0.0, 1.0)`.
-- **Distributions** — `normal`, `exponential`, `poisson` (`std`-free, via `libm`).
+- **Distributions** — `uniform(low, high)`, `normal`, `exponential`, `poisson` (`std`-free, via `libm`).
+- **Convenience helpers** — `iter_u32` / `iter_u64` / `iter_bytes` iterator adapters, `uuid_v4_bytes` (no_std) and `uuid_v4` (alloc), `hex_token`, `base64_token`. fastrand and oorandom don't ship these; they spare callers reaching for a second crate.
 - **`rand 0.10` traits** — implements `TryRng` (and the auto-derived `Rng`) plus `SeedableRng`, so vrd plugs into the wider `rand` ecosystem.
 
 ## Feature flags
@@ -50,7 +51,7 @@ Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Wi
 | Flag | Default? | What it does |
 | :--- | :--- | :--- |
 | `std` | yes | Entropy seeding via `rand::rng()`; `std::error::Error` impls. |
-| `alloc` | via `std` | `Random::bytes`, `Random::string`, `Random::sample`, the heap-stored Mersenne Twister backend. |
+| `alloc` | via `std` | `Random::bytes`, `Random::string`, `Random::sample`, `Random::uuid_v4`, `Random::hex_token`, `Random::base64_token`, the heap-stored Mersenne Twister backend. |
 | `serde` | no | `Serialize` / `Deserialize` derives for the public types. |
 
 Disable defaults to ship into `no_std`:
@@ -114,7 +115,6 @@ let v = mt.rand();
 The 0.0.10 release modernizes the architecture. Breaking changes:
 
 - `Random` now defaults to **Xoshiro256++**, not Mersenne Twister. Use `Random::new_mersenne_twister()` if you need MT.
-- The `pseudo()` method is gone (XOR-folding RNG outputs is statistically a no-op; the operation was misleading).
 - The generic `fill()` method is gone — use `Random::try_fill_bytes(&mut [u8])` from the `rand_core::TryRng` trait, or build types from `rand()` / `u64()`.
 - `int`, `uint`, `random_range` are now **unbiased** — outputs are uniformly distributed even when the requested range doesn't divide `2^32` cleanly. Outputs differ from prior versions for the same seed.
 - `MersenneTwisterError` lost its `IoError` and `SerializationError` variants — direct `serde_json` / `serde_yml` / `toml` helpers were removed. Use `serde` directly with the `serde` feature for that.
@@ -200,4 +200,4 @@ Reproducibility against existing MT-generated test vectors. Reach for `Random::n
 
 Dual-licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) or [MIT](https://opensource.org/licenses/MIT), at your option.
 
-<p align="right"><a href="#random-vrd">Back to Top</a></p>
+<p align="right"><a href="#versatile-random-distributions-vrd">Back to Top</a></p>

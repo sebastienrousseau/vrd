@@ -36,8 +36,12 @@
 //!   `bounded` use Lemire's nearly-divisionless method.
 //! - **Bit-precise floats:** `float()` carries 24 mantissa bits, `double()`
 //!   carries 53. Always `[0.0, 1.0)`.
-//! - **Distributions:** uniform, normal, exponential, Poisson — `std`-free
-//!   via `libm`.
+//! - **Distributions:** `uniform(low, high)`, `normal`, `exponential`,
+//!   `poisson` — `std`-free via `libm`.
+//! - **Convenience helpers:** `iter_u32` / `iter_u64` / `iter_bytes`
+//!   iterator adapters; `uuid_v4_bytes` (`no_std`) and `uuid_v4`
+//!   (`alloc`); `hex_token` and `base64_token` for URL-safe random
+//!   tokens.
 //! - **`rand 0.10` traits:** `TryRng`, the blanket-implemented `Rng`, and
 //!   `SeedableRng`.
 //!

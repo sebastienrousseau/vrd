@@ -5,6 +5,52 @@ All notable changes to `vrd` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Post-modernization polish layered on top of the `0.0.10` release. No
+breaking changes; everything below is additive or documentation.
+
+### Added
+
+- **Iterator adapters on `Random`** — `iter_u32()`, `iter_u64()`, and `iter_bytes()` return `impl Iterator<Item = T>` (the byte iterator is the new public `ByteIter` struct). Composes with `take` / `filter` / `collect` for ergonomic streaming.
+- **UUID v4 generation** — `Random::uuid_v4_bytes()` returns a `[u8; 16]` allocation-free (RFC 4122 §4.4 version + §4.1.1 variant bits set); `Random::uuid_v4()` returns the canonical hyphenated 36-char `String` (`alloc`).
+- **Random tokens** — `Random::hex_token(byte_len)` (lowercase hex, length `byte_len * 2`) and `Random::base64_token(byte_len)` (URL-safe base64 per RFC 4648 §5, no padding). Both `alloc`-only.
+- **Uniform float distribution** — `Random::uniform(low, high)` for `f64` in `[low, high)`.
+- **Property-based tests** — `tests/test_proptest.rs` adds 19 invariants × 256 cases each: bounded-below-range, int/uint inclusive bounds, random_range half-open, float/double/uniform in `[0, 1)` (or specified bounds), bool edges, char ASCII, choose-returns-member, shuffle-preserves-multiset, sample-distinct, determinism, iterator length, UUID format, hex/base64 token shape.
+- **WebAssembly CI gate** — new `wasm` job runs `cargo check --target wasm32-unknown-unknown` for `--no-default-features` and `--features alloc`. CI now spans macOS / Linux / Windows / Cortex-M / WebAssembly.
+- **Three new examples** — `examples/iterators.rs`, `examples/uuid.rs`, `examples/tokens.rs`. All wired into `examples/all.rs` and `Cargo.toml`'s `[[example]]` list.
+
+### Changed
+
+- **Crate identity** — full name `Versatile Random Distributions (VRD)` introduced once at the top of `README.md`, `lib.rs` rustdoc, `TEMPLATE.md`, and the GitHub repo description; every other reference uses lowercase `vrd`. Replaces the redundant paired form `Random (VRD)` (54 occurrences across 38 files). Pattern matches the `PCG (Permuted Congruential Generator)` / `MT19937 (Mersenne Twister)` convention.
+- **GitHub repo description and topics** — updated for 2026 RNG-niche SEO: 20 topics covering `rust`, `rng`, `prng`, `random-number-generator`, `xoshiro`, `xoshiro256`, `mersenne-twister`, `mt19937`, `no-std`, `no-alloc`, `embedded`, `cortex-m`, `rand`, `rand-core`, `distributions`, `algorithms`, `lightweight`, `fast`, `entropy`.
+- **MSRV claim** — `src/lib.rs` rustdoc preamble now matches `Cargo.toml` (`1.70.0`); the prior `1.56.0` claim was a false promise.
+- **TEMPLATE.md** — rewritten around the v0.0.10 dual-backend narrative; previously framed vrd as MT-only.
+- **CONTRIBUTING.md** — replaced generic boilerplate with an actionable pre-submit checklist mirroring the CI gates (`cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `cargo build --no-default-features`); documents signed-commit and `Assisted-by:` trailer conventions.
+- **Logo CDN migration** — image references moved from `kura.pro/vrd/images/` to `cloudcdn.pro/vrd/v1/`.
+- **`serde` minimum** bumped `1.0.209 → 1.0.228` to match the resolved lockfile (closes Dependabot PR #81).
+
+### Fixed
+
+- **Coverage gap on the MT-side `Random` API** — added `test_full_api_on_mersenne_backend` walking every public method on the MT backend, plus targeted tests for `Display` on MT, `set_mti` / `twist` no-op contract on Xoshiro, and `MersenneTwisterConfig::set_config` round-trip.
+- **README/code drift on `Random::pseudo`** — the migration list incorrectly claimed `pseudo` had been removed; the method is still present and supported. Migration entry removed.
+- **Broken in-page anchor** — `Back to Top` now points at `#versatile-random-distributions-vrd` to match the new H1.
+- **Bench-build CI guard** — new `bench-build` job runs `cargo bench --no-run` on every PR to catch bench-suite breakage from API refactors.
+- **Cold-rejection split on `Random::bounded`** — Lemire rejection helper marked `#[cold] #[inline(never)]`; common path stays tight in i-cache.
+
+### Performance
+
+- **`normal()`** switched from Box-Muller to Marsaglia polar method. Empirically a wash on Apple Silicon (libm `cos` is near-free); meaningful win on platforms with slower trig. The 3.5× target via Ziggurat is tracked in [#89](https://github.com/sebastienrousseau/vrd/issues/89).
+
+### Documentation
+
+- **100% rustdoc + 100% doctest examples** across every public item: 110 documented items, 97 with `# Examples` blocks, 99 doctests passing (was 53). `# Errors` and `# Panics` sections added on every fallible/panicking method.
+- README **TL;DR section removed** (information was already in the tagline, Highlights, and FAQ).
+- README **PGO + `target-cpu=native` documentation** — opt-in performance knobs documented for downstream consumers.
+- **Strategic roadmap captured as GitHub issues** under two milestones:
+  - [v0.0.11 — Performance follow-ups](https://github.com/sebastienrousseau/vrd/milestone/1): SIMD `fill_bytes` (#88), Ziggurat normal (#89).
+  - [v0.1.0 — Strategic differentiators](https://github.com/sebastienrousseau/vrd/milestone/2): ChaCha20 CSPRNG (#90), quasi-random sequences (#91), `Random::split()` (#92), PractRand validation (#93), `fill_array<const N>` (#94), PCG backend (#95).
+
 ## [0.0.10] — Modernization release
 
 This release rewrites `vrd` around **Xoshiro256++** as the default backend,
