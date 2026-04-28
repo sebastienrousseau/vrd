@@ -1663,6 +1663,58 @@ mod tests {
         let _ = n.sqrt();
         let _ = n.cos();
         let _ = n.exp();
+
+        let _ = FloatExt::ln(n);
+        let _ = FloatExt::sqrt(n);
+        let _ = FloatExt::cos(0.0_f64);
+        let _ = FloatExt::exp(n);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_mt_tryrng_direct() {
+        let mut mt = MersenneTwister::new();
+        mt.seed(42);
+        assert!(mt.try_next_u32().is_ok());
+        assert!(mt.try_next_u64().is_ok());
+    }
+
+    #[test]
+    fn test_random_seedable_rng_trait() {
+        let mut rng = <Random as SeedableRng>::from_seed([7u8; 32]);
+        let _ = rng.rand();
+    }
+
+    #[test]
+    fn test_iter_u32_u64_and_bytes() {
+        let mut rng = Random::from_u64_seed(1);
+        let v32: u32 = rng.iter_u32().next().unwrap();
+        let _ = v32;
+        let v64: u64 = rng.iter_u64().next().unwrap();
+        let _ = v64;
+        let b: u8 = rng.iter_bytes().next().unwrap();
+        let _ = b;
+    }
+
+    #[test]
+    fn test_rand_slice_error_empty() {
+        let mut rng = Random::from_u64_seed(1);
+        let pool: [u8; 0] = [];
+        assert!(rng.rand_slice(&pool, 1).is_err());
+    }
+
+    #[test]
+    fn test_rand_slice_error_zero_length() {
+        let mut rng = Random::from_u64_seed(1);
+        let pool = [1u8, 2, 3];
+        assert!(rng.rand_slice(&pool, 0).is_err());
+    }
+
+    #[test]
+    fn test_rand_slice_error_length_exceeds_slice() {
+        let mut rng = Random::from_u64_seed(1);
+        let pool = [1u8, 2, 3];
+        assert!(rng.rand_slice(&pool, 10).is_err());
     }
 
     #[test]

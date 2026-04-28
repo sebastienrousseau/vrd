@@ -161,4 +161,10 @@ mod tests {
         let log = String::from_utf8(err.into_inner()).unwrap();
         assert!(log.starts_with("Error:"), "stderr was: {log}");
     }
+
+    #[test]
+    fn test_failing_writer_flush_is_ok() {
+        let mut w = FailingWriter;
+        assert!(w.flush().is_ok());
+    }
 }
