@@ -34,7 +34,9 @@ reproducibility.
 
 Bounded integer sampling is unbiased (Lemire's nearly-divisionless method);
 floats carry full 24-bit (`f32`) and 53-bit (`f64`) mantissa precision; the
-crate compiles for `no_std` targets such as Cortex-M with no allocator.
+crate compiles for `no_std` targets such as Cortex-M
+(`thumbv7em-none-eabihf`) and WebAssembly (`wasm32-unknown-unknown`) with
+no allocator — both validated in CI.
 
 [00]: https://vrdlib.com "vrd"
 [03]: https://github.com/sebastienrousseau/vrd/issues "Issues"

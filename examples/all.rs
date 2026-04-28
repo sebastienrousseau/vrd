@@ -3,6 +3,10 @@
 
 //! Run every other vrd example in sequence.
 //!
+//! The `serde` example is gated by `required-features = ["serde"]`
+//! and is excluded from this orchestrator. Run it explicitly with
+//! `cargo run --example serde --features serde`.
+//!
 //! Usage: `cargo run --example all`
 
 use std::process::Command;

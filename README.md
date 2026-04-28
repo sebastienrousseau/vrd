@@ -31,14 +31,14 @@ Or in `Cargo.toml`:
 vrd = "0.0.10"
 ```
 
-Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, and `no_std` embedded targets (Cortex-M validated in CI).
+Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, `no_std` embedded targets (Cortex-M, `thumbv7em-none-eabihf`), and `wasm32-unknown-unknown` — all validated in CI.
 
 ---
 
 ## Highlights
 
 - **Xoshiro256++ default** — 32-byte state, 2^256 - 1 period, high statistical quality, faster than MT19937 in practice.
-- **Mersenne Twister opt-in** — keep MT19937 for legacy reproducibility via `Random::new_mersenne_twister()` (requires the `alloc` feature).
+- **Mersenne Twister opt-in** — keep MT19937 for legacy reproducibility. `Random::new_mersenne_twister()` (entropy-seeded, requires `alloc + std`) or `Random::new_mersenne_twister_with_seed(u32)` (deterministic, `alloc` only).
 - **`no_std` ready** — pure-core build with no allocator: `Random::from_seed([u8; 32])` gives you a working RNG on any embedded target.
 - **Unbiased bounded sampling** — `int`, `uint`, `random_range`, `bounded` use Lemire's nearly-divisionless method, not modulo.
 - **Bit-precise floats** — `float()` carries 24 mantissa bits (the f32 maximum); `double()` / `f64()` carry 53 (the f64 maximum). Always `[0.0, 1.0)`.
@@ -134,7 +134,8 @@ cargo build --no-default-features --features alloc                   # no_std + 
 cargo test --all-features                                            # all tests
 cargo clippy --all-targets --all-features -- -D warnings             # lint clean
 cargo bench                                                          # comparative criterion benches
-cargo check --target thumbv7em-none-eabihf --no-default-features     # embedded smoke check
+cargo check --target thumbv7em-none-eabihf --no-default-features     # Cortex-M smoke check
+cargo check --target wasm32-unknown-unknown --no-default-features    # WebAssembly smoke check
 cargo run --example all                                              # run every demo in examples/
 ```
 

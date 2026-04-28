@@ -28,10 +28,12 @@
 //! ## Features
 //! - **High performance:** Xoshiro256++ default — 32-byte state, period
 //!   2^256 - 1, SplitMix64 seed whitening.
-//! - **Legacy reproducibility:** opt-in MT19937 backend behind the `alloc`
-//!   feature.
+//! - **Legacy reproducibility:** opt-in MT19937 backend.
+//!   `Random::new_mersenne_twister()` requires `alloc + std`;
+//!   `Random::new_mersenne_twister_with_seed(u32)` is `alloc`-only.
 //! - **`no_std` ready:** pure-core build with `default-features = false`,
-//!   validated on `thumbv7em-none-eabihf` (Cortex-M) in CI.
+//!   validated on `thumbv7em-none-eabihf` (Cortex-M) and
+//!   `wasm32-unknown-unknown` (WebAssembly) in CI.
 //! - **Unbiased sampling:** `int`, `uint`, `random_range`, and the public
 //!   `bounded` use Lemire's nearly-divisionless method.
 //! - **Bit-precise floats:** `float()` carries 24 mantissa bits, `double()`
