@@ -170,11 +170,37 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, signed commits, and PR guideli
 
 ---
 
-## When to reach for `vrd`
+## How `vrd` compares
 
-**Use `vrd` when** you want a fast, dependency-light RNG that compiles into `no_std` targets, or you need MT19937 for bit-for-bit legacy reproducibility against existing test vectors.
+|  | `vrd` | `rand` 0.10 | `fastrand` 2.x | `oorandom` 11.x |
+| :-- | :-: | :-: | :-: | :-: |
+| Default backend | Xoshiro256++ | ChaCha12 / SmallRng | Wyrand | PCG family |
+| MT19937 backend | ✓ (built-in) | external (`rand_mt`) | — | — |
+| Pure `no_std` core | ✓ | partial | ✓ | ✓ |
+| Cortex-M + WASM CI gated | ✓ | — | — | — |
+| Unbiased bounded sampling (Lemire) | ✓ | ✓ | ✓ | — |
+| Bit-precise floats (24-bit `f32` / 53-bit `f64`) | ✓ | ✓ | partial | ✓ |
+| Built-in `uuid_v4` / `uuid_v4_bytes` | ✓ | needs `uuid` | — | — |
+| Built-in `hex_token` / `base64_token` | ✓ | needs `hex` + `base64` | — | — |
+| Output stability commitment (patch versions) | ✓ | explicitly **none** | — | — |
+| `rand` 0.10 traits (`TryRng`, `SeedableRng`) | ✓ | (native) | — | — |
+| CSPRNG path | planned ([#90](https://github.com/sebastienrousseau/vrd/issues/90)) | ✓ (`OsRng`, `ChaCha20Rng`) | — | — |
+| Distribution catalogue | 4 (built-in) | 20+ via `rand_distr` | — | — |
 
-**Don't use `vrd` when** you need a CSPRNG (use `rand::rngs::OsRng` or `getrandom`), a richer distribution catalogue (use `rand_distr`), or seamless ecosystem fit with `rand`-based libraries (use `rand` directly).
+**Reach for `vrd`** when you want a single small crate that gives you fast non-cryptographic randomness, MT19937 for legacy reproducibility, UUIDs, and URL-safe tokens — across `std`, `no_std + alloc`, embedded (Cortex-M), and WebAssembly — without building a CSPRNG into your binary.
+
+**Reach for `rand` + `rand_distr`** when you need cryptographically secure randomness today, or the full statistical-distribution catalogue.
+
+### What you don't have to depend on
+
+Pulling `vrd` in instead of `rand` + companion crates typically lets you drop these from your dependency tree:
+
+- `uuid` — covered by `Random::uuid_v4` / `uuid_v4_bytes`
+- `hex` or `data-encoding` — covered by `Random::hex_token`
+- `base64` — covered by `Random::base64_token`
+- `rand_distr` — if `uniform` / `normal` / `exponential` / `poisson` cover your needs
+
+Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 
 ---
 
@@ -184,10 +210,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, signed commits, and PR guideli
 No. `Random` is a non-cryptographic PRNG built on Xoshiro256++. For credentials, tokens, or anything security-sensitive, use a CSPRNG such as `rand::rngs::OsRng` or the `getrandom` crate.
 
 ### Does `vrd` work without `std`?
-Yes. With `default-features = false`, `vrd` compiles for pure `no_std` targets. Add the `alloc` feature for `Vec`/`String`/`Box`-backed APIs (`bytes`, `string`, `sample`, the Mersenne Twister backend).
+Yes. With `default-features = false`, `vrd` compiles for pure `no_std` targets. Add the `alloc` feature for `Vec`/`String`/`Box`-backed APIs (`bytes`, `string`, `sample`, `uuid_v4`, `hex_token`, `base64_token`, the Mersenne Twister backend).
+
+### Does `vrd` work in WebAssembly?
+Yes. `wasm32-unknown-unknown` is gated in CI under both `--no-default-features` and `--features alloc`. Default WebAssembly has no entropy source, so seed manually with `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)` rather than `Random::new()`. If you want OS-level entropy in the browser, enable `getrandom`'s `js` feature in your binary crate — that's downstream's choice, not vrd's.
 
 ### Can I get the same sequence on two machines?
 Yes — use `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)`. Both are deterministic and allocation-free.
+
+### Is the output stable across vrd versions?
+For a given seed and method, vrd commits to bit-stable output across **patch** releases. Algorithm changes (e.g., a faster `normal()` sampling method) bump at least the minor version and are flagged in the `CHANGELOG`'s `Migration` section, naming the affected methods. Once vrd reaches 1.0, this stability commitment will extend to minor releases as well. The `rand` crate explicitly does not guarantee either. If you have golden-file tests, fuzzing corpora, or reproducible-research workflows depending on a stable RNG sequence, that's a meaningful difference.
 
 ### Why ship Mersenne Twister at all if Xoshiro is the default?
 Reproducibility against existing MT-generated test vectors. Reach for `Random::new_mersenne_twister()` only when you need bit-for-bit MT19937 output.
