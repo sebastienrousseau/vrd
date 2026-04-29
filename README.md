@@ -206,26 +206,119 @@ Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 
 ## FAQ
 
+### Which methods will I use most often?
+
+```rust
+use vrd::Random;
+
+let mut rng = Random::new();                  // entropy-seeded Xoshiro256++
+
+let n: u32 = rng.rand();                      // any u32
+let n: u64 = rng.u64();                       // any u64
+let n      = rng.int(1, 100);                 // i32 in [1, 100], uniform
+let n      = rng.uint(1, 100);                // u32 in [1, 100], uniform
+let f      = rng.double();                    // f64 in [0.0, 1.0)
+let b      = rng.bool(0.5);                   // 50/50 coin
+let pick   = rng.choose(&[10, 20, 30]);       // Option<&T>
+
+#[cfg(feature = "alloc")]
+let buf    = rng.bytes(32);                   // Vec<u8>, 32 random bytes
+```
+
+Every public method is documented at [docs.rs/vrd](https://docs.rs/vrd) with a worked example.
+
+### How do I migrate from `rand`?
+
+`vrd` implements the `rand 0.10` traits, so most idioms translate directly:
+
+| `rand 0.10` | `vrd` equivalent |
+| :-- | :-- |
+| `let mut rng = rand::rng();` | `let mut rng = Random::new();` |
+| `rng.random::<u32>()` | `rng.rand()` |
+| `rng.random_range(0..n)` | `rng.uint(0, n - 1)` |
+| `rng.fill_bytes(&mut buf)` | `rng.try_fill_bytes(&mut buf).unwrap()` |
+| `slice.choose(&mut rng)` | `rng.choose(slice)` |
+| `slice.shuffle(&mut rng)` (`alloc`) | `rng.shuffle(slice)` (`alloc`) |
+| `rand::rngs::StdRng::seed_from_u64(s)` | `Random::from_u64_seed(s)` |
+
+Or pass a `Random` directly to any crate that takes a `rand_core::TryRng`, `Rng`, or `SeedableRng` — vrd implements all three.
+
+### How do I generate non-security tokens (correlation IDs, log markers, debug fixtures)?
+
+```rust
+use vrd::Random;
+let mut rng = Random::new();
+
+let trace_id = rng.uuid_v4_bytes();           // [u8; 16], no_std
+# #[cfg(feature = "alloc")]
+# {
+let trace_id = rng.uuid_v4();                 // RFC 4122 hyphenated, alloc
+let log_id   = rng.hex_token(16);             // 32 lowercase hex chars
+let csrf_id  = rng.base64_token(15);          // 20 URL-safe base64 chars (no padding)
+# }
+```
+
+For **security-sensitive** tokens (API keys, session IDs, password-reset links, CSRF tokens), `vrd` is **not** the right tool. Use `rand::rngs::OsRng` or the `getrandom` crate — both produce CSPRNG-grade output backed by the OS entropy source.
+
+### Do I need one RNG per thread?
+
+Yes. `Random` (and `Xoshiro256PlusPlus`, and `MersenneTwister`) hold mutable state and are not designed for concurrent access. The standard pattern is one RNG per thread, seeded distinctly:
+
+```rust
+use vrd::Random;
+
+# let thread_id: u64 = 0;
+let mut rng = Random::from_u64_seed(thread_id);   // distinct per thread
+let _ = rng.rand();
+```
+
+For parallel deterministic streams that don't drift, a forking `Random::split()` API is tracked in [#92](https://github.com/sebastienrousseau/vrd/issues/92).
+
+### Can I save and restore RNG state?
+
+Yes — enable the `serde` feature.
+
+```toml
+vrd = { version = "0.0.10", features = ["serde"] }
+```
+
+```rust,ignore
+use vrd::Random;
+
+let mut rng = Random::from_u64_seed(42);
+let snap = serde_json::to_string(&rng).unwrap();
+
+let mut restored: Random = serde_json::from_str(&snap).unwrap();
+assert_eq!(rng.rand(), restored.rand());      // identical state, identical output
+```
+
+`Random`, `Xoshiro256PlusPlus`, `MersenneTwisterParams`, and `MersenneTwisterConfig` all derive `Serialize` / `Deserialize` under the `serde` feature.
+
 ### Is `vrd` cryptographically secure?
-No. `Random` is a non-cryptographic PRNG built on Xoshiro256++. For credentials, tokens, or anything security-sensitive, use a CSPRNG such as `rand::rngs::OsRng` or the `getrandom` crate.
+No. `Random` is a non-cryptographic PRNG built on Xoshiro256++. For credentials, secrets, session IDs, or anything that an attacker would benefit from predicting, use a CSPRNG such as `rand::rngs::OsRng` or the `getrandom` crate. A built-in ChaCha20-based CSPRNG backend is tracked in [#90](https://github.com/sebastienrousseau/vrd/issues/90).
 
 ### Does `vrd` work without `std`?
-Yes. With `default-features = false`, `vrd` compiles for pure `no_std` targets. Add the `alloc` feature for `Vec`/`String`/`Box`-backed APIs (`bytes`, `string`, `sample`, `uuid_v4`, `hex_token`, `base64_token`, the Mersenne Twister backend).
+Yes. With `default-features = false`, `vrd` compiles for pure `no_std` targets — Cortex-M is gated in CI on every PR. The `alloc` feature unlocks `Vec`/`String`/`Box`-backed APIs (`bytes`, `string`, `sample`, `shuffle`, `uuid_v4`, `hex_token`, `base64_token`, the Mersenne Twister backend). Without `alloc`, `Random::from_seed([u8; 32])` and `Random::from_u64_seed(u64)` give you a fully-functional Xoshiro256++ on bare metal.
 
 ### Does `vrd` work in WebAssembly?
 Yes. `wasm32-unknown-unknown` is gated in CI under both `--no-default-features` and `--features alloc`. Default WebAssembly has no entropy source, so seed manually with `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)` rather than `Random::new()`. If you want OS-level entropy in the browser, enable `getrandom`'s `js` feature in your binary crate — that's downstream's choice, not vrd's.
 
+### Why ship Mersenne Twister at all if Xoshiro is the default?
+Reproducibility against existing MT-generated test vectors. Numerical-simulation pipelines, scientific software, and tooling that emits "random-looking" reference data often pin MT19937 because that's what NumPy / older `rand` / SciPy / MATLAB historically used. Reach for `Random::new_mersenne_twister()` (or `new_mersenne_twister_with_seed(u32)` for `alloc`-only) only when you need bit-for-bit MT19937 output.
+
 ### Can I get the same sequence on two machines?
-Yes — use `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)`. Both are deterministic and allocation-free.
+Yes — use `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)`. Both are deterministic and allocation-free. The output is byte-identical across architectures (x86, ARM, RISC-V, WebAssembly) — only floating-point operations *downstream* of the RNG (your code's arithmetic) may differ across targets.
 
 ### Is the output stable across vrd versions?
 For a given seed and method, vrd commits to bit-stable output across **patch** releases. Algorithm changes (e.g., a faster `normal()` sampling method) bump at least the minor version and are flagged in the `CHANGELOG`'s `Migration` section, naming the affected methods. Once vrd reaches 1.0, this stability commitment will extend to minor releases as well. The `rand` crate explicitly does not guarantee either. If you have golden-file tests, fuzzing corpora, or reproducible-research workflows depending on a stable RNG sequence, that's a meaningful difference.
 
-### Why ship Mersenne Twister at all if Xoshiro is the default?
-Reproducibility against existing MT-generated test vectors. Reach for `Random::new_mersenne_twister()` only when you need bit-for-bit MT19937 output.
+### How big is the RNG state?
+- `Xoshiro256PlusPlus`: **32 bytes** (four `u64` words). Stored inline.
+- `MersenneTwister`: **~2.5 KB** (624 × `u32` + index). Heap-stored when wrapped in `Random` to keep the enum discriminant small.
+- `Random`: a tagged enum holding either `Xoshiro256PlusPlus` inline or `Box<MersenneTwister>`; sized for the Xoshiro variant. The wrapper-vs-direct dispatch overhead is **zero** — the inliner elides the match completely (verified in `cargo bench`).
 
 ### How fast is it?
-`cargo bench` runs head-to-head benchmarks against `fastrand` and `rand::rng()` on `u32`, `u64`, byte fills, and distribution sampling. Run them locally — numbers are workload-dependent.
+`cargo bench` runs head-to-head against `fastrand` 2.x and `rand::rng()` on `u32`, `u64`, byte fills, bounded sampling, and distribution sampling. On Apple Silicon, Xoshiro vrd produces a `u32` in ~1.1 ns; the wrapper adds zero overhead vs the raw `Xoshiro256PlusPlus`. Run them locally — absolute numbers are workload- and platform-dependent.
 
 ---
 

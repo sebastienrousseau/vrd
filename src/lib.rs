@@ -47,10 +47,34 @@
 //! - **`rand 0.10` traits:** `TryRng`, the blanket-implemented `Rng`, and
 //!   `SeedableRng`.
 //!
+//! ## Quickstart
+//!
+//! ```
+//! use vrd::Random;
+//!
+//! let mut rng = Random::from_u64_seed(42);   // deterministic, allocation-free
+//!
+//! let n: u32 = rng.rand();                    // any u32
+//! let _      = rng.u64();                     // any u64
+//! let _      = rng.int(1, 100);               // i32 in [1, 100], uniform
+//! let _      = rng.double();                  // f64 in [0.0, 1.0)
+//! let _      = rng.bool(0.5);                 // 50/50 coin
+//! assert!(n > 0 || n == 0);
+//! ```
+//!
+//! Use [`Random::new()`] for entropy-seeded randomness on `std` targets,
+//! [`Random::from_seed()`] / [`Random::from_u64_seed()`] for deterministic
+//! / `no_std` use, and [`Random::new_mersenne_twister()`] / [`Random::new_mersenne_twister_with_seed()`]
+//! when you need bit-for-bit MT19937 reproducibility against existing
+//! test vectors.
+//!
 //! ## Not a CSPRNG
 //!
-//! `Random` is **not** cryptographically secure. For credentials or
-//! security-sensitive randomness, use `rand::rngs::OsRng` or `getrandom`.
+//! `Random` is **not** cryptographically secure. For credentials,
+//! session IDs, or anything an attacker would benefit from predicting,
+//! use `rand::rngs::OsRng` or `getrandom`. A built-in ChaCha20-based
+//! CSPRNG backend is tracked in
+//! [issue #90](https://github.com/sebastienrousseau/vrd/issues/90).
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
