@@ -1,3 +1,5 @@
+//! Integration tests for the Mersenne Twister configuration types.
+
 #[cfg(test)]
 mod tests {
     use vrd::mersenne_twister::{
@@ -27,7 +29,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "n must be at least 1")]
+    #[should_panic(expected = "N must be at least 1")]
     fn test_new_custom_invalid_n() {
         let params = MersenneTwisterParams::default();
         let config_result =
@@ -36,7 +38,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "m must be at least 1 and less than n")]
+    #[should_panic(expected = "M must be at least 1 and less than N")]
     fn test_new_custom_invalid_m() {
         let params = MersenneTwisterParams::default();
         let config_result =
@@ -158,7 +160,7 @@ mod tests {
     #[test]
     fn test_display() {
         let config = MersenneTwisterConfig::<624, 397>::new().unwrap();
-        let expected = "MersenneTwisterConfig { params: MersenneTwisterParams { matrix_a: 0x9908b0df, upper_mask: 0x80000000, lower_mask: 0x7fffffff, tempering_mask_b: 0x9d2c5680, tempering_mask_c: 0xefc60000 } }";
+        let expected = "MersenneTwisterConfig { matrix_a: 0x9908b0df, upper_mask: 0x80000000, lower_mask: 0x7fffffff, tempering_mask_b: 0x9d2c5680, tempering_mask_c: 0xefc60000 }";
 
         assert_eq!(format!("{}", config), expected);
     }
@@ -172,7 +174,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "n must be at least 1")]
+    #[should_panic(expected = "N must be at least 1")]
     fn test_validate_invalid_n() {
         let params = MersenneTwisterParams::default();
         let validation_result =
@@ -181,7 +183,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "m must be at least 1 and less than n")]
+    #[should_panic(expected = "M must be at least 1 and less than N")]
     fn test_validate_invalid_m() {
         let params = MersenneTwisterParams::default();
         let validation_result =
@@ -220,21 +222,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "upper_mask must be 0x80000000")]
-    fn test_validate_invalid_upper_mask() {
-        let params = MersenneTwisterParams {
-            matrix_a: 0x9908b0df,
-            upper_mask: 0xffffffff, // Invalid value
-            lower_mask: 0x7fffffff,
-            tempering_mask_b: 0x9d2c5680,
-            tempering_mask_c: 0xefc60000,
-        };
-        let validation_result =
-            MersenneTwisterConfig::<624, 397>::validate(&params);
-        validation_result.unwrap();
-    }
-
-    #[test]
     #[should_panic(expected = "lower_mask must be 0x7fffffff")]
     fn test_validate_invalid_lower_mask() {
         let params = MersenneTwisterParams {
@@ -257,7 +244,54 @@ mod tests {
             upper_mask: 0x80000000,
             lower_mask: 0x7fffffff,
             tempering_mask_b: 0x9d2c5680,
-            tempering_mask_c: 0xffffffff, // Invalid value
+            tempering_mask_c: 0x12345678, // Invalid value
+        };
+        let validation_result =
+            MersenneTwisterConfig::<624, 397>::validate(&params);
+        validation_result.unwrap();
+    }
+
+    /// Round-trips `set_config` against the canonical params — exercises
+    /// the in-place setter that `validate()` covers but the previous
+    /// suite never invoked.
+    #[test]
+    fn test_set_config_roundtrip() {
+        let mut config =
+            MersenneTwisterConfig::<624, 397>::new().unwrap();
+        let new_params = MersenneTwisterParams::default();
+        config.set_config(new_params).unwrap();
+        assert_eq!(config.params, new_params);
+    }
+
+    /// `set_config` rejects invalid params and leaves the config untouched.
+    #[test]
+    fn test_set_config_rejects_invalid_and_preserves_state() {
+        let mut config =
+            MersenneTwisterConfig::<624, 397>::new().unwrap();
+        let snapshot = config.params;
+
+        let bad = MersenneTwisterParams {
+            matrix_a: 0x12345678, // highest bit not set
+            ..MersenneTwisterParams::default()
+        };
+        let result = config.set_config(bad);
+
+        assert!(result.is_err());
+        assert_eq!(
+            config.params, snapshot,
+            "invalid set_config must not mutate state"
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "upper_mask must be 0x80000000")]
+    fn test_validate_invalid_upper_mask() {
+        let params = MersenneTwisterParams {
+            matrix_a: 0x9908b0df,
+            upper_mask: 0xffffffff, // Invalid value
+            lower_mask: 0x7fffffff,
+            tempering_mask_b: 0x9d2c5680,
+            tempering_mask_c: 0xefc60000,
         };
         let validation_result =
             MersenneTwisterConfig::<624, 397>::validate(&params);

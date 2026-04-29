@@ -1,0 +1,123 @@
+# Unified CI Pipeline
+# Uses reusable workflows from sebastienrousseau/pipelines
+# Replaces: audit.yml, check.yml, format.yml, lint.yml, test.yml, coverage.yml
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feat/**"
+  pull_request:
+    branches:
+      - main
+      - "feat/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Rust CI
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
+    with:
+      rust-version: 'stable'
+      run-clippy: true
+      run-fmt: true
+      run-audit: true
+      run-coverage: true
+    secrets: inherit
+
+  security:
+    uses: sebastienrousseau/pipelines/.github/workflows/security.yml@main
+    with:
+      language: rust
+
+  docs:
+    if: github.ref == 'refs/heads/main'
+    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@main
+    with:
+      type: rust
+      redirect-crate: vrd
+
+  # WebAssembly check — confirms the no_std core compiles for the
+  # browser/wasm runtime path. We test default-off and `alloc` only;
+  # the `std` path on `wasm32-unknown-unknown` requires getrandom's
+  # `js` shim and is downstream's responsibility, not ours.
+  wasm:
+    name: WebAssembly (wasm32-unknown-unknown)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust stable + wasm32-unknown-unknown
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo check (no defaults)
+        run: cargo check --target wasm32-unknown-unknown --no-default-features
+
+      - name: cargo check (alloc only)
+        run: cargo check --target wasm32-unknown-unknown --no-default-features --features alloc
+
+  # no_std embedded target build — confirms the crate stays portable.
+  embedded:
+    name: no_std (thumbv7em-none-eabihf)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust stable + thumbv7em-none-eabihf
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo check (no defaults)
+        run: cargo check --target thumbv7em-none-eabihf --no-default-features
+
+      - name: cargo check (alloc only)
+        run: cargo check --target thumbv7em-none-eabihf --no-default-features --features alloc
+
+  # Compile-only check on the criterion bench suite. Catches accidental
+  # bench breakage from API refactors without paying for a full timing
+  # run on every PR.
+  bench-build:
+    name: Bench (compile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo bench --no-run
+        run: cargo bench --no-run
+
+  # Nightly toolchain tests (optional, continue on error).
+  test-nightly:
+    name: Test (nightly)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test --all-features

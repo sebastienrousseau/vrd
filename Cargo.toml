@@ -1,15 +1,13 @@
 [package]
-# Metadata about the package.
-authors = ["The Random (VRD) Contributors"]
+authors = ["The vrd Contributors"]
 build = "build.rs"
-categories = ['algorithms', 'encoding','parser-implementations','data-structures']
-description = "A Rust library for generating random and pseudo-random numbers based on the Mersenne Twister algorithm"
+autoexamples = false
+categories = ["algorithms", "no-std", "embedded"]
+description = "A lightweight, no_std-friendly random number generator backed by Xoshiro256++ with optional Mersenne Twister support."
 documentation = "https://docs.rs/vrd"
 edition = "2021"
 exclude = ["/.git/*", "/.github/*", "/.gitignore", "/.vscode/*"]
 homepage = "https://vrdlib.com"
-
-# Included and excluded files
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
@@ -22,80 +20,178 @@ include = [
     "/src/**",
     "/tests/**"
 ]
-keywords = ["entropy", "rand", "random-number", "random", "vrd"]
+keywords = ["rng", "random", "no-std", "xoshiro", "mersenne-twister"]
 license = "MIT OR Apache-2.0"
 name = "vrd"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/vrd"
-rust-version = "1.56.0"
-version = "0.0.9"
+rust-version = "1.70"
+version = "0.0.10"
 
 [[bench]]
-# [[bench]] sections define benchmarks.
 name = "benchmark"
 harness = false
 path = "benches/criterion.rs"
 
 [profile.bench]
-# Profile for benchmarks.
 debug = true
 
 [dependencies]
-# Dependencies are only used for building.
-bitflags = "2.6.0"
-dtt = "0.0.9"
-rand = "0.8.5"
-rlg = "0.0.8"
-serde = { version = "1.0.209", features = ["derive"] }
-serde_json = "1.0.127"
-serde-big-array =  "0.5.1"
-tokio = { version = "1.39.3", features = ["full"] }
-uuid = { version = "1.10.0", features = ["v4"] }
-serde_yml = { version = "0.0.12", optional = true }
-toml = { version = "0.8.19", optional = true }
+rand = { version = "0.10", default-features = false }
+libm = { version = "0.2", default-features = false }
+serde = { version = "1.0.228", default-features = false, features = ["derive"], optional = true }
+serde-big-array = { version = "0.5.1", default-features = false, optional = true }
 
 [build-dependencies]
-# Dependencies for build scripts.
-version_check = "0.9.5" # Check the Rust version used to compile the package.
+version_check = "0.9.5"
 
 [dev-dependencies]
-# Development dependencies are only used for testing and building.
-assert_cmd = "2.0.16"
-criterion = "0.5.1"
+assert_cmd = "2.2"
+criterion = "0.8.2"
+fastrand = "2"
+proptest = "1"
+serde_json = "1.0.127"
 
 [lib]
 crate-type = ["lib"]
 name = "vrd"
 path = "src/lib.rs"
 
+[[bin]]
+name = "vrd"
+path = "src/main.rs"
+required-features = ["std"]
+
+# Examples — single-word names per the noyalib convention. `support.rs` is
+# a shared helper module imported via `#[path = "support.rs"]` and is not
+# itself an example.
+[[example]]
+name = "hello"
+path = "examples/hello.rs"
+[[example]]
+name = "basics"
+path = "examples/basics.rs"
+[[example]]
+name = "seed"
+path = "examples/seed.rs"
+[[example]]
+name = "bytes"
+path = "examples/bytes.rs"
+[[example]]
+name = "floats"
+path = "examples/floats.rs"
+[[example]]
+name = "bools"
+path = "examples/bools.rs"
+[[example]]
+name = "chars"
+path = "examples/chars.rs"
+[[example]]
+name = "strings"
+path = "examples/strings.rs"
+[[example]]
+name = "bounded"
+path = "examples/bounded.rs"
+[[example]]
+name = "unbiased"
+path = "examples/unbiased.rs"
+[[example]]
+name = "normal"
+path = "examples/normal.rs"
+[[example]]
+name = "exponential"
+path = "examples/exponential.rs"
+[[example]]
+name = "poisson"
+path = "examples/poisson.rs"
+[[example]]
+name = "choose"
+path = "examples/choose.rs"
+[[example]]
+name = "shuffle"
+path = "examples/shuffle.rs"
+[[example]]
+name = "sample"
+path = "examples/sample.rs"
+[[example]]
+name = "slice"
+path = "examples/slice.rs"
+[[example]]
+name = "weighted"
+path = "examples/weighted.rs"
+[[example]]
+name = "xoshiro"
+path = "examples/xoshiro.rs"
+[[example]]
+name = "mersenne"
+path = "examples/mersenne.rs"
+[[example]]
+name = "backends"
+path = "examples/backends.rs"
+[[example]]
+name = "traits"
+path = "examples/traits.rs"
+[[example]]
+name = "seedable"
+path = "examples/seedable.rs"
+[[example]]
+name = "macros"
+path = "examples/macros.rs"
+[[example]]
+name = "dice"
+path = "examples/dice.rs"
+[[example]]
+name = "lottery"
+path = "examples/lottery.rs"
+[[example]]
+name = "passwords"
+path = "examples/passwords.rs"
+[[example]]
+name = "monte"
+path = "examples/monte.rs"
+[[example]]
+name = "errors"
+path = "examples/errors.rs"
+[[example]]
+name = "config"
+path = "examples/config.rs"
+[[example]]
+name = "nostd"
+path = "examples/nostd.rs"
+[[example]]
+name = "serde"
+path = "examples/serde.rs"
+required-features = ["serde"]
+[[example]]
+name = "iterators"
+path = "examples/iterators.rs"
+[[example]]
+name = "uuid"
+path = "examples/uuid.rs"
+[[example]]
+name = "tokens"
+path = "examples/tokens.rs"
+[[example]]
+name = "all"
+path = "examples/all.rs"
+
 [features]
-# No default features
-default = []
-yaml = ["serde_yml"]
-toml = ["dep:toml"]
+default = ["std"]
+std = ["alloc", "serde?/std", "rand/std", "rand/thread_rng"]
+alloc = ["rand/alloc", "serde?/alloc"]
+serde = ["dep:serde", "dep:serde-big-array"]
 
 [package.metadata.docs.rs]
-# Specify arguments for rustdoc to enhance documentation quality.
-rustdoc-args = [
-    "--generate-link-to-definition",
-    "--cfg", "docsrs",
-    "--document-private-items",
-    "--display-warnings"
-]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
 
 # Linting config
 [lints.rust]
-
-## Warn
-# box_pointers = "warn"
 missing_copy_implementations = "warn"
 missing_docs = "warn"
 unstable_features = "warn"
-# unused_crate_dependencies = "warn"
 unused_extern_crates = "warn"
-# unused_results = "warn"
 
-## Allow
 bare_trait_objects = "allow"
 elided_lifetimes_in_paths = "allow"
 non_camel_case_types = "allow"
@@ -103,13 +199,10 @@ non_upper_case_globals = "allow"
 trivial_bounds = "allow"
 unsafe_code = "allow"
 
-## Forbid
-# missing_docs = "warn"
 missing_debug_implementations = "forbid"
 non_ascii_idents = "forbid"
 unreachable_pub = "forbid"
 
-## Deny
 dead_code = "deny"
 deprecated_in_future = "deny"
 ellipsis_inclusive_range_patterns = "deny"
@@ -118,7 +211,6 @@ future_incompatible = { level = "deny", priority = -1 }
 keyword_idents = { level = "deny", priority = -1 }
 macro_use_extern_crate = "deny"
 meta_variable_misuse = "deny"
-missing_fragment_specifier = "deny"
 noop_method_call = "deny"
 rust_2018_idioms = { level = "deny", priority = -1 }
 rust_2021_compatibility = { level = "deny", priority = -1 }
@@ -160,7 +252,7 @@ debug = false
 debug-assertions = false
 incremental = false
 lto = true
-opt-level = "s"
+opt-level = 3
 overflow-checks = false
 panic = "abort"
 rpath = false

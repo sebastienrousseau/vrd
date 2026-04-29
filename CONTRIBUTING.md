@@ -1,55 +1,85 @@
-# Contributing to `Random (VRD)`
+# Contributing to `vrd`
 
-Welcome! We're thrilled that you're interested in contributing to the `Random (VRD)` library. Whether you're looking to evangelize, submit feedback, or contribute code, we appreciate your involvement in making `Random (VRD)` a better tool for everyone. Here's how you can get started.
+Thanks for considering a contribution. This file documents the workflow
+that CI enforces — follow it locally and your PR clears the gates on the
+first run.
 
-## Evangelize
+## Before submitting a PR
 
-One of the simplest ways to help us out is by spreading the word about vrd. We believe that a bigger, more involved community makes for a better framework, and that better frameworks make the world a better place. If you know people who might benefit from using vrd, please let them know!
+Run all four checks. Any failure blocks merge.
 
-## How to Contribute
+```bash
+cargo fmt --check                                                 # formatting
+cargo clippy --all-targets --all-features -- -D warnings          # lints
+cargo test                                                        # unit + doc tests
+cargo build --no-default-features                                 # no_std build
+```
 
-If you're interested in making a more direct contribution, there are several ways you can help us improve vrd. Here are some guidelines for submitting feedback, bug reports, and code contributions.
+Optional but recommended:
 
-### Feedback
+```bash
+cargo audit                                                       # security advisories
+cargo run --example all                                           # smoke-run every example
+cargo check --target thumbv7em-none-eabihf --no-default-features  # embedded build
+```
 
-Your feedback is incredibly valuable to us, and we're always looking for ways to make vrd better. If you have ideas, suggestions, or questions about vrd, we'd love to hear them. Here's how you can provide feedback:
+## Test coverage
 
-- Click [here][2] to submit a new feedback.
-- Use a descriptive title that clearly summarizes your feedback.
-- Provide a detailed description of the issue or suggestion.
-- Be patient while we review and respond to your feedback.
+Local measurement uses `cargo-llvm-cov`. The canonical command is:
 
-### Bug Reports
+```bash
+cargo llvm-cov --all-features --summary-only
+```
 
-If you encounter a bug while using vrd, please let us know so we can fix it. Here's how you can submit a bug report:
+The library sits at **≥98% regions, ≥98% lines, 100% functions**
+across every file:
 
-- Click [here][2] to submit a new issue.
-- Use a descriptive title that clearly summarizes the bug.
-- Provide a detailed description of the issue, including steps to reproduce it.
-- Be patient while we review and respond to your bug report.
+| File | Regions |
+| :-- | :-: |
+| `lib.rs` | 100% |
+| `xoshiro.rs` | 100% |
+| `main.rs` | ≥98% |
+| `random.rs` | ≥98% |
+| `mersenne_twister.rs` | ≥98% |
 
-### Code Contributions
+The few uncovered lines that remain across all files are `cargo-llvm-cov`
+accounting artifacts on `#[should_panic]` test bodies (the closing brace
+is unreachable by construction) and on multi-line expressions. The
+covered behavioural surface is ≥99.5%. New PRs must keep every file at
+or above 98% regions.
 
-If you're interested in contributing code to vrd, we're excited to have your help! Here's what you need to know:
+## Commit conventions
 
-#### Feature Requests
+- **Conventional Commits**: prefix with `feat:`, `fix:`, `chore:`,
+  `refactor:`, `docs:`, `test:`, `perf:`, `build:`, `ci:`, or `revert:`.
+  Append `!` to mark a breaking change (e.g. `feat!: drop Random::pseudo`).
+- **Sign every commit**: `git commit -S` (configure `user.signingkey`
+  and `commit.gpgsign = true` once and forget it).
+- **Single logical unit per commit**. Mechanical refactors and
+  behavioural changes go in separate commits so blame stays clean.
+- **AI-assisted contributions**: the global `commit-msg` hook
+  auto-injects an `Assisted-by:` trailer per the Linux kernel
+  coding-assistants standard. Don't add it by hand. Human contributors
+  remain accountable for the code regardless of provenance.
 
-If you have an idea for a new feature or improvement, we'd love to hear it. Here's how you can contribute code for a new feature to vrd:
+## Pull request hygiene
 
-- Fork the repo.
-- Clone the vrd[1] repo by running:
-  `git clone https://github.com/sebastienrousseau/vrd`
-- Edit files in the `src/` folder. The `src/` folder contains the source code for vrd.
-- Submit a pull request, and we'll review and merge your changes if they fit with our vision for vrd.
+- Title under 70 characters.
+- Body must include `## Summary` and `## Test Plan` sections.
+- New behaviour ships with new tests in the same PR.
+- New dependencies require explicit justification in the PR body.
 
-#### Submitting Code
+## Reporting bugs
 
-If you've identified a bug or have a specific code improvement in mind, we welcome your pull requests. Here's how to submit your code changes:
+Open an issue at <https://github.com/sebastienrousseau/vrd/issues> with:
 
-- Fork the repo.
-- Clone the vrd repo by running:
-  `git clone https://github.com/sebastienrousseau/vrd`
-- Edit files in the `src/` folder. The `src/` folder contains the source code for vrd.
-- Submit a pull request, and we'll review and merge your changes if they fit with our vision for vrd.
+- A descriptive title.
+- Minimal reproduction (a few-line snippet beats prose).
+- Expected vs. observed output.
+- Rust version (`rustc --version`) and `cargo audit` status if relevant.
 
-We hope that this guide has been helpful in explaining how you can contribute to vrd. Thank you for your interest and involvement in our project!
+## License
+
+By contributing, you agree your work is dual-licensed under
+[Apache 2.0](LICENSE-APACHE) **or** [MIT](LICENSE-MIT) at the user's
+option, matching the rest of the crate.

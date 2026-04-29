@@ -1,14 +1,14 @@
 <!-- markdownlint-disable MD033 MD041 -->
 
-<img src="https://kura.pro/vrd/images/logos/vrd.svg"
-alt="Random (VRD) logo" width="66" align="right" />
+<img src="https://cloudcdn.pro/vrd/v1/logos/vrd.svg"
+alt="vrd logo" width="66" align="right" />
 
 <!-- markdownlint-enable MD033 MD041 -->
 
-# Random (VRD)
+# Versatile Random Distributions (VRD)
 
-A Rust library for generating high-quality random numbers based on the Mersenne
-Twister algorithm.
+A lightweight, `no_std`-friendly random number generator backed by Xoshiro256++,
+with optional Mersenne Twister support.
 
 [![Made With Love][made-with-rust]][11] [![Crates.io][crates-badge]][06] [![lib.rs][libs-badge]][08] [![Docs.rs][docs-badge]][07] [![Codecov][codecov-badge]][12] [![Build Status][build-badge]][09] [![GitHub][github-badge]][13]
 
@@ -27,13 +27,18 @@ Twister algorithm.
 
 ## Overview
 
-`Random (VRD)` is a Rust library for generating high-quality random numbers based on the Mersenne Twister algorithm.
+`vrd` generates high-quality random numbers in Rust. The default backend is
+**Xoshiro256++** — 32-byte state, period 2^256 - 1, with SplitMix64 seed
+whitening. **Mersenne Twister (MT19937)** is opt-in for legacy
+reproducibility.
 
-The `Random` struct in this library provides a robust interface for generating a variety of random numbers using the Mersenne Twister algorithm. Additionally, the `MersenneTwisterConfig` struct allows for advanced configuration of the algorithm.
+Bounded integer sampling is unbiased (Lemire's nearly-divisionless method);
+floats carry full 24-bit (`f32`) and 53-bit (`f64`) mantissa precision; the
+crate compiles for `no_std` targets such as Cortex-M
+(`thumbv7em-none-eabihf`) and WebAssembly (`wasm32-unknown-unknown`) with
+no allocator — both validated in CI.
 
-`Random (VRD)` generates pseudorandom integers uniformly distributed in 0..(2^32 - 1), starting from any odd seed in 0..(2^32 - 1). The index is incremented after each random number is generated. When the index reaches 624, the array is reinitialized and the index is reset to 0.
-
-[00]: https://vrdlib.com "Random (VRD)"
+[00]: https://vrdlib.com "vrd"
 [03]: https://github.com/sebastienrousseau/vrd/issues "Issues"
 [04]: https://github.com/sebastienrousseau/vrd/blob/main/CONTRIBUTING.md "Contributing Instructions"
 [06]: https://crates.io/crates/vrd "Crates.io"
@@ -44,13 +49,13 @@ The `Random` struct in this library provides a robust interface for generating a
 [12]: https://codecov.io/gh/sebastienrousseau/vrd "Codecov"
 [13]: https://github.com/sebastienrousseau/vrd/ "GitHub"
 
-[build-badge]: https://img.shields.io/github/actions/workflow/status/sebastienrousseau/vrd/release.yml?branch=main&style=for-the-badge&logo=github "Build Status"
+[build-badge]: https://img.shields.io/github/actions/workflow/status/sebastienrousseau/vrd/ci.yml?branch=main&style=for-the-badge&logo=github "Build Status"
 [codecov-badge]: https://img.shields.io/codecov/c/github/sebastienrousseau/vrd?style=for-the-badge&token=oEisyTucB5 'Codecov'
 [crates-badge]: https://img.shields.io/crates/v/vrd.svg?style=for-the-badge 'Crates.io badge'
 [divider]: https://kura.pro/common/images/elements/divider.svg "divider"
 [docs-badge]: https://img.shields.io/docsrs/vrd.svg?style=for-the-badge 'Docs.rs badge'
 [github-badge]: https://img.shields.io/badge/github-sebastienrousseau/vrd-8da0cb?style=for-the-badge&labelColor=555555&logo=github "GitHub"
-[libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.8-orange.svg?style=for-the-badge 'Lib.rs badge'
+[libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.10-orange.svg?style=for-the-badge 'Lib.rs badge'
 [made-with-rust]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust 'Made With Rust'
 
 ## Changelog 📚

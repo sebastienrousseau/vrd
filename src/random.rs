@@ -1,494 +1,268 @@
-// Copyright © 2023-2024 Random (VRD) library. All rights reserved.
+// Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-// This file is part of the `Random (VRD)` library, a Rust implementation of the Mersenne Twister RNG.
-// See LICENSE-APACHE.md and LICENSE-MIT.md in the repository root for full license information.
 
-use crate::MersenneTwisterConfig;
-use rand::{RngCore, SeedableRng};
+//! The [`Random`] facade and the enum-dispatched [`RngBackend`] backends.
+
+use crate::mersenne_twister::MersenneTwisterConfig;
+use crate::xoshiro::Xoshiro256PlusPlus;
+use core::convert::Infallible;
+use rand::rand_core::{SeedableRng, TryRng};
+
+#[cfg(feature = "alloc")]
+use alloc::boxed::Box;
+#[cfg(feature = "alloc")]
+use alloc::string::String;
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
 use serde_big_array::BigArray;
 
-#[non_exhaustive]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    Hash,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-)]
-/// The `Random` struct is used to generate random numbers using the Mersenne Twister algorithm.
+// ---------------------------------------------------------------------------
+// FloatExt — abstraction over std vs libm for no_std math.
+// ---------------------------------------------------------------------------
+
+/// Floating-point math operations bridged across `std` / `libm`.
 ///
-/// This struct maintains an internal state for random number generation and provides methods to generate various types of random numbers.
-pub struct Random {
-    /// The array of unsigned 32-bit integers used to generate random numbers.
-    #[serde(with = "BigArray")]
+/// This trait provides a unified interface for mathematical functions that
+/// are usually available in the standard library but missing in `core`.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::FloatExt;
+///
+/// let n = 2.0f64;
+/// let ln_n = n.ln();
+/// let sqrt_n = n.sqrt();
+/// ```
+pub trait FloatExt {
+    /// Natural logarithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// let n: f64 = std::f64::consts::E;
+    /// assert!((FloatExt::ln(n) - 1.0).abs() < 1e-12);
+    /// ```
+    fn ln(self) -> Self;
+
+    /// Square root.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// assert!((FloatExt::sqrt(4.0_f64) - 2.0).abs() < 1e-12);
+    /// ```
+    fn sqrt(self) -> Self;
+
+    /// Cosine.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// assert!(FloatExt::cos(0.0_f64) - 1.0 < 1e-12);
+    /// ```
+    fn cos(self) -> Self;
+
+    /// Exponential.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::FloatExt;
+    /// assert!((FloatExt::exp(0.0_f64) - 1.0).abs() < 1e-12);
+    /// ```
+    fn exp(self) -> Self;
+}
+
+impl FloatExt for f64 {
+    #[inline]
+    fn ln(self) -> Self {
+        #[cfg(feature = "std")]
+        {
+            f64::ln(self)
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            libm::log(self)
+        }
+    }
+    #[inline]
+    fn sqrt(self) -> Self {
+        #[cfg(feature = "std")]
+        {
+            f64::sqrt(self)
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            libm::sqrt(self)
+        }
+    }
+    #[inline]
+    fn cos(self) -> Self {
+        #[cfg(feature = "std")]
+        {
+            f64::cos(self)
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            libm::cos(self)
+        }
+    }
+    #[inline]
+    fn exp(self) -> Self {
+        #[cfg(feature = "std")]
+        {
+            f64::exp(self)
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            libm::exp(self)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MersenneTwister generator — relegated, available only with `alloc`.
+// ---------------------------------------------------------------------------
+
+/// Canonical MT19937 generator (`N = 624`, `M = 397`).
+///
+/// 2496-byte state — kept behind `alloc` because [`RngBackend`] always
+/// boxes it.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::random::MersenneTwister;
+///
+/// let mut mt = MersenneTwister::new();
+/// mt.seed(42);
+/// let n = mt.rand();
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct MersenneTwister {
+    /// Internal MT19937 state vector — 624 32-bit words.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mt = MersenneTwister::new();
+    /// assert_eq!(mt.mt.len(), 624);
+    /// ```
+    #[cfg_attr(feature = "serde", serde(with = "BigArray"))]
     pub mt: [u32; 624],
-    /// The current index of the array used in the generation of random numbers.
+
+    /// Current index into [`Self::mt`]. Reaches `624` and triggers
+    /// the next twist; an unseeded generator starts at `625`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mut mt = MersenneTwister::new();
+    /// assert_eq!(mt.mti, 625); // unseeded sentinel
+    /// mt.seed(1);
+    /// assert_eq!(mt.mti, 624);
+    /// ```
     pub mti: usize,
 }
 
-impl Random {
-    /// Returns a random bool with a specified probability.
-    ///
-    /// The `bool` method returns a random boolean value. The probability of returning `true` is determined
-    /// by the `probability` parameter. This method is useful for generating random boolean outcomes, like
-    /// simulating a coin flip.
-    ///
-    /// # Arguments
-    /// * `probability` - A `f64` value representing the probability of the function returning `true`.
-    ///                   This should be a value between 0.0 and 1.0, where 0.0 always returns `false` and 1.0 always returns `true`.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_bool = rng.bool(0.5); // 50% chance to get true
-    /// ```
-    ///
-    /// # Panics
-    /// Panics if `probability` is not between 0.0 and 1.0.
-    pub fn bool(&mut self, probability: f64) -> bool {
-        let random_value = self.rand();
-        (random_value as f64) < (probability * u32::MAX as f64)
+impl Default for MersenneTwister {
+    /// Returns a new instance using [`Self::new`].
+    fn default() -> Self {
+        Self::new()
     }
+}
 
-    /// Generates a vector of random bytes of the specified length.
-    ///
-    /// # Arguments
-    /// * `len` - The length of the byte vector to be generated.
+impl MersenneTwister {
+    /// Creates a new generator with an empty state. Call [`Self::seed`]
+    /// before use.
     ///
     /// # Examples
+    ///
     /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_bytes = rng.bytes(10); // Generates 10 random bytes
-    /// println!("Random bytes: {:?}", random_bytes);
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mt = MersenneTwister::new();
+    /// assert_eq!(mt.mti(), 625);
     /// ```
-    ///
-    /// # Returns
-    /// A `Vec<u8>` containing `len` randomly generated bytes.
-    pub fn bytes(&mut self, len: usize) -> Vec<u8> {
-        let mut res = Vec::with_capacity(len);
-        for _ in 0..len {
-            let byte = self.rand() as u8;
-            res.push(byte);
-        }
-        res
-    }
-
-    /// Generates a random character within the range 'a' to 'z'.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_char = rng.char(); // Generates a random lowercase character
-    /// println!("Random char: {}", random_char);
-    /// ```
-    ///
-    /// # Returns
-    /// A `char` representing a randomly chosen lowercase letter from 'a' to 'z'.
-    pub fn char(&mut self) -> char {
-        let random_value = self.rand() % 26;
-        (b'a' + random_value as u8) as char
-    }
-
-    /// Selects a random element from a provided slice.
-    ///
-    /// # Arguments
-    /// * `values` - A slice of values from which to select a random element.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let items = [1, 2, 3, 4, 5];
-    /// let random_item = rng.choose(&items);
-    /// println!("Random item from the array: {:?}", random_item);
-    /// ```
-    ///
-    /// # Returns
-    /// An `Option<&T>` which is `Some(&T)` if the slice is not empty, containing a randomly chosen element from the slice.
-    /// Returns `None` if the slice is empty.
-    pub fn choose<'a, T>(&'a mut self, values: &'a [T]) -> Option<&T> {
-        if values.is_empty() {
-            return None;
-        }
-        let index = (self.rand() as usize) % values.len();
-        Some(&values[index])
-    }
-
-    /// Generates a random floating-point number in the range [0.0, 1.0).
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_float = rng.float(); // Generates a random float
-    /// println!("Random float: {}", random_float);
-    /// ```
-    ///
-    /// # Returns
-    /// A `f32` representing a randomly generated floating-point number.
-    ///
-    /// # Notes
-    /// The generated float is inclusive of 0.0 and exclusive of 1.0.
-    pub fn float(&mut self) -> f32 {
-        (self.rand() as f32) / (u32::MAX as f32)
-    }
-
-    /// Creates a new instance of the `Random` struct, seeded with a non-deterministic value obtained from the system's entropy source.
-    ///
-    /// This method ensures that each instance of `Random` produces a unique and unpredictable sequence of numbers.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::from_entropy(); // Creates a new instance of Random with a non-deterministic seed
-    /// let random_number = rng.rand(); // Generates a random number
-    /// println!("Random number: {}", random_number);
-    /// ```
-    ///
-    /// # Returns
-    /// A new instance of `Random` with its internal state initialized for random number generation using a non-deterministic seed.
-    pub fn from_entropy() -> Self {
-        let seed = rand::thread_rng().next_u32();
-        let mut rng = Random::new();
-        rng.seed(seed);
-        rng
-    }
-
-    /// Generates a random integer within a specified range.
-    ///
-    /// # Arguments
-    /// * `min` - The lower bound of the range (inclusive).
-    /// * `max` - The upper bound of the range (inclusive).
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_int = rng.int(1, 10); // Generates a random integer between 1 and 10
-    /// println!("Random integer between 1 and 10: {}", random_int);
-    /// ```
-    ///
-    /// # Returns
-    /// An `i32` representing a randomly generated integer within the specified range.
-    ///
-    /// # Panics
-    /// Panics if `min` is greater than `max`.
-    pub fn int(&mut self, min: i32, max: i32) -> i32 {
-        assert!(
-            min <= max,
-            "min must be less than or equal to max for int"
-        );
-        let range = max as u32 - min as u32 + 1;
-        let value_in_range = (self.rand() % range) + min as u32;
-        value_in_range as i32
-    }
-
-    /// Generates a random unsigned integer within a specified range.
-    ///
-    /// # Arguments
-    /// * `min` - The lower bound of the range (inclusive).
-    /// * `max` - The upper bound of the range (inclusive).
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_uint = rng.uint(1, 100); // Generates a random unsigned integer between 1 and 100
-    /// println!("Random unsigned integer between 1 and 100: {}", random_uint);
-    /// ```
-    ///
-    /// # Returns
-    /// A `u32` representing a randomly generated unsigned integer within the specified range.
-    ///
-    /// # Panics
-    /// Panics if `min` is greater than `max` or if the range is zero.
-    pub fn uint(&mut self, min: u32, max: u32) -> u32 {
-        assert!(
-            min <= max,
-            "min must be less than or equal to max for uint"
-        );
-
-        if min == max {
-            return min; // If min and max are equal, return min (or max).
-        }
-
-        let range = max - min;
-        assert!(range > 0, "Range should be non-zero");
-
-        (self.rand() % (range + 1)) + min
-    }
-
-    /// Generates a random double-precision floating-point number.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_double = rng.double(); // Generates a random double
-    /// println!("Random double: {}", random_double);
-    /// ```
-    ///
-    /// # Returns
-    /// A `f64` representing a randomly generated double-precision floating-point number.
-    ///
-    /// # Notes
-    /// The generated double is a number in the range [0.0, 1.0).
-    pub fn double(&mut self) -> f64 {
-        (self.rand() as f64) / (u32::MAX as f64)
-    }
-
-    /// Returns the current index of the internal state array used in random number generation.
-    ///
-    /// This method is useful for inspecting the state of the random number generator.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let rng = Random::new();
-    /// let current_index = rng.mti();
-    /// println!("Current index of the RNG state array: {}", current_index);
-    /// ```
-    ///
-    /// # Returns
-    /// The current index (`usize`) of the internal state array (`mt`) used by the Mersenne Twister algorithm.
-    pub fn mti(&self) -> usize {
-        self.mti
-    }
-
-    /// Sets the value of the current index of the internal state array used in random number generation.
-    ///
-    /// # Arguments
-    /// * `value` - The new index value to set for the internal state array.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// rng.set_mti(100); // Sets the current index to 100
-    /// assert_eq!(rng.mti(), 100);
-    /// ```
-    ///
-    /// # Notes
-    /// - This method allows for manual manipulation of the internal state of the random number generator.
-    /// - It should be used with caution, as incorrect values can affect the quality of the generated random numbers.
-    pub fn set_mti(&mut self, value: usize) {
-        self.mti = value;
-    }
-
-    /// Creates a new instance of the `Random` struct, initializing the internal state for random number generation.
-    ///
-    /// This method seeds the random number generator with a default value obtained from the thread's random number generator.
-    ///
-    /// The `new` method initializes the `Random` struct. It sets the initial state of the `mt` array
-    /// using a default seed obtained from the system's RNG. This seeding process is crucial for ensuring
-    /// that each instance of `Random` produces a unique and unpredictable sequence of numbers.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new(); // Creates a new instance of Random
-    /// let random_number = rng.rand(); // Generates a random number
-    /// println!("Random number: {}", random_number);
-    /// ```
-    ///
-    /// # Returns
-    /// A new instance of `Random` with its internal state initialized for random number generation.
     pub fn new() -> Self {
-        const N: usize = 624;
-        let mut rng = Random {
-            mt: [0; N],
-            mti: N + 1,
-        };
-        let seed = rand::thread_rng().next_u32();
-        rng.mt[0] = seed;
-        for i in 1..N {
-            let previous_value = rng.mt[i - 1];
-            rng.mt[i] = 1812433253u32
-                .wrapping_mul(previous_value ^ (previous_value >> 30))
-                .wrapping_add(i as u32);
+        Self {
+            mt: [0; 624],
+            mti: 625,
         }
-        rng.mti = N;
-        rng
     }
 
-    /// Generates a pseudo-random number by combining multiple random number generations.
-    ///
-    /// This method enhances the randomness by XOR-ing multiple calls to the basic random number generator.
+    /// Seeds the generator from a 32-byte buffer; only the low 4 bytes
+    /// are needed for MT19937 itself, but accepting 32 bytes keeps the
+    /// API consistent with [`Xoshiro256PlusPlus::from_seed`]. The full
+    /// 32 bytes are mixed via XOR-fold so callers don't silently lose
+    /// entropy.
     ///
     /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let pseudo_random_number = rng.pseudo(); // Generates a pseudo-random number
-    /// println!("Pseudo-random number: {}", pseudo_random_number);
-    /// ```
     ///
-    /// # Returns
-    /// A `u32` representing a pseudo-random number generated by combining multiple random number generations.
-    pub fn pseudo(&mut self) -> u32 {
-        let mut res = self.rand();
-        for _ in 0..31 {
-            res ^= self.rand();
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let seed = [1u8; 32];
+    /// let mt = MersenneTwister::from_seed(seed);
+    /// ```
+    pub fn from_seed(seed: [u8; 32]) -> Self {
+        let mut s = 0u32;
+        for chunk in seed.chunks_exact(4) {
+            s ^= u32::from_le_bytes([
+                chunk[0], chunk[1], chunk[2], chunk[3],
+            ]);
         }
-        res
+        let mut mt = Self::new();
+        mt.seed(s);
+        mt
     }
 
-    /// Generates a random 32-bit unsigned integer using the Mersenne Twister algorithm.
-    ///
-    /// This method is the core function of the `Random` struct, providing the basic mechanism for generating random numbers.
-    ///
-    /// The `rand` method generates a random 32-bit number using the current state of the `mt` array.
-    /// It applies a series of bitwise transformations for tempering, which refines the output and improves
-    /// the statistical properties of the generated numbers.
+    /// Seeds the MT state from a 32-bit value using the canonical
+    /// Knuth multiplier constant.
     ///
     /// # Examples
+    ///
     /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_number = rng.rand(); // Generates a random 32-bit unsigned integer
-    /// println!("Random number: {}", random_number);
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mut mt = MersenneTwister::new();
+    /// mt.seed(12345);
     /// ```
-    ///
-    /// # Returns
-    /// A `u32` representing a randomly generated 32-bit unsigned integer.
-    ///
-    /// # Notes
-    /// - This method updates the internal state of the random number generator each time it is called.
-    /// - If the internal index (`mti`) reaches the threshold, it automatically reinitializes the internal state array.
-    pub fn rand(&mut self) -> u32 {
-        const N: usize = 624;
-        const M: usize = 397;
-        let config = MersenneTwisterConfig::<N, M>::default();
-        if self.mti >= N {
-            if self.mti == N + 1 {
-                self.seed(5489);
-            }
-            self.twist();
-        }
-
-        let mut y = self.mt[self.mti];
-        self.mti += 1;
-        y ^= y >> 11;
-        y ^= (y << 7) & config.params.tempering_mask_b;
-        y ^= (y << 15) & config.params.tempering_mask_c;
-        y ^= y >> 18;
-        y
-    }
-
-    /// Generates a random 32-bit unsigned integer within a specified range.
-    ///
-    /// # Arguments
-    /// * `min` - The lower bound of the range (inclusive).
-    /// * `max` - The upper bound of the range (exclusive).
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_number = rng.random_range(10, 20); // Generates a random number between 10 (inclusive) and 20 (exclusive)
-    /// println!("Random number between 10 and 20: {}", random_number);
-    /// ```
-    ///
-    /// # Returns
-    /// A `u32` representing a randomly generated number within the specified range.
-    ///
-    /// # Panics
-    /// Panics if `min` is not less than `max`.
-    pub fn random_range(&mut self, min: u32, max: u32) -> u32 {
-        assert!(
-            max > min,
-            "max must be greater than min for random_range"
-        );
-        let range = max - min;
-        min + (self.rand() % range)
-    }
-
-    /// Generates a random number within a specified range of integer values.
-    ///
-    /// # Arguments
-    /// * `min` - The lower bound of the range (inclusive).
-    /// * `max` - The upper bound of the range (inclusive).
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_number = rng.range(1, 100); // Generates a random number between 1 and 100
-    /// println!("Random number between 1 and 100: {}", random_number);
-    /// ```
-    ///
-    /// # Returns
-    /// An `i32` representing a randomly generated number within the specified range.
-    ///
-    /// # Panics
-    /// Panics if `min` is greater than `max`.
-    pub fn range(&mut self, min: i32, max: i32) -> i32 {
-        assert!(
-            min <= max,
-            "min must be less than or equal to max for range"
-        );
-        self.int(min, max)
-    }
-
-    /// Seeds the random number generator with a specified value.
-    ///
-    /// This method initializes the internal state array of the generator with a given seed, affecting the sequence of random numbers generated.
-    ///
-    /// The constant 1812433253u32 is used in the seeding process. It's derived from the fractional part
-    /// of the square root of 2. This particular value is chosen to provide good statistical properties
-    /// for the initial array of numbers.
-    ///
-    /// # Arguments
-    /// * `seed` - A `u32` value used to seed the generator.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// rng.seed(12345); // Seeds the random number generator
-    /// let random_number = rng.rand(); // Generates a random number based on the new seed
-    /// println!("Random number with seed 12345: {}", random_number);
-    /// ```
-    ///
-    /// # Notes
-    /// - Seeding the generator is essential for reproducibility of the random number sequence.
     pub fn seed(&mut self, seed: u32) {
         const N: usize = 624;
         self.mt[0] = seed;
         for i in 1..N {
-            self.mt[i] = 1812433253u32
+            self.mt[i] = 1_812_433_253u32
                 .wrapping_mul(self.mt[i - 1] ^ (self.mt[i - 1] >> 30))
                 .wrapping_add(i as u32);
         }
         self.mti = N;
     }
 
-    /// Performs the "twisting" operation to update the internal state array of the random number generator.
-    ///
-    /// This method is a key part of the Mersenne Twister algorithm, and it's called internally when the generator's index exceeds its predefined threshold.
-    ///
-    /// The `twist` method is a key part of the Mersenne Twister algorithm. It generates a new array of
-    /// 624 numbers based on the current array. This method uses bitwise operations and modular arithmetic
-    /// to transform the existing numbers into a new set, thereby 'twisting' the current state. This is
-    /// essential for maintaining the algorithm's long period and high-quality randomness.
+    /// Performs the MT twist on the state vector.
     ///
     /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// rng.twist(); // Manually performs a twist operation
-    /// ```
     ///
-    /// # Notes
-    /// - This method modifies the internal state array, ensuring that future random numbers generated are different from the previous ones.
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mut mt = MersenneTwister::new();
+    /// mt.seed(42);
+    /// mt.twist();
+    /// ```
     pub fn twist(&mut self) {
         const N: usize = 624;
         const M: usize = 397;
@@ -506,139 +280,1233 @@ impl Random {
         self.mti = 0;
     }
 
-    /// Generates a random 64-bit signed integer.
+    /// Generates the next `u32`.
     ///
     /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_i64 = rng.i64();
-    /// println!("Random i64: {}", random_i64);
-    /// ```
     ///
-    /// # Returns
-    /// An `i64` representing a randomly generated 64-bit signed integer.
-    pub fn i64(&mut self) -> i64 {
-        let high = self.rand() as i64;
-        let low = self.rand() as i64;
-        (high << 32) | low
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mut mt = MersenneTwister::new();
+    /// mt.seed(42);
+    /// let n = mt.rand();
+    /// ```
+    #[inline]
+    pub fn rand(&mut self) -> u32 {
+        const N: usize = 624;
+        if self.mti >= N {
+            self.twist();
+        }
+        let mut y = self.mt[self.mti];
+        self.mti += 1;
+        y ^= y >> 11;
+        y ^= (y << 7) & 0x9d2c_5680;
+        y ^= (y << 15) & 0xefc6_0000;
+        y ^ (y >> 18)
     }
 
-    /// Generates a random 64-bit unsigned integer.
+    /// Generates the next `u64` by combining two `u32` outputs.
     ///
     /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_u64 = rng.u64();
-    /// println!("Random u64: {}", random_u64);
-    /// ```
     ///
-    /// # Returns
-    /// A `u64` representing a randomly generated 64-bit unsigned integer.
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mut mt = MersenneTwister::new();
+    /// mt.seed(42);
+    /// let n = mt.next_u64();
+    /// ```
+    #[inline]
+    pub fn next_u64(&mut self) -> u64 {
+        let hi = self.rand() as u64;
+        let lo = self.rand() as u64;
+        (hi << 32) | lo
+    }
+
+    /// Returns the current index into the state vector.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mt = MersenneTwister::new();
+    /// assert_eq!(mt.mti(), 625);
+    /// ```
+    pub fn mti(&self) -> usize {
+        self.mti
+    }
+
+    /// Forces the index to `value`; mostly useful for round-trip tests.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::random::MersenneTwister;
+    ///
+    /// let mut mt = MersenneTwister::new();
+    /// mt.set_mti(100);
+    /// assert_eq!(mt.mti(), 100);
+    /// ```
+    pub fn set_mti(&mut self, value: usize) {
+        self.mti = value;
+    }
+}
+
+impl TryRng for MersenneTwister {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        Ok(self.rand())
+    }
+
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.next_u64())
+    }
+
+    fn try_fill_bytes(
+        &mut self,
+        dest: &mut [u8],
+    ) -> Result<(), Self::Error> {
+        let mut i = 0;
+        while i + 4 <= dest.len() {
+            let bytes = self.rand().to_le_bytes();
+            dest[i..i + 4].copy_from_slice(&bytes);
+            i += 4;
+        }
+        if i < dest.len() {
+            let bytes = self.rand().to_le_bytes();
+            let remaining = dest.len() - i;
+            dest[i..].copy_from_slice(&bytes[..remaining]);
+        }
+        Ok(())
+    }
+}
+
+impl SeedableRng for MersenneTwister {
+    type Seed = [u8; 32];
+
+    fn from_seed(seed: Self::Seed) -> Self {
+        MersenneTwister::from_seed(seed)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// RngBackend — Xoshiro inline (always), MT boxed (alloc-gated).
+// ---------------------------------------------------------------------------
+
+/// Available backends for [`Random`].
+///
+/// Xoshiro is inline (no allocation) so it works on pure `no_std`. MT is
+/// only available with the `alloc` feature because its 2496-byte state is
+/// stored on the heap to keep the enum size small.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::RngBackend;
+/// use vrd::xoshiro::Xoshiro256PlusPlus;
+///
+/// let backend = RngBackend::Xoshiro256PlusPlus(Xoshiro256PlusPlus::from_u64_seed(42));
+/// ```
+#[allow(variant_size_differences)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[non_exhaustive]
+pub enum RngBackend {
+    /// Xoshiro256++ — fast, small-state, statistically strong.
+    /// Default backend produced by [`Random::new`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::{Random, RngBackend};
+    ///
+    /// let rng = Random::from_u64_seed(1);
+    /// assert!(matches!(rng.backend(), RngBackend::Xoshiro256PlusPlus(_)));
+    /// ```
+    Xoshiro256PlusPlus(Xoshiro256PlusPlus),
+
+    /// Mersenne Twister (MT19937) — for callers needing legacy
+    /// reproducibility. Requires the `alloc` feature; produced by
+    /// [`Random::new_mersenne_twister_with_seed`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::{Random, RngBackend};
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let rng = Random::new_mersenne_twister_with_seed(1);
+    /// assert!(matches!(rng.backend(), RngBackend::MersenneTwister(_)));
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    MersenneTwister(Box<MersenneTwister>),
+}
+
+// ---------------------------------------------------------------------------
+// Random — the user-facing facade.
+// ---------------------------------------------------------------------------
+
+/// Random number generator dispatched over [`RngBackend`].
+///
+/// The default backend is Xoshiro256++. Construct with [`Random::new`] for
+/// entropy-seeded operation under `std`, or [`Random::from_seed`] for a
+/// deterministic, allocation-free generator on any target.
+///
+/// # Examples
+///
+/// ```
+/// use vrd::Random;
+///
+/// # #[cfg(feature = "std")]
+/// # {
+/// let mut rng = Random::new();
+/// let n = rng.rand();
+/// # }
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[non_exhaustive]
+pub struct Random {
+    backend: RngBackend,
+}
+
+/// Iterator returned by [`Random::iter_bytes`].
+///
+/// Buffers a `u64` per 8 bytes, so cost-per-byte matches
+/// [`Random::try_fill_bytes`].
+///
+/// # Examples
+///
+/// ```
+/// use vrd::Random;
+///
+/// let mut rng = Random::from_u64_seed(1);
+/// let mut iter = rng.iter_bytes();
+/// let _: u8 = iter.next().unwrap();
+/// ```
+#[derive(Debug)]
+pub struct ByteIter<'a> {
+    rng: &'a mut Random,
+    buf: [u8; 8],
+    idx: u8,
+}
+
+impl Iterator for ByteIter<'_> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<u8> {
+        if self.idx >= 8 {
+            self.buf = self.rng.u64().to_le_bytes();
+            self.idx = 0;
+        }
+        let b = self.buf[self.idx as usize];
+        self.idx += 1;
+        Some(b)
+    }
+}
+
+impl Random {
+    // ----------------------------- constructors -----------------------------
+
+    /// Creates a new entropy-seeded Xoshiro256++ generator. Requires
+    /// `std` for the OS entropy source.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// # }
+    /// ```
+    #[cfg(feature = "std")]
+    pub fn new() -> Self {
+        let mut seed = [0u8; 32];
+        let mut sm: u64 = rand::random();
+        for chunk in seed.chunks_exact_mut(8) {
+            sm = sm.wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(1);
+            let v: u64 = rand::random::<u64>() ^ sm;
+            chunk.copy_from_slice(&v.to_le_bytes());
+        }
+        Self::from_seed(seed)
+    }
+
+    /// Creates a Xoshiro256++-backed [`Random`] from a 32-byte seed.
+    /// Allocation-free; available on any target.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let seed = [0x42; 32];
+    /// let mut rng = Random::from_seed(seed);
+    /// ```
+    pub fn from_seed(seed: [u8; 32]) -> Self {
+        Self {
+            backend: RngBackend::Xoshiro256PlusPlus(
+                Xoshiro256PlusPlus::from_seed(seed),
+            ),
+        }
+    }
+
+    /// Convenience constructor for a Xoshiro256++-backed instance from a
+    /// `u64` seed. Allocation-free.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(123456789);
+    /// ```
+    pub fn from_u64_seed(seed: u64) -> Self {
+        Self {
+            backend: RngBackend::Xoshiro256PlusPlus(
+                Xoshiro256PlusPlus::from_u64_seed(seed),
+            ),
+        }
+    }
+
+    /// Creates a Mersenne-Twister-backed [`Random`] seeded with a `u32`.
+    /// Requires `alloc`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::new_mersenne_twister_with_seed(42);
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn new_mersenne_twister_with_seed(seed: u32) -> Self {
+        let mut mt = MersenneTwister::new();
+        mt.seed(seed);
+        Self {
+            backend: RngBackend::MersenneTwister(Box::new(mt)),
+        }
+    }
+
+    /// Creates an entropy-seeded Mersenne-Twister-backed [`Random`].
+    /// Requires `alloc` + `std`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(all(feature = "alloc", feature = "std"))]
+    /// # {
+    /// let mut rng = Random::new_mersenne_twister();
+    /// # }
+    /// ```
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    pub fn new_mersenne_twister() -> Self {
+        Self::new_mersenne_twister_with_seed(rand::random())
+    }
+
+    // ------------------------------ raw output ------------------------------
+
+    /// Generates a pseudo-random number by combining multiple random number generations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// let n = rng.pseudo();
+    /// # }
+    /// ```
+    pub fn pseudo(&mut self) -> u32 {
+        let mut res = self.rand();
+        for _ in 0..31 {
+            res ^= self.rand();
+        }
+        res
+    }
+
+    /// Generates the next `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// let n = rng.rand();
+    /// # }
+    /// ```
+    #[inline]
+    pub fn rand(&mut self) -> u32 {
+        match &mut self.backend {
+            RngBackend::Xoshiro256PlusPlus(xs) => xs.next_u32(),
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => mt.rand(),
+        }
+    }
+
+    /// Generates the next `u64`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// let n = rng.u64();
+    /// # }
+    /// ```
+    #[inline]
     pub fn u64(&mut self) -> u64 {
-        let high = self.rand() as u64;
-        let low = self.rand() as u64;
-        (high << 32) | low
+        match &mut self.backend {
+            RngBackend::Xoshiro256PlusPlus(xs) => xs.next_u64(),
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => mt.next_u64(),
+        }
     }
 
-    /// Generates a random 64-bit floating-point number in the range [0.0, 1.0).
+    /// Generates the next `i64`.
     ///
     /// # Examples
+    ///
     /// ```
-    /// use vrd::random::Random;
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
     /// let mut rng = Random::new();
-    /// let random_f64 = rng.f64();
-    /// println!("Random f64: {}", random_f64);
+    /// let n = rng.i64();
+    /// # }
+    /// ```
+    #[inline]
+    pub fn i64(&mut self) -> i64 {
+        self.u64() as i64
+    }
+
+    /// Re-seeds the active backend from a `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// rng.seed(999);
+    /// # }
+    /// ```
+    pub fn seed(&mut self, seed: u32) {
+        match &mut self.backend {
+            RngBackend::Xoshiro256PlusPlus(xs) => {
+                *xs = Xoshiro256PlusPlus::from_u64_seed(seed as u64);
+            }
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => mt.seed(seed),
+        }
+    }
+
+    /// Returns a reference to the active backend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::{Random, RngBackend};
+    ///
+    /// let rng = Random::from_u64_seed(42);
+    /// match rng.backend() {
+    ///     RngBackend::Xoshiro256PlusPlus(_) => println!("Using Xoshiro"),
+    ///     _ => unreachable!(),
+    /// }
+    /// ```
+    pub fn backend(&self) -> &RngBackend {
+        &self.backend
+    }
+
+    // -------------------------- bounded sampling ---------------------------
+
+    /// Generates an unbiased `u32` in `[0, range)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// let n = rng.bounded(10);
+    /// assert!(n < 10);
+    /// # }
+    /// ```
+    #[inline]
+    pub fn bounded(&mut self, range: u32) -> u32 {
+        assert!(range > 0, "range must be greater than zero");
+        let x = u64::from(self.rand()).wrapping_mul(u64::from(range));
+        let l = x as u32;
+        if l < range {
+            // Rejection branch hits <1% for ranges < 2^30; pulled
+            // out so the hot path stays small in i-cache.
+            return self.bounded_reject(range, x);
+        }
+        (x >> 32) as u32
+    }
+
+    /// Rejection-loop tail of [`Self::bounded`]. Marked `#[cold]` and
+    /// never inlined so the common-path bytes in `bounded` stay tight.
+    #[cold]
+    #[inline(never)]
+    fn bounded_reject(&mut self, range: u32, mut x: u64) -> u32 {
+        let t = range.wrapping_neg() % range;
+        let mut l = x as u32;
+        while l < t {
+            x = u64::from(self.rand()).wrapping_mul(u64::from(range));
+            l = x as u32;
+        }
+        (x >> 32) as u32
+    }
+
+    /// Generates an unbiased `u32` in `[min, max)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// let n = rng.random_range(10, 20);
+    /// assert!(n >= 10 && n < 20);
+    /// # }
+    /// ```
+    #[inline]
+    pub fn random_range(&mut self, min: u32, max: u32) -> u32 {
+        assert!(max > min, "max must be greater than min");
+        min + self.bounded(max - min)
+    }
+
+    /// Generates an unbiased `i32` in `[min, max]` (inclusive).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "std")]
+    /// # {
+    /// let mut rng = Random::new();
+    /// let n = rng.int(-10, 10);
+    /// assert!(n >= -10 && n <= 10);
+    /// # }
+    /// ```
+    pub fn int(&mut self, min: i32, max: i32) -> i32 {
+        assert!(min <= max, "min must be <= max for int");
+        if min == max {
+            return min;
+        }
+        let range = (max as i64) - (min as i64);
+        if range == u32::MAX as i64 {
+            return min.wrapping_add(self.rand() as i32);
+        }
+        let range_u32 = (range + 1) as u32;
+        min.wrapping_add(self.bounded(range_u32) as i32)
+    }
+
+    /// Inclusive alias for [`Self::int`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let n = rng.range(1, 10);
+    /// assert!((1..=10).contains(&n));
+    /// ```
+    pub fn range(&mut self, min: i32, max: i32) -> i32 {
+        self.int(min, max)
+    }
+
+    /// Generates an unbiased `u32` in `[min, max]` (inclusive).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let n = rng.uint(1, 100);
+    /// assert!((1..=100).contains(&n));
     /// ```
     ///
-    /// # Returns
-    /// An `f64` representing a randomly generated 64-bit floating-point number.
+    /// # Panics
+    ///
+    /// Panics if `min > max`.
+    pub fn uint(&mut self, min: u32, max: u32) -> u32 {
+        assert!(min <= max, "min must be <= max for uint");
+        if min == max {
+            return min;
+        }
+        let range = (max as u64) - (min as u64);
+        if range == u32::MAX as u64 {
+            return min.wrapping_add(self.rand());
+        }
+        let range_u32 = (range + 1) as u32;
+        min + self.bounded(range_u32)
+    }
+
+    // --------------------------- bools, chars ------------------------------
+
+    /// Generates a random `bool` whose probability of `true` is
+    /// `probability`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let _coin: bool = rng.bool(0.5);
+    /// assert!(!rng.bool(0.0));
+    /// assert!( rng.bool(1.0));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `probability` is outside `[0.0, 1.0]`.
+    pub fn bool(&mut self, probability: f64) -> bool {
+        assert!(
+            (0.0..=1.0).contains(&probability),
+            "probability must be in [0.0, 1.0]"
+        );
+        self.f64() < probability
+    }
+
+    /// Generates a lowercase ASCII character in `'a'..='z'`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let c = rng.char();
+    /// assert!(c.is_ascii_lowercase());
+    /// ```
+    pub fn char(&mut self) -> char {
+        let v = self.bounded(26) as u8;
+        (b'a' + v) as char
+    }
+
+    /// Picks a random reference into `values`. Returns `None` if the
+    /// slice is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool = [10, 20, 30, 40, 50];
+    /// let pick = rng.choose(&pool).unwrap();
+    /// assert!(pool.contains(pick));
+    ///
+    /// let empty: [i32; 0] = [];
+    /// assert!(rng.choose(&empty).is_none());
+    /// ```
+    pub fn choose<'a, T>(&mut self, values: &'a [T]) -> Option<&'a T> {
+        if values.is_empty() {
+            return None;
+        }
+        let idx = self.bounded(values.len() as u32) as usize;
+        Some(&values[idx])
+    }
+
+    // ------------------------------ floats ---------------------------------
+
+    /// Generates an `f32` in `[0.0, 1.0)` with full 24-bit mantissa
+    /// precision.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.float();
+    /// assert!((0.0..1.0).contains(&x));
+    /// ```
+    #[inline]
+    pub fn float(&mut self) -> f32 {
+        const SCALE: f32 = 1.0 / ((1u32 << 24) as f32);
+        ((self.rand() >> 8) as f32) * SCALE
+    }
+
+    /// Generates an `f64` in `[0.0, 1.0)` with full 53-bit mantissa
+    /// precision.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.double();
+    /// assert!((0.0..1.0).contains(&x));
+    /// ```
+    #[inline]
+    pub fn double(&mut self) -> f64 {
+        const SCALE: f64 = 1.0 / ((1u64 << 53) as f64);
+        ((self.u64() >> 11) as f64) * SCALE
+    }
+
+    /// Alias for [`Self::double`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.f64();
+    /// assert!((0.0..1.0).contains(&x));
+    /// ```
+    #[inline]
     pub fn f64(&mut self) -> f64 {
         self.double()
     }
 
-    /// Generates a random string of the specified length.
-    ///
-    /// # Arguments
-    /// * `length` - The desired length of the random string.
+    // -------------------------- byte / Vec output --------------------------
+
+    /// Returns a fresh `Vec<u8>` of `len` random bytes. Requires the
+    /// `alloc` feature.
     ///
     /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let random_string = rng.string(10);
-    /// println!("Random string: {}", random_string);
-    /// ```
     ///
-    /// # Returns
-    /// A `String` representing a randomly generated string of the specified length.
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let buf = rng.bytes(16);
+    /// assert_eq!(buf.len(), 16);
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn bytes(&mut self, len: usize) -> Vec<u8> {
+        let mut buf = alloc::vec![0u8; len];
+        let _ = self.try_fill_bytes(&mut buf);
+        buf
+    }
+
+    /// Returns a fresh `String` of `length` lowercase ASCII chars.
+    /// Requires the `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let s = rng.string(8);
+    /// assert_eq!(s.len(), 8);
+    /// assert!(s.chars().all(|c| c.is_ascii_lowercase()));
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
     pub fn string(&mut self, length: usize) -> String {
         (0..length).map(|_| self.char()).collect()
     }
 
-    /// Generates a random number from a standard normal distribution (mean = 0, stddev = 1).
+    // -------------------------- iterator adapters ---------------------------
+
+    /// Returns an unbounded iterator yielding random `u32` values.
     ///
-    /// # Arguments
-    /// * `mu` - The mean of the normal distribution.
-    /// * `sigma` - The standard deviation of the normal distribution.
+    /// The iterator borrows `self` mutably; collect-into-Vec or
+    /// `.take(n)` to bound it.
     ///
     /// # Examples
+    ///
     /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let normal = rng.normal(0.0, 1.0);
-    /// println!("Random number from standard normal distribution: {}", normal);
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let xs: Vec<u32> = rng.iter_u32().take(5).collect();
+    /// assert_eq!(xs.len(), 5);
+    /// # }
+    /// ```
+    pub fn iter_u32(&mut self) -> impl Iterator<Item = u32> + '_ {
+        core::iter::from_fn(move || Some(self.rand()))
+    }
+
+    /// Returns an unbounded iterator yielding random `u64` values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let xs: Vec<u64> = rng.iter_u64().take(5).collect();
+    /// assert_eq!(xs.len(), 5);
+    /// # }
+    /// ```
+    pub fn iter_u64(&mut self) -> impl Iterator<Item = u64> + '_ {
+        core::iter::from_fn(move || Some(self.u64()))
+    }
+
+    /// Returns an unbounded iterator yielding random bytes.
+    ///
+    /// Internally buffers a `u64` per 8 bytes — the same throughput as
+    /// [`Self::try_fill_bytes`], but ergonomic for `take`/`collect` use.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let bytes: Vec<u8> = rng.iter_bytes().take(16).collect();
+    /// assert_eq!(bytes.len(), 16);
+    /// # }
+    /// ```
+    pub fn iter_bytes(&mut self) -> ByteIter<'_> {
+        ByteIter {
+            rng: self,
+            buf: [0u8; 8],
+            idx: 8,
+        }
+    }
+
+    // ----------------------------- UUIDs / tokens ---------------------------
+
+    /// Generates a random 16-byte buffer formatted as an RFC 4122
+    /// **version 4** UUID. Allocation-free.
+    ///
+    /// Variant bits and version bits are set per spec; the remaining
+    /// 122 bits come from the active backend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let bytes = rng.uuid_v4_bytes();
+    /// // Version 4: high nibble of byte 6 is 0x4.
+    /// assert_eq!(bytes[6] >> 4, 0x4);
+    /// // Variant 10x: high two bits of byte 8 are 0b10.
+    /// assert_eq!(bytes[8] >> 6, 0b10);
+    /// ```
+    pub fn uuid_v4_bytes(&mut self) -> [u8; 16] {
+        let mut bytes = [0u8; 16];
+        // try_fill_bytes is infallible for both backends.
+        let _ = TryRng::try_fill_bytes(self, &mut bytes);
+        // RFC 4122 §4.4: version 4 in the high nibble of byte 6.
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        // RFC 4122 §4.1.1: variant 10x in the top two bits of byte 8.
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        bytes
+    }
+
+    /// Generates a random RFC 4122 v4 UUID as a hyphenated lowercase
+    /// `String`. Requires the `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let s = rng.uuid_v4();
+    /// assert_eq!(s.len(), 36);
+    /// // Hyphens at the canonical 8-4-4-4-12 positions.
+    /// assert_eq!(s.as_bytes()[8], b'-');
+    /// assert_eq!(s.as_bytes()[13], b'-');
+    /// assert_eq!(s.as_bytes()[18], b'-');
+    /// assert_eq!(s.as_bytes()[23], b'-');
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn uuid_v4(&mut self) -> String {
+        let b = self.uuid_v4_bytes();
+        let mut s = String::with_capacity(36);
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+        let push_hex = |byte: u8, s: &mut String| {
+            s.push(HEX[(byte >> 4) as usize] as char);
+            s.push(HEX[(byte & 0x0f) as usize] as char);
+        };
+        for (i, &byte) in b.iter().enumerate() {
+            if matches!(i, 4 | 6 | 8 | 10) {
+                s.push('-');
+            }
+            push_hex(byte, &mut s);
+        }
+        s
+    }
+
+    /// Generates a lowercase hex token of `byte_len` bytes (so the
+    /// returned string has length `byte_len * 2`). Requires `alloc`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let token = rng.hex_token(16);
+    /// assert_eq!(token.len(), 32);
+    /// assert!(token.chars().all(|c| c.is_ascii_hexdigit()));
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn hex_token(&mut self, byte_len: usize) -> String {
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+        let mut s = String::with_capacity(byte_len * 2);
+        for _ in 0..byte_len {
+            let byte = self.rand() as u8;
+            s.push(HEX[(byte >> 4) as usize] as char);
+            s.push(HEX[(byte & 0x0f) as usize] as char);
+        }
+        s
+    }
+
+    /// Generates an unpadded URL-safe **base64** token of `byte_len`
+    /// random bytes. The returned string has length
+    /// `((byte_len + 2) / 3) * 4`, minus padding. Alphabet per
+    /// RFC 4648 §5: `A-Z a-z 0-9 - _`. Requires `alloc`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let token = rng.base64_token(15);
+    /// assert_eq!(token.len(), 20); // 15 bytes -> 20 base64 chars (no padding)
+    /// assert!(token.chars().all(|c| matches!(c,
+    ///     'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_'
+    /// )));
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn base64_token(&mut self, byte_len: usize) -> String {
+        const ALPHABET: &[u8; 64] =
+            b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+        let mut bytes = alloc::vec![0u8; byte_len];
+        let _ = TryRng::try_fill_bytes(self, &mut bytes);
+        let n = bytes.len();
+        let chunks = n / 3;
+        let rem = n % 3;
+        let mut out = String::with_capacity(((n + 2) / 3) * 4);
+        for i in 0..chunks {
+            let a = bytes[i * 3];
+            let b = bytes[i * 3 + 1];
+            let c = bytes[i * 3 + 2];
+            out.push(ALPHABET[(a >> 2) as usize] as char);
+            out.push(
+                ALPHABET[(((a & 0x03) << 4) | (b >> 4)) as usize]
+                    as char,
+            );
+            out.push(
+                ALPHABET[(((b & 0x0f) << 2) | (c >> 6)) as usize]
+                    as char,
+            );
+            out.push(ALPHABET[(c & 0x3f) as usize] as char);
+        }
+        if rem == 1 {
+            let a = bytes[chunks * 3];
+            out.push(ALPHABET[(a >> 2) as usize] as char);
+            out.push(ALPHABET[((a & 0x03) << 4) as usize] as char);
+        } else if rem == 2 {
+            let a = bytes[chunks * 3];
+            let b = bytes[chunks * 3 + 1];
+            out.push(ALPHABET[(a >> 2) as usize] as char);
+            out.push(
+                ALPHABET[(((a & 0x03) << 4) | (b >> 4)) as usize]
+                    as char,
+            );
+            out.push(ALPHABET[((b & 0x0f) << 2) as usize] as char);
+        }
+        out
+    }
+
+    // ------------------------ uniform float in (low, high) -------------------
+
+    /// Generates an `f64` uniformly distributed in `[low, high)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.uniform(-3.0, 3.0);
+    /// assert!((-3.0..3.0).contains(&x));
     /// ```
     ///
-    /// # Returns
-    /// An `f64` representing a random number from a standard normal distribution.
+    /// # Panics
+    ///
+    /// Panics if `low >= high` or if either bound is non-finite.
+    pub fn uniform(&mut self, low: f64, high: f64) -> f64 {
+        assert!(
+            low.is_finite() && high.is_finite(),
+            "bounds must be finite"
+        );
+        assert!(low < high, "low must be < high");
+        low + (high - low) * self.f64()
+    }
+
+    // ------------------------------ shuffling -------------------------------
+
+    /// Fisher-Yates shuffle in place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let mut deck = [1, 2, 3, 4, 5];
+    /// rng.shuffle(&mut deck);
+    /// // The shuffled array is a permutation of the original.
+    /// let mut sorted = deck;
+    /// sorted.sort_unstable();
+    /// assert_eq!(sorted, [1, 2, 3, 4, 5]);
+    /// ```
+    pub fn shuffle<T>(&mut self, slice: &mut [T]) {
+        if slice.len() < 2 {
+            return;
+        }
+        for i in (1..slice.len()).rev() {
+            let j = self.bounded((i + 1) as u32) as usize;
+            slice.swap(i, j);
+        }
+    }
+
+    /// Sample `amount` references without replacement via partial
+    /// Fisher-Yates with `swap_remove` — O(amount) draws, each O(1).
+    /// Requires the `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool: Vec<u32> = (1..=20).collect();
+    /// let picks = rng.sample(&pool, 5);
+    /// assert_eq!(picks.len(), 5);
+    /// // No duplicates.
+    /// let mut as_vals: Vec<u32> = picks.iter().map(|r| **r).collect();
+    /// as_vals.sort_unstable();
+    /// let mut deduped = as_vals.clone();
+    /// deduped.dedup();
+    /// assert_eq!(as_vals, deduped);
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn sample<'a, T>(
+        &mut self,
+        slice: &'a [T],
+        amount: usize,
+    ) -> Vec<&'a T> {
+        let mut result = Vec::with_capacity(amount);
+        let mut indices: Vec<usize> = (0..slice.len()).collect();
+        for _ in 0..amount {
+            let pick = self.bounded(indices.len() as u32) as usize;
+            let chosen = indices.swap_remove(pick);
+            result.push(&slice[chosen]);
+        }
+        result
+    }
+
+    /// Sample `amount` references with replacement. Requires the
+    /// `alloc` feature.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "alloc")]
+    /// # {
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool = ["alpha", "beta", "gamma"];
+    /// let picks = rng.sample_with_replacement(&pool, 5);
+    /// assert_eq!(picks.len(), 5);
+    /// // Every pick is one of the pool entries (duplicates allowed).
+    /// for p in picks {
+    ///     assert!(pool.contains(p));
+    /// }
+    /// # }
+    /// ```
+    #[cfg(feature = "alloc")]
+    pub fn sample_with_replacement<'a, T>(
+        &mut self,
+        slice: &'a [T],
+        amount: usize,
+    ) -> Vec<&'a T> {
+        let mut result = Vec::with_capacity(amount);
+        for _ in 0..amount {
+            let idx = self.bounded(slice.len() as u32) as usize;
+            result.push(&slice[idx]);
+        }
+        result
+    }
+
+    /// Returns a contiguous random subslice of `length` from `slice`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let pool = [1, 2, 3, 4, 5, 6, 7, 8];
+    /// let window = rng.rand_slice(&pool, 3).unwrap();
+    /// assert_eq!(window.len(), 3);
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(&'static str)` when:
+    /// - the input slice is empty,
+    /// - `length` is `0`, or
+    /// - `length` exceeds `slice.len()`.
+    pub fn rand_slice<'a, T>(
+        &mut self,
+        slice: &'a [T],
+        length: usize,
+    ) -> Result<&'a [T], &'static str> {
+        if slice.is_empty() {
+            return Err("input slice is empty");
+        }
+        if length == 0 {
+            return Err("requested length must be greater than zero");
+        }
+        if length > slice.len() {
+            return Err("requested length exceeds slice length");
+        }
+        let start =
+            self.bounded((slice.len() - length + 1) as u32) as usize;
+        Ok(&slice[start..start + length])
+    }
+
+    // ---------------------- statistical distributions -----------------------
+
+    /// Standard normal sample, parameterized by `(mu, sigma)`.
+    ///
+    /// Uses the **Marsaglia polar method**: rejection-sample two uniforms
+    /// inside the unit disc, then transform to a normal sample without
+    /// trigonometry. Acceptance probability is π/4 ≈ 78.5%, so the inner
+    /// loop runs ~1.27 times on average. Faster than Box-Muller (no
+    /// `cos` call) for the same statistical guarantees.
+    ///
+    /// For an even faster `normal()` based on the Ziggurat algorithm
+    /// (~3 ns/sample), see issue tracker — Ziggurat needs build-time
+    /// table generation and lives behind a `fast-distributions` feature
+    /// in a future release.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let z = rng.normal(0.0, 1.0);
+    /// assert!(z.is_finite());
+    /// ```
     pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
-        let u1 = self.f64();
-        let u2 = self.f64();
-        let z0 = (-2.0 * u1.ln()).sqrt()
-            * (2.0 * std::f64::consts::PI * u2).cos();
-        mu + sigma * z0
+        loop {
+            // Map u, v from [0, 1) to (-1, 1).
+            let u = 2.0 * self.f64() - 1.0;
+            let v = 2.0 * self.f64() - 1.0;
+            let s = u * u + v * v;
+            // Reject pairs that fall outside the open unit disc, plus
+            // the (origin) case where ln would diverge.
+            if s > 0.0 && s < 1.0 {
+                let factor = FloatExt::sqrt(-2.0 * FloatExt::ln(s) / s);
+                return mu + sigma * (u * factor);
+            }
+        }
     }
 
-    /// Generates a random number from an exponential distribution with the specified rate parameter.
-    ///
-    /// # Arguments
-    /// * `rate` - The rate parameter (lambda) of the exponential distribution.
+    /// Exponential sample with the given `rate` (λ). Mean of the
+    /// distribution is `1.0 / rate`.
     ///
     /// # Examples
+    ///
     /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let exponential = rng.exponential(1.5);
-    /// println!("Random number from exponential distribution with rate 1.5: {}", exponential);
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let x = rng.exponential(1.5);
+    /// assert!(x >= 0.0);
     /// ```
     ///
-    /// # Returns
-    /// An `f64` representing a random number from an exponential distribution.
+    /// # Panics
+    ///
+    /// Panics if `rate <= 0.0`.
     pub fn exponential(&mut self, rate: f64) -> f64 {
-        -1.0 / rate * (1.0 - self.f64()).ln()
+        assert!(rate > 0.0, "rate must be positive");
+        let u = 1.0 - self.f64();
+        let u = if u == 0.0 { f64::MIN_POSITIVE } else { u };
+        -FloatExt::ln(u) / rate
     }
 
-    /// Generates a random number from a Poisson distribution with the specified mean parameter.
-    ///
-    /// # Arguments
-    /// * `mean` - The mean parameter (lambda) of the Poisson distribution.
+    /// Poisson sample with the given `mean` (λ). Uses Knuth's
+    /// multiplicative algorithm; cost is O(λ).
     ///
     /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let poisson = rng.poisson(3.0);
-    /// println!("Random number from Poisson distribution with mean 3.0: {}", poisson);
-    /// ```
     ///
-    /// # Returns
-    /// An `u64` representing a random number from a Poisson distribution.
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let k = rng.poisson(3.0);
+    /// // k is a non-negative count; with mean 3.0, values cluster
+    /// // near 3 but the tail is unbounded.
+    /// let _: u64 = k;
+    /// ```
     pub fn poisson(&mut self, mean: f64) -> u64 {
-        let mut k = 0;
+        let l = FloatExt::exp(-mean);
+        let mut k = 0u64;
         let mut p = 1.0;
-        let l = (-mean).exp();
         loop {
             k += 1;
             p *= self.f64();
@@ -649,263 +1517,391 @@ impl Random {
         k - 1
     }
 
-    /// Generates a random subslice of the specified length from the given slice.
-    ///
-    /// # Arguments
-    /// * `slice` - The slice from which to generate a random subslice.
-    /// * `length` - The desired length of the random subslice.
+    // ------------------- MT-specific helpers (no-op on Xoshiro) ------------
+
+    /// Returns the current Mersenne-Twister state index. Returns `0`
+    /// when the active backend is Xoshiro256++.
     ///
     /// # Examples
+    ///
     /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let slice = &[1, 2, 3, 4, 5];
-    /// let random_subslice = rng.rand_slice(slice, 3);
-    /// println!("Random subslice: {:?}", random_subslice);
+    /// use vrd::Random;
+    ///
+    /// let rng = Random::from_u64_seed(1);
+    /// assert_eq!(rng.mti(), 0); // Xoshiro backend
     /// ```
-    ///
-    /// # Returns
-    /// A `Result<&[T], &str>` containing a randomly generated subslice of the specified length.
-    pub fn rand_slice<'a, T>(
-        &mut self,
-        slice: &'a [T],
-        length: usize,
-    ) -> Result<&'a [T], &'static str> {
-        if slice.is_empty() {
-            return Err("Input slice is empty");
-        }
-        if length == 0 {
-            return Err("Requested length must be greater than zero");
-        }
-        if length > slice.len() {
-            return Err("Requested length exceeds slice length");
-        }
-
-        let available_start_positions = slice.len() - length + 1;
-        let start = self
-            .random_range(0, available_start_positions as u32)
-            as usize;
-        Ok(&slice[start..start + length])
-    }
-
-    /// Randomly samples elements from the given slice without replacement.
-    ///
-    /// # Arguments
-    /// * `slice` - The slice from which to sample elements.
-    /// * `amount` - The number of elements to sample.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let slice = &[1, 2, 3, 4, 5];
-    /// let samples = rng.sample(slice, 3);
-    /// println!("Random samples: {:?}", samples);
-    /// ```
-    ///
-    /// # Returns
-    /// A vector containing the randomly sampled elements.
-    pub fn sample<'a, T>(
-        &'a mut self,
-        slice: &'a [T],
-        amount: usize,
-    ) -> Vec<&T> {
-        let mut result = Vec::with_capacity(amount);
-        let mut indices: Vec<usize> = (0..slice.len()).collect();
-        for _ in 0..amount {
-            let index =
-                self.random_range(0, indices.len() as u32) as usize;
-            result.push(&slice[indices[index]]);
-            indices.remove(index);
-        }
-        result
-    }
-
-    /// Randomly samples elements from the given slice with replacement.
-    ///
-    /// # Arguments
-    /// * `slice` - The slice from which to sample elements.
-    /// * `amount` - The number of elements to sample.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let slice = &[1, 2, 3, 4, 5];
-    /// let samples = rng.sample_with_replacement(slice, 3);
-    /// println!("Random samples with replacement: {:?}", samples);
-    /// ```
-    ///
-    /// # Returns
-    /// A vector containing the randomly sampled elements with replacement.
-    pub fn sample_with_replacement<'a, T>(
-        &'a mut self,
-        slice: &'a [T],
-        amount: usize,
-    ) -> Vec<&T> {
-        let mut result = Vec::with_capacity(amount);
-        for _ in 0..amount {
-            let index =
-                self.random_range(0, slice.len() as u32) as usize;
-            result.push(&slice[index]);
-        }
-        result
-    }
-
-    /// Fills the given mutable slice with random values.
-    ///
-    /// # Arguments
-    /// * `slice` - The mutable slice to fill with random values.
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let mut buffer = [0; 10];
-    /// rng.fill(&mut buffer);
-    /// println!("Filled buffer: {:?}", buffer);
-    /// ```
-    pub fn fill<T>(&mut self, slice: &mut [T])
-    where
-        T: Default
-            + std::ops::RemAssign<u32>
-            + std::ops::BitOrAssign<u32>,
-    {
-        for item in slice.iter_mut() {
-            let random_value = self.rand();
-            *item = T::default();
-            *item %= random_value;
-            *item |= random_value;
+    pub fn mti(&self) -> usize {
+        match &self.backend {
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => mt.mti(),
+            _ => 0,
         }
     }
 
-    /// Shuffles the elements of a mutable slice randomly.
-    ///
-    /// # Arguments
-    /// * `slice` - The mutable slice to shuffle.
+    /// Sets the Mersenne-Twister state index. No-op on the Xoshiro
+    /// backend.
     ///
     /// # Examples
+    ///
     /// ```
-    /// use vrd::random::Random;
-    /// let mut rng = Random::new();
-    /// let mut values = [1, 2, 3, 4, 5];
-    /// rng.shuffle(&mut values);
-    /// println!("Shuffled values: {:?}", values);
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// rng.set_mti(0); // no-op on Xoshiro; mti() still returns 0
+    /// assert_eq!(rng.mti(), 0);
     /// ```
-    pub fn shuffle<T>(&mut self, slice: &mut [T]) {
-        for i in (1..slice.len()).rev() {
-            let j = self.random_range(0, (i + 1) as u32) as usize;
-            slice.swap(i, j);
+    pub fn set_mti(&mut self, value: usize) {
+        match &mut self.backend {
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => mt.set_mti(value),
+            _ => {
+                let _ = value;
+            }
+        }
+    }
+
+    /// Forces a Mersenne-Twister state-vector twist. No-op on the
+    /// Xoshiro backend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// rng.twist(); // no-op on Xoshiro
+    /// ```
+    pub fn twist(&mut self) {
+        match &mut self.backend {
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => mt.twist(),
+            _ => {}
         }
     }
 }
 
-impl std::fmt::Display for Random {
-    /// Returns a formatted string representation of the `Random` struct.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Random {{ mt: {:?}, mti: {:?} }}", self.mt, self.mti)
-    }
-}
-
+#[cfg(feature = "std")]
 impl Default for Random {
-    /// Returns a default random number generator
-    ///
-    /// # Examples
-    /// ```
-    /// use vrd::random::Random;
-    /// let rng = Random::default();
-    /// ```
-    ///
-    /// # Returns
-    /// A new instance of `Random` with its internal state initialized for random number generation.
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl RngCore for Random {
-    /// Generates the next random `u32` value.
-    ///
-    /// # Returns
-    /// A `u32` representing a randomly generated 32-bit unsigned integer.
-    fn next_u32(&mut self) -> u32 {
-        self.rand()
-    }
-
-    /// Generates the next random `u64` value.
-    ///
-    /// # Returns
-    /// A `u64` representing a randomly generated 64-bit unsigned integer.
-    fn next_u64(&mut self) -> u64 {
-        self.u64()
-    }
-
-    /// Fills `dest` with random data.
-    ///
-    /// # Arguments
-    /// * `dest` - The byte slice to be filled with random data.
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        for chunk in dest.chunks_mut(4) {
-            let random_value = self.rand().to_le_bytes();
-            chunk.copy_from_slice(&random_value[..chunk.len()]);
+impl core::fmt::Display for Random {
+    fn fmt(
+        &self,
+        f: &mut core::fmt::Formatter<'_>,
+    ) -> core::fmt::Result {
+        match &self.backend {
+            RngBackend::Xoshiro256PlusPlus(_) => {
+                write!(f, "Random {{ backend: Xoshiro256PlusPlus }}")
+            }
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => write!(
+                f,
+                "Random {{ backend: MersenneTwister, mti: {} }}",
+                mt.mti
+            ),
         }
     }
+}
 
-    /// Attempts to fill `dest` with random data.
-    ///
-    /// This method will never fail for this implementation, so it always returns `Ok(())`.
-    ///
-    /// # Arguments
-    /// * `dest` - The byte slice to be filled with random data.
-    ///
-    /// # Returns
-    /// A `Result<(), Error>` which is always `Ok(())` for this implementation.
+impl TryRng for Random {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        Ok(self.rand())
+    }
+
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.u64())
+    }
+
     fn try_fill_bytes(
         &mut self,
         dest: &mut [u8],
-    ) -> Result<(), rand::Error> {
-        self.fill_bytes(dest);
-        Ok(())
+    ) -> Result<(), Self::Error> {
+        match &mut self.backend {
+            RngBackend::Xoshiro256PlusPlus(xs) => {
+                xs.try_fill_bytes(dest)
+            }
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(mt) => mt.try_fill_bytes(dest),
+        }
     }
 }
 
 impl SeedableRng for Random {
-    type Seed = [u8; 16]; // Adjust as necessary
+    type Seed = [u8; 32];
 
     fn from_seed(seed: Self::Seed) -> Self {
-        let mut mt = [0u32; 624];
+        Random::from_seed(seed)
+    }
+}
 
-        // Initialize the state with a non-zero value
-        mt[0] = u32::from_le_bytes(seed[0..4].try_into().unwrap());
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::rand_weighted_choice;
 
-        for i in 1..624 {
-            mt[i] = 0x6C078965u32
-                .wrapping_mul(mt[i - 1] ^ (mt[i - 1] >> 30))
-                .wrapping_add(i as u32);
+    #[cfg(feature = "alloc")]
+    use alloc::format;
+    #[cfg(all(not(feature = "alloc"), feature = "std"))]
+    use std::format;
+
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)]
+    use alloc::vec;
+    #[cfg(all(not(feature = "alloc"), feature = "std"))]
+    #[allow(unused_imports)]
+    use std::vec;
+
+    #[test]
+    fn test_floatext() {
+        let n = 2.0f64;
+        let _ = n.ln();
+        let _ = n.sqrt();
+        let _ = n.cos();
+        let _ = n.exp();
+
+        let _ = FloatExt::ln(n);
+        let _ = FloatExt::sqrt(n);
+        let _ = FloatExt::cos(0.0_f64);
+        let _ = FloatExt::exp(n);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_mt_tryrng_direct() {
+        let mut mt = MersenneTwister::new();
+        mt.seed(42);
+        assert!(mt.try_next_u32().is_ok());
+        assert!(mt.try_next_u64().is_ok());
+    }
+
+    #[test]
+    fn test_random_seedable_rng_trait() {
+        let mut rng = <Random as SeedableRng>::from_seed([7u8; 32]);
+        let _ = rng.rand();
+    }
+
+    #[test]
+    fn test_iter_u32_u64_and_bytes() {
+        let mut rng = Random::from_u64_seed(1);
+        let v32: u32 = rng.iter_u32().next().unwrap();
+        let _ = v32;
+        let v64: u64 = rng.iter_u64().next().unwrap();
+        let _ = v64;
+        let b: u8 = rng.iter_bytes().next().unwrap();
+        let _ = b;
+    }
+
+    #[test]
+    fn test_rand_slice_error_empty() {
+        let mut rng = Random::from_u64_seed(1);
+        let pool: [u8; 0] = [];
+        assert!(rng.rand_slice(&pool, 1).is_err());
+    }
+
+    #[test]
+    fn test_rand_slice_error_zero_length() {
+        let mut rng = Random::from_u64_seed(1);
+        let pool = [1u8, 2, 3];
+        assert!(rng.rand_slice(&pool, 0).is_err());
+    }
+
+    #[test]
+    fn test_rand_slice_error_length_exceeds_slice() {
+        let mut rng = Random::from_u64_seed(1);
+        let pool = [1u8, 2, 3];
+        assert!(rng.rand_slice(&pool, 10).is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_mt_direct() {
+        let mut mt = MersenneTwister::new();
+        mt.seed(42);
+        assert_eq!(mt.mti(), 624);
+        let _ = mt.rand();
+        let _ = mt.next_u64();
+        mt.twist();
+        assert_eq!(mt.mti(), 0);
+        mt.set_mti(100);
+        assert_eq!(mt.mti(), 100);
+        let mut buf = [0u8; 10];
+        assert!(mt.try_fill_bytes(&mut buf).is_ok());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_mt_seedable() {
+        let seed = [1u8; 32];
+        let mut mt = <MersenneTwister as SeedableRng>::from_seed(seed);
+        assert_ne!(mt.rand(), 0);
+    }
+
+    #[test]
+    fn test_random_constructors() {
+        let _ = Random::from_u64_seed(42);
+        let _ = Random::from_seed([1u8; 32]);
+        #[cfg(feature = "alloc")]
+        let _ = Random::new_mersenne_twister_with_seed(42);
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_random_std_constructors() {
+        let _ = Random::new();
+        #[cfg(feature = "alloc")]
+        let _ = Random::new_mersenne_twister();
+    }
+
+    #[test]
+    fn test_random_methods() {
+        let mut rng = Random::from_u64_seed(42);
+        let _ = rng.rand();
+        let _ = rng.u64();
+        let _ = rng.i64();
+        let _ = rng.float();
+        let _ = rng.double();
+        let _ = rng.f64();
+        let _ = rng.bool(0.5);
+        let _ = rng.char();
+        let _ = rng.int(1, 10);
+        let _ = rng.uint(1, 10);
+        let _ = rng.range(1, 10);
+        let _ = rng.random_range(1, 10);
+        let _ = rng.pseudo();
+        let _ = rng.choose(&[1, 2, 3]);
+        let _ = rng.rand_slice(&[1, 2, 3], 2);
+        let _ = rng.normal(0.0, 1.0);
+        let _ = rng.exponential(1.0);
+        let _ = rng.poisson(3.0);
+        rng.seed(123);
+        let _ = rng.backend();
+        let _ = rng.mti();
+        rng.set_mti(10);
+        rng.twist();
+        #[cfg(any(feature = "alloc", feature = "std"))]
+        let _ = format!("{}", rng);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_random_alloc_methods() {
+        let mut rng = Random::new_mersenne_twister_with_seed(42);
+        let _ = rng.bytes(10);
+        let _ = rng.string(10);
+        let mut nums = [1, 2, 3];
+        rng.shuffle(&mut nums);
+        let _ = rng.sample(&nums, 2);
+        let _ = rng.sample_with_replacement(&nums, 2);
+    }
+
+    #[test]
+    fn test_bounded_loop() {
+        let mut rng = Random::from_u64_seed(1);
+        for _ in 0..2000 {
+            let _ = rng.bounded(0x8000_0001);
         }
+    }
 
-        // Further mix in the seed into the state array
-        let mut i = 1;
-        let mut j = 0;
-        for _ in 0..624.max(16) {
-            mt[i] = (mt[i]
-                ^ ((mt[i - 1] ^ (mt[i - 1] >> 30))
-                    .wrapping_mul(0x6C078965u32)))
-            .wrapping_add(u32::from_le_bytes(
-                seed[j..j + 4].try_into().unwrap(),
-            ))
-            .wrapping_add(j as u32); // Add seed and its index
-            i += 1;
-            j += 4;
-            if i >= 624 {
-                mt[0] = mt[623];
-                i = 1;
-            }
-            if j >= 16 {
-                j = 0;
-            }
-        }
+    #[test]
+    fn test_uint_int_full_range() {
+        let mut rng = Random::from_u64_seed(42);
+        let _ = rng.uint(0, u32::MAX);
+        let _ = rng.int(i32::MIN, i32::MAX);
+        assert_eq!(rng.int(5, 5), 5);
+        assert_eq!(rng.uint(5, 5), 5);
+    }
 
-        Random { mt, mti: 624 }
+    #[test]
+    #[should_panic]
+    fn test_bool_panic() {
+        let mut rng = Random::from_u64_seed(42);
+        let _ = rng.bool(1.1);
+    }
+
+    #[test]
+    fn test_try_rng() {
+        let mut rng = Random::from_u64_seed(42);
+        assert!(rng.try_next_u32().is_ok());
+        assert!(rng.try_next_u64().is_ok());
+        let mut buf = [0u8; 10];
+        assert!(rng.try_fill_bytes(&mut buf).is_ok());
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "choices and weights must have the same length"
+    )]
+    fn test_weighted_choice_diff_length() {
+        let mut rng = Random::from_u64_seed(42);
+        let choices = [1, 2];
+        let weights = [1];
+        let _ = rand_weighted_choice!(rng, &choices, &weights);
+    }
+
+    #[test]
+    #[should_panic(expected = "total weight must be positive")]
+    fn test_weighted_choice_zero_weight() {
+        let mut rng = Random::from_u64_seed(42);
+        let choices = [1, 2];
+        let weights = [0, 0];
+        let _ = rand_weighted_choice!(rng, &choices, &weights);
+    }
+
+    #[test]
+    fn test_weighted_choice_selection() {
+        let mut rng = Random::from_u64_seed(42);
+        let choices = [1, 2];
+        let weights = [100, 0];
+        let pick = rand_weighted_choice!(rng, &choices, &weights);
+        assert_eq!(pick, &1);
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_random_new_std() {
+        let mut rng = Random::new();
+        assert_ne!(rng.rand(), rng.rand());
+    }
+
+    #[test]
+    fn test_random_normal_zero_edge() {
+        let mut rng = Random::from_u64_seed(0);
+        let _ = rng.normal(0.0, 1.0);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_mersenne_twister_default_trait() {
+        let mt = <MersenneTwister as Default>::default();
+        assert_eq!(mt.mti(), 625);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_mt_from_seed_loop() {
+        let seed = [1u8; 32];
+        let mt = MersenneTwister::from_seed(seed);
+        assert_eq!(mt.mti(), 624);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_mt_try_fill_bytes_exhaust_alignment() {
+        let mut mt = MersenneTwister::new();
+        let mut buf = [0u8; 15];
+        assert!(mt.try_fill_bytes(&mut buf).is_ok());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_random_display_mt_direct() {
+        let rng = Random::new_mersenne_twister_with_seed(42);
+        let s = format!("{}", rng);
+        assert!(s.contains("MersenneTwister"));
     }
 }
