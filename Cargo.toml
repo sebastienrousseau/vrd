@@ -41,6 +41,7 @@ rand = { version = "0.10", default-features = false }
 libm = { version = "0.2", default-features = false }
 serde = { version = "1.0.228", default-features = false, features = ["derive"], optional = true }
 serde-big-array = { version = "0.5.1", default-features = false, optional = true }
+rand_chacha = { version = "0.10", default-features = false, optional = true }
 
 [build-dependencies]
 version_check = "0.9.5"
@@ -134,6 +135,10 @@ name = "pcg"
 path = "examples/pcg.rs"
 required-features = ["pcg"]
 [[example]]
+name = "secure"
+path = "examples/secure.rs"
+required-features = ["crypto", "std"]
+[[example]]
 name = "backends"
 path = "examples/backends.rs"
 [[example]]
@@ -187,7 +192,7 @@ path = "examples/all.rs"
 default = ["std"]
 std = ["alloc", "serde?/std", "rand/std", "rand/thread_rng"]
 alloc = ["rand/alloc", "serde?/alloc"]
-serde = ["dep:serde", "dep:serde-big-array"]
+serde = ["dep:serde", "dep:serde-big-array", "rand_chacha?/serde"]
 # Bulk-byte SIMD path for `fill_bytes`. Trades bit-for-bit reproducibility
 # against the scalar path for throughput (~2.5–3× on AArch64 NEON and
 # x86_64 AVX2). Off by default; see `xoshiro_simd` for the contract.
@@ -195,6 +200,11 @@ simd = []
 # Adds PCG32 and PCG64 as third / fourth backends. Small-state,
 # fast, statistically excellent — not a CSPRNG.
 pcg = []
+# Adds a ChaCha20-based CSPRNG backend. The default Xoshiro and MT
+# backends remain non-crypto. Pulls in `rand_chacha` for the
+# audited reference implementation. Requires `alloc` because the
+# CSPRNG variant is boxed in `RngBackend` to keep the enum small.
+crypto = ["alloc", "dep:rand_chacha"]
 
 [package.metadata.docs.rs]
 all-features = true

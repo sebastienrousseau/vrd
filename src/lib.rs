@@ -139,6 +139,9 @@ pub mod xoshiro_simd;
 /// PCG32 / PCG64 generators (feature `pcg`).
 #[cfg(feature = "pcg")]
 pub mod pcg;
+/// ChaCha20 CSPRNG (feature `crypto`).
+#[cfg(feature = "crypto")]
+pub mod chacha;
 /// Ziggurat sampler for `Random::normal()`.
 mod ziggurat;
 

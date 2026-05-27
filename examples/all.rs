@@ -61,7 +61,8 @@ const EXAMPLES: &[&str] = &[
 
 /// Examples that require specific feature flags. Each entry is
 /// `(example name, comma-separated features)`.
-const FEATURE_EXAMPLES: &[(&str, &str)] = &[("pcg", "pcg")];
+const FEATURE_EXAMPLES: &[(&str, &str)] =
+    &[("pcg", "pcg"), ("secure", "crypto")];
 
 fn main() {
     println!("\n  \x1b[1mvrd examples\x1b[0m\n");

@@ -295,7 +295,16 @@ assert_eq!(rng.rand(), restored.rand());      // identical state, identical outp
 `Random`, `Xoshiro256PlusPlus`, `MersenneTwisterParams`, and `MersenneTwisterConfig` all derive `Serialize` / `Deserialize` under the `serde` feature.
 
 ### Is `vrd` cryptographically secure?
-No. `Random` is a non-cryptographic PRNG built on Xoshiro256++. For credentials, secrets, session IDs, or anything that an attacker would benefit from predicting, use a CSPRNG such as `rand::rngs::OsRng` or the `getrandom` crate. A built-in ChaCha20-based CSPRNG backend is tracked in [#90](https://github.com/sebastienrousseau/vrd/issues/90).
+Yes — when the `crypto` feature is enabled and you construct via `Random::new_secure()` or `Random::from_secure_seed([u8; 32])`. That backend wraps `rand_chacha::ChaCha20Rng`, the rand-ecosystem reference ChaCha20 implementation. Bit-for-bit equivalent to `rand_chacha::ChaCha20Rng::from_seed(...)`, so callers already on `rand_chacha` can drop in without behavioural surprises.
+
+The other backends (Xoshiro256++ default, MT19937, PCG) are **not** CSPRNGs. Pick the backend that matches the use case:
+
+| Backend | Constructor | State | Speed | Crypto-quality? |
+| :--- | :--- | :---: | :---: | :---: |
+| **Xoshiro256++** | `Random::new()` | 32 B | fastest | no |
+| **MT19937** | `Random::new_mersenne_twister()` | 2 488 B | slow | no |
+| **PCG32 / PCG64** | `Random::new_pcg32()` / `new_pcg64()` | 16 / 32 B | fastest | no |
+| **ChaCha20** | `Random::new_secure()` | ~256 B | ~3× slower than Xoshiro | **yes** |
 
 ### Does `vrd` work without `std`?
 Yes. With `default-features = false`, `vrd` compiles for pure `no_std` targets — Cortex-M is gated in CI on every PR. The `alloc` feature unlocks `Vec`/`String`/`Box`-backed APIs (`bytes`, `string`, `sample`, `shuffle`, `uuid_v4`, `hex_token`, `base64_token`, the Mersenne Twister backend). Without `alloc`, `Random::from_seed([u8; 32])` and `Random::from_u64_seed(u64)` give you a fully-functional Xoshiro256++ on bare metal.

@@ -410,7 +410,7 @@ impl SeedableRng for MersenneTwister {
 /// let backend = RngBackend::Xoshiro256PlusPlus(Xoshiro256PlusPlus::from_u64_seed(42));
 /// ```
 #[allow(variant_size_differences)]
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
 pub enum RngBackend {
@@ -454,6 +454,12 @@ pub enum RngBackend {
     /// under the `pcg` feature.
     #[cfg(feature = "pcg")]
     Pcg64(crate::pcg::Pcg64),
+
+    /// ChaCha20 CSPRNG — crypto-quality output. Produced by
+    /// [`Random::new_secure`] / [`Random::from_secure_seed`].
+    /// Available under the `crypto` feature.
+    #[cfg(feature = "crypto")]
+    ChaCha20(Box<crate::chacha::ChaChaRng>),
 }
 
 // ---------------------------------------------------------------------------
@@ -477,7 +483,7 @@ pub enum RngBackend {
 /// let n = rng.rand();
 /// # }
 /// ```
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
 pub struct Random {
@@ -696,6 +702,55 @@ impl Random {
         )
     }
 
+    /// Creates a ChaCha20-CSPRNG-backed [`Random`] from a
+    /// deterministic 32-byte seed. Requires the `crypto` feature.
+    /// Output is bit-for-bit equivalent to
+    /// `rand_chacha::ChaCha20Rng::from_seed(seed)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "crypto")]
+    /// # {
+    /// let mut rng = Random::from_secure_seed([42u8; 32]);
+    /// let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(feature = "crypto")]
+    pub fn from_secure_seed(seed: [u8; 32]) -> Self {
+        Self {
+            backend: RngBackend::ChaCha20(Box::new(
+                crate::chacha::ChaChaRng::from_seed(seed),
+            )),
+        }
+    }
+
+    /// Creates a ChaCha20-CSPRNG-backed [`Random`] seeded from the
+    /// OS entropy source. Requires the `crypto` feature and `std`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(all(feature = "crypto", feature = "std"))]
+    /// # {
+    /// let mut rng = Random::new_secure();
+    /// // crypto-grade UUID v4 / token / etc.
+    /// # let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(all(feature = "crypto", feature = "std"))]
+    pub fn new_secure() -> Self {
+        Self {
+            backend: RngBackend::ChaCha20(Box::new(
+                crate::chacha::ChaChaRng::from_os_rng(),
+            )),
+        }
+    }
+
     /// Creates an entropy-seeded Mersenne-Twister-backed [`Random`].
     /// Requires `alloc` + `std`.
     ///
@@ -760,6 +815,8 @@ impl Random {
             RngBackend::Pcg32(p) => p.next_u32(),
             #[cfg(feature = "pcg")]
             RngBackend::Pcg64(p) => p.next_u32(),
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => c.next_u32(),
         }
     }
 
@@ -786,6 +843,8 @@ impl Random {
             RngBackend::Pcg32(p) => p.next_u64(),
             #[cfg(feature = "pcg")]
             RngBackend::Pcg64(p) => p.next_u64(),
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => c.next_u64(),
         }
     }
 
@@ -834,6 +893,12 @@ impl Random {
             #[cfg(feature = "pcg")]
             RngBackend::Pcg64(p) => {
                 *p = crate::pcg::Pcg64::from_u128_seed(seed as u128);
+            }
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => {
+                let mut s = [0u8; 32];
+                s[0..4].copy_from_slice(&seed.to_le_bytes());
+                **c = crate::chacha::ChaChaRng::from_seed(s);
             }
         }
     }
@@ -890,6 +955,8 @@ impl Random {
             RngBackend::MersenneTwister(_) => None,
             #[cfg(feature = "pcg")]
             RngBackend::Pcg32(_) | RngBackend::Pcg64(_) => None,
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(_) => None,
         }
     }
 
@@ -1768,6 +1835,10 @@ impl core::fmt::Display for Random {
             RngBackend::Pcg64(_) => {
                 write!(f, "Random {{ backend: Pcg64 }}")
             }
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(_) => {
+                write!(f, "Random {{ backend: ChaCha20 }}")
+            }
         }
     }
 }
@@ -1797,6 +1868,8 @@ impl TryRng for Random {
             RngBackend::Pcg32(p) => p.try_fill_bytes(dest),
             #[cfg(feature = "pcg")]
             RngBackend::Pcg64(p) => p.try_fill_bytes(dest),
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => c.try_fill_bytes(dest),
         }
     }
 }
