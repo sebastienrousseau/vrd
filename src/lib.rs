@@ -145,12 +145,15 @@ pub mod chacha;
 /// Quasi-random low-discrepancy sequences (feature `quasirandom`).
 #[cfg(feature = "quasirandom")]
 pub mod quasirandom;
+/// Pluggable `Distribution` trait and built-in samplers.
+pub mod distribution;
 /// Ziggurat sampler for `Random::normal()`.
 mod ziggurat;
 
 pub use mersenne_twister::{
     MersenneTwisterConfig, MersenneTwisterError, MersenneTwisterParams,
 };
+pub use distribution::Distribution;
 pub use random::{FloatExt, Random, RngBackend};
 
 #[cfg(test)]
