@@ -53,6 +53,10 @@ Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Wi
 | `std` | yes | Entropy seeding via `rand::rng()`; `std::error::Error` impls. |
 | `alloc` | via `std` | `Random::bytes`, `Random::string`, `Random::sample`, `Random::uuid_v4`, `Random::hex_token`, `Random::base64_token`, the heap-stored Mersenne Twister backend. |
 | `serde` | no | `Serialize` / `Deserialize` derives for the public types. |
+| `simd` | no | SIMD-batched `fill_bytes` on AArch64 NEON / x86_64 AVX2 (~2–3× on bulk byte fills). |
+| `pcg` | no | PCG32 (16 B state) and PCG64 (32 B state) as additional backends. |
+| `crypto` | no | ChaCha20 CSPRNG backend: `Random::new_secure()`, `Random::from_secure_seed`. |
+| `quasirandom` | no | Halton / Sobol / Van der Corput low-discrepancy sequences for Monte Carlo. |
 
 Disable defaults to ship into `no_std`:
 
@@ -152,6 +156,14 @@ rustflags = ["-C", "target-cpu=native"]
 ```
 
 `target-cpu=native` is **not** baked into vrd's release profile because it would break `cargo install` for users on machines that download crates as binaries. Set it in the consuming crate.
+
+**`simd` feature for bulk byte generation** — opts into SIMD-batched `fill_bytes` that holds K independent Xoshiro256++ states in vector registers (K = 2 on AArch64 NEON, K = 4 on x86_64 AVX2). ~2.2× faster on 1 KiB and ~3× on 16 KiB:
+
+```toml
+vrd = { version = "0.0.11", features = ["simd"] }
+```
+
+The SIMD path produces a **different byte stream** than the scalar path for the same seed — see [`xoshiro_simd`](https://docs.rs/vrd/latest/vrd/xoshiro_simd/) for the contract. Reproducibility-sensitive code must stay on the scalar default.
 
 **Profile-Guided Optimization (PGO)** — typically yields 5–15% on hot loops:
 

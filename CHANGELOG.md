@@ -5,6 +5,111 @@ All notable changes to `vrd` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — v0.0.11 — Performance follow-ups + v0.1.0 differentiators
+
+This release pulls in both the perf items from the v0.0.10 audit
+(#88, #89) and the v0.1.0 differentiator backlog (#90–#95, #84 close-out).
+After this lands, vrd is no longer "yet another non-crypto PRNG with a
+nice API" — it's a tri-backend (Xoshiro / MT / PCG) + crypto-backend
+(ChaCha20) + quasi-random (Halton / Sobol / VdC) RNG with a SIMD
+bulk-byte path and a pluggable `Distribution` trait.
+
+### Added
+
+- **`Random::split()`** — parallel-safe stream derivation via
+  Xoshiro256++ `jump()`. Returns `Some(Random)` on the Xoshiro backend
+  (2¹²⁸-step separation guarantee), `None` on MT / PCG / ChaCha20
+  (no analogous fixed-distance jump). New `examples/split.rs`. (#92)
+- **`Random::fill_array<const N>()`** — stack-allocated bulk byte
+  generation; allocation-free, works in pure `no_std`. (#94)
+- **`pcg` feature** — adds `Pcg32` (16-byte state) and `Pcg64`
+  (32-byte state) as third / fourth `RngBackend` variants. New
+  constructors: `Random::new_pcg32`, `new_pcg32_with_seed`,
+  `new_pcg64`, `new_pcg64_with_seed`. Hand-rolled PCG-XSH-RR-64/32
+  and PCG-XSL-RR-128/64 per O'Neill 2014; no new external deps. PCG32
+  measures faster than Xoshiro through the facade
+  (2.7 ns vs. 3.2 ns/`u32` on Apple Silicon). New `examples/pcg.rs`.
+  (#95)
+- **`crypto` feature** — adds `Random::new_secure()` and
+  `Random::from_secure_seed([u8; 32])`, backed by ChaCha20 via the
+  audited `rand_chacha 0.10` reference implementation. Bit-for-bit
+  equivalent to `rand_chacha::ChaCha20Rng::from_seed`. Moves vrd
+  out of the documented "non-crypto only" pack into the small set of
+  crates that cover both ends with one API. Tested via
+  `tests/test_chacha.rs`; new `examples/secure.rs`. README "Choosing a
+  backend" table replaces the prior "Not a CSPRNG" callout. (#90)
+- **`quasirandom` feature** — `HaltonSequence` (up to 32 dims via the
+  first 32 primes), `SobolSequence` (up to 6 dims via Bratley-Fox
+  direction numbers), `VanDerCorputSequence` (any prime base).
+  Variance scales `O((log n)^d / n)` for Monte Carlo integration,
+  ray-tracing, finance. New module `src/quasirandom.rs`;
+  `examples/halton.rs` and `examples/sobol.rs` show side-by-side π
+  convergence vs. the PRNG path. (#91)
+- **`Distribution<T>` trait** — pluggable distribution sampling.
+  Built-in `Normal`, `Exponential`, `Uniform`, `Poisson` impls forward
+  to the optimised methods on `Random`; users add their own via
+  `impl Distribution<MyType> for MyDist`. Closes the "Custom
+  distribution support" item from #84.
+- **`crush` feature** — `examples/crush.rs` pipes vrd output through
+  an external PractRand `RNG_test` binary and emits a pass-count
+  summary. New `BENCHMARKS.md` tracks the reference results per
+  release. Informational only — CI does NOT gate on it. (#93)
+- **`simd` feature** — optional SIMD-batched `fill_bytes` for bulk byte
+  generation. Holds K independent Xoshiro256++ states in vector
+  registers (K = 2 on AArch64 NEON, K = 4 on x86_64 AVX2 — built up
+  from two interleaved 2-lane groups for ILP). Off by default.
+  - **Reproducibility contract**: same seed produces a **different
+    byte stream** under `simd` vs. scalar. This is fundamental to
+    parallelising — there's no correctness-preserving way to interleave
+    K independent generators into the same sequence a single-threaded
+    one would produce. Lanes are derived from a SplitMix64 whitening
+    of the scalar state (collision probability ≤ K²/2²⁵⁶); after the
+    SIMD loop, the scalar state is advanced by adopting lane 0's
+    final state. Buffers under 64 B fall back to the scalar path
+    where setup cost would dominate.
+  - Statistical quality is unchanged — each lane is a full Xoshiro256++.
+
+### Performance
+
+- **`Random::normal()` is ~4× faster** — replaced the Marsaglia polar
+  method with a **256-strip Ziggurat sampler** (Marsaglia & Tsang, 2000)
+  whose `K`/`W`/`F` tables are pre-computed at build time by `build.rs`.
+  The fast path costs one `u32` draw, one table lookup, and one `f64`
+  multiply; the overhang branch (~1% of calls) adds one `exp` and one
+  `f64` draw; the tail branch (~0.03% of calls) falls back to
+  exponential rejection. On Apple Silicon M-series:
+  `distributions/normal(0, 1)` 14.66 ns → 3.39 ns. A golden vector
+  test pins down 16 bit-exact samples to catch table drift; a
+  moments check verifies skewness < 0.05 and excess kurtosis < 0.1
+  over 200 000 samples. (#89)
+- **`fill_bytes` SIMD path** under the new `simd` feature reaches
+  **2.22× on 1 KiB** and **3.02× on 16 KiB** vs. the scalar baseline on
+  Apple Silicon M-series:
+
+  | Buffer | Scalar | SIMD (NEON) | Speedup | GB/s |
+  | :--- | ---: | ---: | ---: | ---: |
+  | 1 KiB | 137.9 ns | 62.1 ns | 2.22× | 16.5 |
+  | 16 KiB | 2188 ns | 725 ns | 3.02× | 22.6 |
+
+  AVX2 path is implemented but un-benchmarked here; targets ~25–40
+  GB/s on a modern x86_64 part. (#88)
+
+### Changed
+
+- **`#![forbid(unsafe_code)]` → `#![deny(unsafe_code)]`** at the crate
+  root, so the `xoshiro_simd` module can lift the deny locally for
+  architecture intrinsics. All other modules remain `unsafe`-free.
+- **`Xoshiro256PlusPlus::fill_bytes`** documents the SIMD vs. scalar
+  reproducibility contract in its rustdoc.
+- **`Random` / `RngBackend`** no longer derive `Eq` / `Hash` / `Ord` /
+  `PartialOrd`. The ChaCha20 backend's underlying type doesn't
+  implement them, and "ordering RNG states" was never a meaningful
+  operation. `PartialEq` is kept for snapshot / determinism
+  comparisons.
+- **`serde` feature** now forwards through to `rand_chacha?/serde` so
+  the ChaCha20 backend round-trips cleanly when both `crypto` and
+  `serde` are enabled.
+
 ## [0.0.10] — 2026-04-29 — Modernization release
 
 This release rewrites `vrd` around **Xoshiro256++** as the default

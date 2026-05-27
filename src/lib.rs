@@ -71,13 +71,30 @@
 //! when you need bit-for-bit MT19937 reproducibility against existing
 //! test vectors.
 //!
-//! ## Not a CSPRNG
+//! ## Choosing a backend
 //!
-//! `Random` is **not** cryptographically secure. For credentials,
-//! session IDs, or anything an attacker would benefit from predicting,
-//! use `rand::rngs::OsRng` or `getrandom`. A built-in ChaCha20-based
-//! CSPRNG backend is tracked in
-//! [issue #90](https://github.com/sebastienrousseau/vrd/issues/90).
+//! Default `Random` is non-cryptographic Xoshiro256++. For
+//! credentials, session IDs, or anything an attacker would benefit
+//! from predicting, enable the `crypto` feature and construct via
+//! [`Random::new_secure`] (entropy-seeded) or
+//! [`Random::from_secure_seed`] (deterministic). The other backends
+//! cover different speed / state-size / reproducibility points:
+//!
+//! | Backend | Constructor | State | Crypto-quality? |
+//! | :--- | :--- | ---: | :---: |
+//! | Xoshiro256++ | [`Random::new`] | 32 B | no |
+//! | MT19937 | [`Random::new_mersenne_twister`] | 2 488 B | no |
+//! | PCG32 / PCG64 | [`Random::new_pcg32`] / [`Random::new_pcg64`] | 16 / 32 B | no |
+//! | ChaCha20 | [`Random::new_secure`] | ~256 B | **yes** |
+//!
+//! ## Optional features
+//!
+//! - `simd` — SIMD-batched `fill_bytes` (~2–3× bulk throughput).
+//! - `pcg` — PCG32 / PCG64 backends.
+//! - `crypto` — ChaCha20 CSPRNG backend.
+//! - `quasirandom` — Halton / Sobol / Van der Corput low-discrepancy
+//!   sequences for Monte Carlo integration.
+//! - `serde` — `Serialize` / `Deserialize` on the public types.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
