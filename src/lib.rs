@@ -13,7 +13,10 @@
 #![crate_type = "lib"]
 #![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
-#![forbid(unsafe_code)]
+// `deny`, not `forbid`, so the optional `simd` module (which needs
+// architecture intrinsics) can lift it with a module-local `#[allow]`.
+// All other modules must remain free of `unsafe`.
+#![deny(unsafe_code)]
 #![doc = "Minimum supported Rust version: 1.70.0"]
 
 //! # Versatile Random Distributions (VRD)
@@ -130,6 +133,9 @@ pub mod mersenne_twister;
 pub mod random;
 /// Xoshiro256++ implementation.
 pub mod xoshiro;
+/// SIMD-batched `fill_bytes` (feature `simd`).
+#[cfg(feature = "simd")]
+pub mod xoshiro_simd;
 /// Ziggurat sampler for `Random::normal()`.
 mod ziggurat;
 

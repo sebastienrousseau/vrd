@@ -153,6 +153,12 @@ impl Xoshiro256PlusPlus {
 
     /// Fills `dest` with random bytes.
     ///
+    /// With the `simd` feature, large buffers go through a SIMD-batched
+    /// path that holds K independent Xoshiro256++ lanes in vector
+    /// registers (K = 2 on AArch64 NEON, K = 4 on x86_64 AVX2). Same
+    /// seed produces a **different** byte stream under `simd` vs.
+    /// scalar — see [`crate::xoshiro_simd`] for the contract.
+    ///
     /// # Examples
     ///
     /// ```
@@ -163,6 +169,16 @@ impl Xoshiro256PlusPlus {
     /// rng.fill_bytes(&mut buf);
     /// ```
     pub fn fill_bytes(&mut self, dest: &mut [u8]) {
+        #[cfg(feature = "simd")]
+        crate::xoshiro_simd::fill_bytes(self, dest);
+        #[cfg(not(feature = "simd"))]
+        self.fill_bytes_scalar(dest);
+    }
+
+    /// Scalar `fill_bytes` — always available; the SIMD path falls
+    /// back to this for the trailing bytes that don't fill a full
+    /// register.
+    pub(crate) fn fill_bytes_scalar(&mut self, dest: &mut [u8]) {
         let mut i = 0;
         while i + 8 <= dest.len() {
             let bytes = self.next_u64().to_le_bytes();
@@ -174,6 +190,23 @@ impl Xoshiro256PlusPlus {
             let remaining = dest.len() - i;
             dest[i..].copy_from_slice(&bytes[..remaining]);
         }
+    }
+
+    /// Returns a copy of the current 4-word state. Used by the SIMD
+    /// fill path (feature `simd`) to seed independent lanes via
+    /// [`Self::jump`].
+    #[doc(hidden)]
+    #[cfg(feature = "simd")]
+    pub(crate) fn state_snapshot(&self) -> [u64; 4] {
+        self.state
+    }
+
+    /// Overwrites the 4-word state. Pair with [`Self::state_snapshot`]
+    /// to roll the SIMD lanes back into the scalar generator.
+    #[doc(hidden)]
+    #[cfg(feature = "simd")]
+    pub(crate) fn set_state(&mut self, state: [u64; 4]) {
+        self.state = state;
     }
 
     /// Advances the state by 2^128 calls to [`Self::next_u64`].

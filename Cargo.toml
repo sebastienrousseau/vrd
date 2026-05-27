@@ -180,6 +180,10 @@ default = ["std"]
 std = ["alloc", "serde?/std", "rand/std", "rand/thread_rng"]
 alloc = ["rand/alloc", "serde?/alloc"]
 serde = ["dep:serde", "dep:serde-big-array"]
+# Bulk-byte SIMD path for `fill_bytes`. Trades bit-for-bit reproducibility
+# against the scalar path for throughput (~2.5–3× on AArch64 NEON and
+# x86_64 AVX2). Off by default; see `xoshiro_simd` for the contract.
+simd = []
 
 [package.metadata.docs.rs]
 all-features = true

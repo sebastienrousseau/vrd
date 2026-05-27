@@ -83,6 +83,21 @@ fn bench_fill_bytes(c: &mut Criterion) {
     });
 
     group.finish();
+
+    // Larger buffers amortise the SIMD setup cost over more bytes;
+    // the throughput delta vs. the 1 KiB bench is informative.
+    let mut group = c.benchmark_group("fill_16384_bytes");
+
+    group.bench_function("vrd::Random / Xoshiro256++ (default)", |b| {
+        let mut rng = Random::new();
+        let mut buf = [0u8; 16 * 1024];
+        b.iter(|| {
+            use rand::rand_core::TryRng;
+            let _ = rng.try_fill_bytes(black_box(&mut buf));
+        });
+    });
+
+    group.finish();
 }
 
 /// Distribution sampling cost for the statistical helpers.
