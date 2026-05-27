@@ -142,10 +142,21 @@ impl fmt::Display for VrdError {
 #[cfg(feature = "std")]
 impl std::error::Error for VrdError {}
 
+/// ChaCha20 CSPRNG (feature `crypto`).
+#[cfg(feature = "crypto")]
+pub mod chacha;
+/// Pluggable `Distribution` trait and built-in samplers.
+pub mod distribution;
 /// Convenience macros.
 pub mod macros;
 /// Mersenne Twister configuration and constants.
 pub mod mersenne_twister;
+/// PCG32 / PCG64 generators (feature `pcg`).
+#[cfg(feature = "pcg")]
+pub mod pcg;
+/// Quasi-random low-discrepancy sequences (feature `quasirandom`).
+#[cfg(feature = "quasirandom")]
+pub mod quasirandom;
 /// The core `Random` facade.
 pub mod random;
 /// Xoshiro256++ implementation.
@@ -153,24 +164,13 @@ pub mod xoshiro;
 /// SIMD-batched `fill_bytes` (feature `simd`).
 #[cfg(feature = "simd")]
 pub mod xoshiro_simd;
-/// PCG32 / PCG64 generators (feature `pcg`).
-#[cfg(feature = "pcg")]
-pub mod pcg;
-/// ChaCha20 CSPRNG (feature `crypto`).
-#[cfg(feature = "crypto")]
-pub mod chacha;
-/// Quasi-random low-discrepancy sequences (feature `quasirandom`).
-#[cfg(feature = "quasirandom")]
-pub mod quasirandom;
-/// Pluggable `Distribution` trait and built-in samplers.
-pub mod distribution;
 /// Ziggurat sampler for `Random::normal()`.
 mod ziggurat;
 
+pub use distribution::Distribution;
 pub use mersenne_twister::{
     MersenneTwisterConfig, MersenneTwisterError, MersenneTwisterParams,
 };
-pub use distribution::Distribution;
 pub use random::{FloatExt, Random, RngBackend};
 
 #[cfg(test)]

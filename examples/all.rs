@@ -101,7 +101,11 @@ fn main() {
 
         let result = Command::new("cargo")
             .args([
-                "run", "--example", name, "--features", features,
+                "run",
+                "--example",
+                name,
+                "--features",
+                features,
                 "--quiet",
             ])
             .stdout(std::process::Stdio::null())

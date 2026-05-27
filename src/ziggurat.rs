@@ -203,8 +203,8 @@ mod tests {
         let inv_n = 1.0 / n as f64;
         let m1 = sum * inv_n;
         let m2 = sum2 * inv_n - m1 * m1;
-        let m3 = sum3 * inv_n - 3.0 * m1 * sum2 * inv_n
-            + 2.0 * m1 * m1 * m1;
+        let m3 =
+            sum3 * inv_n - 3.0 * m1 * sum2 * inv_n + 2.0 * m1 * m1 * m1;
         let m4 = sum4 * inv_n - 4.0 * m1 * sum3 * inv_n
             + 6.0 * m1 * m1 * sum2 * inv_n
             - 3.0 * m1 * m1 * m1 * m1;

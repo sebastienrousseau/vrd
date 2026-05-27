@@ -37,7 +37,9 @@ fn main() {
         .unwrap_or(256);
     let total_bytes = mib * 1024 * 1024;
 
-    println!("\n  \x1b[1mvrd statistical validation (PractRand)\x1b[0m");
+    println!(
+        "\n  \x1b[1mvrd statistical validation (PractRand)\x1b[0m"
+    );
     println!(
         "  Budget per backend: {} MiB. Override with VRD_CRUSH_BYTES.\n",
         mib
@@ -62,10 +64,8 @@ fn main() {
 
     type BackendFactory = Box<dyn FnMut() -> Random>;
     let mut backends: Vec<(&str, BackendFactory)> = Vec::new();
-    backends.push((
-        "Xoshiro256++",
-        Box::new(|| Random::from_u64_seed(1)),
-    ));
+    backends
+        .push(("Xoshiro256++", Box::new(|| Random::from_u64_seed(1))));
     backends.push((
         "MersenneTwister",
         Box::new(|| Random::new_mersenne_twister_with_seed(1)),
@@ -93,9 +93,7 @@ fn main() {
     println!(
         "| Backend | Tests run | Anomalies | Failures | Verdict |"
     );
-    println!(
-        "| :--- | ---: | ---: | ---: | :---: |"
-    );
+    println!("| :--- | ---: | ---: | ---: | :---: |");
 
     for (name, make_rng) in backends.iter_mut() {
         let mut rng = make_rng();

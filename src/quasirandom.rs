@@ -99,8 +99,8 @@ fn radical_inverse(mut n: u64, base: u32) -> f64 {
 /// First 32 primes — bases for the Halton sequence's per-dimension
 /// Van der Corput components.
 const HALTON_PRIMES: [u32; 32] = [
-    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59,
-    61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
+    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61,
+    67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
 ];
 
 /// Maximum number of dimensions supported by [`HaltonSequence`].
@@ -147,8 +147,7 @@ impl HaltonSequence {
     /// `D != self.dimensions()`.
     pub fn next_point<const D: usize>(&mut self) -> [f64; D] {
         assert_eq!(
-            D,
-            self.d,
+            D, self.d,
             "const D must match dimensions configured at construction"
         );
         let mut out = [0.0; D];
@@ -197,63 +196,213 @@ pub const SOBOL_MAX_DIM: usize = 6;
 // and `s` is its degree.
 const SOBOL_DIRECTIONS: [[u32; 32]; SOBOL_MAX_DIM] = [
     [
-        0x8000_0000, 0x4000_0000, 0x2000_0000, 0x1000_0000, 0x0800_0000,
-        0x0400_0000, 0x0200_0000, 0x0100_0000, 0x0080_0000, 0x0040_0000,
-        0x0020_0000, 0x0010_0000, 0x0008_0000, 0x0004_0000, 0x0002_0000,
-        0x0001_0000, 0x0000_8000, 0x0000_4000, 0x0000_2000, 0x0000_1000,
-        0x0000_0800, 0x0000_0400, 0x0000_0200, 0x0000_0100, 0x0000_0080,
-        0x0000_0040, 0x0000_0020, 0x0000_0010, 0x0000_0008, 0x0000_0004,
-        0x0000_0002, 0x0000_0001,
+        0x8000_0000,
+        0x4000_0000,
+        0x2000_0000,
+        0x1000_0000,
+        0x0800_0000,
+        0x0400_0000,
+        0x0200_0000,
+        0x0100_0000,
+        0x0080_0000,
+        0x0040_0000,
+        0x0020_0000,
+        0x0010_0000,
+        0x0008_0000,
+        0x0004_0000,
+        0x0002_0000,
+        0x0001_0000,
+        0x0000_8000,
+        0x0000_4000,
+        0x0000_2000,
+        0x0000_1000,
+        0x0000_0800,
+        0x0000_0400,
+        0x0000_0200,
+        0x0000_0100,
+        0x0000_0080,
+        0x0000_0040,
+        0x0000_0020,
+        0x0000_0010,
+        0x0000_0008,
+        0x0000_0004,
+        0x0000_0002,
+        0x0000_0001,
     ],
     // Dim 2: polynomial x + 1, m_1 = 1
     [
-        0x8000_0000, 0xC000_0000, 0xA000_0000, 0xF000_0000, 0x8800_0000,
-        0xCC00_0000, 0xAA00_0000, 0xFF00_0000, 0x8080_0000, 0xC0C0_0000,
-        0xA0A0_0000, 0xF0F0_0000, 0x8888_0000, 0xCCCC_0000, 0xAAAA_0000,
-        0xFFFF_0000, 0x8000_8000, 0xC000_C000, 0xA000_A000, 0xF000_F000,
-        0x8800_8800, 0xCC00_CC00, 0xAA00_AA00, 0xFF00_FF00, 0x8080_8080,
-        0xC0C0_C0C0, 0xA0A0_A0A0, 0xF0F0_F0F0, 0x8888_8888, 0xCCCC_CCCC,
-        0xAAAA_AAAA, 0xFFFF_FFFF,
+        0x8000_0000,
+        0xC000_0000,
+        0xA000_0000,
+        0xF000_0000,
+        0x8800_0000,
+        0xCC00_0000,
+        0xAA00_0000,
+        0xFF00_0000,
+        0x8080_0000,
+        0xC0C0_0000,
+        0xA0A0_0000,
+        0xF0F0_0000,
+        0x8888_0000,
+        0xCCCC_0000,
+        0xAAAA_0000,
+        0xFFFF_0000,
+        0x8000_8000,
+        0xC000_C000,
+        0xA000_A000,
+        0xF000_F000,
+        0x8800_8800,
+        0xCC00_CC00,
+        0xAA00_AA00,
+        0xFF00_FF00,
+        0x8080_8080,
+        0xC0C0_C0C0,
+        0xA0A0_A0A0,
+        0xF0F0_F0F0,
+        0x8888_8888,
+        0xCCCC_CCCC,
+        0xAAAA_AAAA,
+        0xFFFF_FFFF,
     ],
     // Dim 3: polynomial x^2 + x + 1, m = [1, 3]
     [
-        0x8000_0000, 0x4000_0000, 0xE000_0000, 0x5000_0000, 0xF800_0000,
-        0x2C00_0000, 0xE200_0000, 0x4900_0000, 0xF7C0_0000, 0x4A60_0000,
-        0xEF00_0000, 0x5DD0_0000, 0xF108_0000, 0x2528_0000, 0xCCC2_0000,
-        0xFFFB_0000, 0x8001_8000, 0x4002_4000, 0xE003_E000, 0x5004_5000,
-        0xF807_F800, 0x2C0C_2C00, 0xE20D_E200, 0x4914_4900, 0xF7CD_F7C0,
-        0x4A6F_4A60, 0xEF7B_EF00, 0x5DDF_5DD0, 0xF108_F108, 0x2528_2528,
-        0xCCC2_CCC2, 0xFFFB_FFFB,
+        0x8000_0000,
+        0x4000_0000,
+        0xE000_0000,
+        0x5000_0000,
+        0xF800_0000,
+        0x2C00_0000,
+        0xE200_0000,
+        0x4900_0000,
+        0xF7C0_0000,
+        0x4A60_0000,
+        0xEF00_0000,
+        0x5DD0_0000,
+        0xF108_0000,
+        0x2528_0000,
+        0xCCC2_0000,
+        0xFFFB_0000,
+        0x8001_8000,
+        0x4002_4000,
+        0xE003_E000,
+        0x5004_5000,
+        0xF807_F800,
+        0x2C0C_2C00,
+        0xE20D_E200,
+        0x4914_4900,
+        0xF7CD_F7C0,
+        0x4A6F_4A60,
+        0xEF7B_EF00,
+        0x5DDF_5DD0,
+        0xF108_F108,
+        0x2528_2528,
+        0xCCC2_CCC2,
+        0xFFFB_FFFB,
     ],
     // Dim 4: polynomial x^3 + x + 1, m = [1, 3, 1]
     [
-        0x8000_0000, 0x4000_0000, 0x6000_0000, 0xD000_0000, 0x6800_0000,
-        0x3400_0000, 0xC600_0000, 0x6D00_0000, 0x3580_0000, 0xC340_0000,
-        0x6FA0_0000, 0xB510_0000, 0xC628_0000, 0xA714_0000, 0xC32A_0000,
-        0x6431_0000, 0xB2E1_8000, 0xC55A_4000, 0xEFBA_6000, 0xF563_D000,
-        0xD27F_6800, 0xE3B1_3400, 0xC568_C600, 0xB78F_6D00, 0xC44B_3580,
-        0x8261_C340, 0x4123_6FA0, 0x60D2_B510, 0xD026_C628, 0x6817_A714,
-        0x3412_C32A, 0xC600_6431,
+        0x8000_0000,
+        0x4000_0000,
+        0x6000_0000,
+        0xD000_0000,
+        0x6800_0000,
+        0x3400_0000,
+        0xC600_0000,
+        0x6D00_0000,
+        0x3580_0000,
+        0xC340_0000,
+        0x6FA0_0000,
+        0xB510_0000,
+        0xC628_0000,
+        0xA714_0000,
+        0xC32A_0000,
+        0x6431_0000,
+        0xB2E1_8000,
+        0xC55A_4000,
+        0xEFBA_6000,
+        0xF563_D000,
+        0xD27F_6800,
+        0xE3B1_3400,
+        0xC568_C600,
+        0xB78F_6D00,
+        0xC44B_3580,
+        0x8261_C340,
+        0x4123_6FA0,
+        0x60D2_B510,
+        0xD026_C628,
+        0x6817_A714,
+        0x3412_C32A,
+        0xC600_6431,
     ],
     // Dim 5: polynomial x^3 + x^2 + 1, m = [1, 1, 3]
     [
-        0x8000_0000, 0xC000_0000, 0x2000_0000, 0xB000_0000, 0xC800_0000,
-        0x6C00_0000, 0x4600_0000, 0x6700_0000, 0xC580_0000, 0xC1C0_0000,
-        0x2820_0000, 0x9870_0000, 0x9C68_0000, 0x4CB4_0000, 0xC65A_0000,
-        0x69C7_0000, 0xC32E_8000, 0xC09B_C000, 0x2031_E000, 0xB008_F000,
-        0xC8C4_4800, 0x6C66_E400, 0x4647_2A00, 0x6726_F900, 0xC5A6_82C0,
-        0xC176_4860, 0x2832_BA90, 0x987F_7CB0, 0x9C7E_3C50, 0x4C24_CE40,
-        0xC60B_E5A0, 0x69CC_99C0,
+        0x8000_0000,
+        0xC000_0000,
+        0x2000_0000,
+        0xB000_0000,
+        0xC800_0000,
+        0x6C00_0000,
+        0x4600_0000,
+        0x6700_0000,
+        0xC580_0000,
+        0xC1C0_0000,
+        0x2820_0000,
+        0x9870_0000,
+        0x9C68_0000,
+        0x4CB4_0000,
+        0xC65A_0000,
+        0x69C7_0000,
+        0xC32E_8000,
+        0xC09B_C000,
+        0x2031_E000,
+        0xB008_F000,
+        0xC8C4_4800,
+        0x6C66_E400,
+        0x4647_2A00,
+        0x6726_F900,
+        0xC5A6_82C0,
+        0xC176_4860,
+        0x2832_BA90,
+        0x987F_7CB0,
+        0x9C7E_3C50,
+        0x4C24_CE40,
+        0xC60B_E5A0,
+        0x69CC_99C0,
     ],
     // Dim 6: polynomial x^4 + x + 1, m = [1, 1, 1, 3]
     [
-        0x8000_0000, 0xC000_0000, 0xA000_0000, 0x9000_0000, 0xD800_0000,
-        0xFC00_0000, 0xCE00_0000, 0xD900_0000, 0xFD80_0000, 0xCFC0_0000,
-        0xD9E0_0000, 0xFCD0_0000, 0xCE38_0000, 0xD974_0000, 0xFD46_0000,
-        0xCFEF_0000, 0xD9E8_8000, 0xFCD0_4000, 0xCE38_E000, 0xD974_9000,
-        0xFD46_D800, 0xCFEF_FC00, 0xD9E8_CE00, 0xFCD0_D900, 0xCE38_FD80,
-        0xD974_CFC0, 0xFD46_D9E0, 0xCFEF_FCD0, 0xD9E8_CE38, 0xFCD0_D974,
-        0xCE38_FD46, 0xD974_CFEF,
+        0x8000_0000,
+        0xC000_0000,
+        0xA000_0000,
+        0x9000_0000,
+        0xD800_0000,
+        0xFC00_0000,
+        0xCE00_0000,
+        0xD900_0000,
+        0xFD80_0000,
+        0xCFC0_0000,
+        0xD9E0_0000,
+        0xFCD0_0000,
+        0xCE38_0000,
+        0xD974_0000,
+        0xFD46_0000,
+        0xCFEF_0000,
+        0xD9E8_8000,
+        0xFCD0_4000,
+        0xCE38_E000,
+        0xD974_9000,
+        0xFD46_D800,
+        0xCFEF_FC00,
+        0xD9E8_CE00,
+        0xFCD0_D900,
+        0xCE38_FD80,
+        0xD974_CFC0,
+        0xFD46_D9E0,
+        0xCFEF_FCD0,
+        0xD9E8_CE38,
+        0xFCD0_D974,
+        0xCE38_FD46,
+        0xD974_CFEF,
     ],
 ];
 
@@ -302,8 +451,7 @@ impl SobolSequence {
     /// Returns the next `D`-dimensional point.
     pub fn next_point<const D: usize>(&mut self) -> [f64; D] {
         assert_eq!(
-            D,
-            self.d,
+            D, self.d,
             "const D must match dimensions configured at construction"
         );
         let scale = 1.0_f64 / ((1u64 << 32) as f64);
@@ -341,8 +489,7 @@ impl SobolSequence {
             "Sobol exhausted: only 2^32 points per dimension"
         );
         let mut out = Vec::with_capacity(self.d);
-        for (k, dir) in
-            SOBOL_DIRECTIONS.iter().enumerate().take(self.d)
+        for (k, dir) in SOBOL_DIRECTIONS.iter().enumerate().take(self.d)
         {
             self.x[k] ^= dir[bit];
             out.push((self.x[k] as f64) * scale);
@@ -360,8 +507,7 @@ impl SobolSequence {
         if bit >= 32 {
             return;
         }
-        for (k, dir) in
-            SOBOL_DIRECTIONS.iter().enumerate().take(self.d)
+        for (k, dir) in SOBOL_DIRECTIONS.iter().enumerate().take(self.d)
         {
             self.x[k] ^= dir[bit];
         }
@@ -389,10 +535,7 @@ mod tests {
         let expected = [0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875];
         for &e in &expected {
             let got = vdc.next_point();
-            assert!(
-                (got - e).abs() < 1e-12,
-                "got {got}, want {e}"
-            );
+            assert!((got - e).abs() < 1e-12, "got {got}, want {e}");
         }
     }
 

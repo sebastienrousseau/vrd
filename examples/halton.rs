@@ -10,27 +10,21 @@
 #[path = "support.rs"]
 mod support;
 
-use vrd::Random;
 use vrd::quasirandom::HaltonSequence;
+use vrd::Random;
 
 fn main() {
     support::header("vrd -- halton");
 
-    support::task_with_output(
-        "First 6 points of Halton(2-D)",
-        || {
-            let mut h = HaltonSequence::new(2);
-            (0..6)
-                .map(|i| {
-                    let p = h.next_point::<2>();
-                    format!(
-                        "point {i}: ({:>10.6}, {:>10.6})",
-                        p[0], p[1]
-                    )
-                })
-                .collect()
-        },
-    );
+    support::task_with_output("First 6 points of Halton(2-D)", || {
+        let mut h = HaltonSequence::new(2);
+        (0..6)
+            .map(|i| {
+                let p = h.next_point::<2>();
+                format!("point {i}: ({:>10.6}, {:>10.6})", p[0], p[1])
+            })
+            .collect()
+    });
 
     support::task_with_output(
         "π estimate via Monte Carlo, N = 4096",
@@ -63,8 +57,14 @@ fn main() {
             vec![
                 format!("Halton(2) π = {pi_h:.6}"),
                 format!("Random    π = {pi_r:.6}"),
-                format!("|π - true| (Halton) = {:.6}", (pi_h - std::f64::consts::PI).abs()),
-                format!("|π - true| (Random) = {:.6}", (pi_r - std::f64::consts::PI).abs()),
+                format!(
+                    "|π - true| (Halton) = {:.6}",
+                    (pi_h - std::f64::consts::PI).abs()
+                ),
+                format!(
+                    "|π - true| (Random) = {:.6}",
+                    (pi_r - std::f64::consts::PI).abs()
+                ),
             ]
         },
     );

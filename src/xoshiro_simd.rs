@@ -199,7 +199,6 @@ mod aarch64 {
 
             res
         }
-
     }
 
     #[inline]
@@ -258,10 +257,7 @@ mod aarch64 {
             // SAFETY: 16-byte store stays within `dest`.
             unsafe {
                 let out = lanes_a.step();
-                vst1q_u64(
-                    dest.as_mut_ptr().add(i) as *mut u64,
-                    out,
-                );
+                vst1q_u64(dest.as_mut_ptr().add(i) as *mut u64, out);
             }
             i += 16;
         }
@@ -418,7 +414,9 @@ mod tests {
     #[test]
     fn fill_handles_short_and_unaligned_lengths() {
         let mut rng = Xoshiro256PlusPlus::from_u64_seed(1);
-        for &len in &[0usize, 1, 7, 15, 16, 17, 31, 33, 63, 65, 127, 129] {
+        for &len in
+            &[0usize, 1, 7, 15, 16, 17, 31, 33, 63, 65, 127, 129]
+        {
             let mut buf = vec![0u8; len];
             fill_bytes(&mut rng, &mut buf);
             // Most buffers will have at least one non-zero byte. Skip

@@ -15,21 +15,15 @@ use vrd::quasirandom::SobolSequence;
 fn main() {
     support::header("vrd -- sobol");
 
-    support::task_with_output(
-        "First 8 points of Sobol(2-D)",
-        || {
-            let mut s = SobolSequence::new(2);
-            (0..8)
-                .map(|i| {
-                    let p = s.next_point::<2>();
-                    format!(
-                        "point {i}: ({:>10.6}, {:>10.6})",
-                        p[0], p[1]
-                    )
-                })
-                .collect()
-        },
-    );
+    support::task_with_output("First 8 points of Sobol(2-D)", || {
+        let mut s = SobolSequence::new(2);
+        (0..8)
+            .map(|i| {
+                let p = s.next_point::<2>();
+                format!("point {i}: ({:>10.6}, {:>10.6})", p[0], p[1])
+            })
+            .collect()
+    });
 
     support::task_with_output(
         "First 6 points of Sobol(6-D) — all dims supported",

@@ -51,10 +51,7 @@ pub trait Distribution<T> {
 
     /// Returns an iterator that calls `sample` repeatedly. Useful
     /// for `take(n).collect()`-style consumption.
-    fn samples<'a>(
-        &'a self,
-        rng: &'a mut Random,
-    ) -> Iter<'a, Self, T>
+    fn samples<'a>(&'a self, rng: &'a mut Random) -> Iter<'a, Self, T>
     where
         Self: Sized,
     {
@@ -152,7 +149,10 @@ mod tests {
     #[test]
     fn normal_distribution_samples() {
         let mut rng = Random::from_u64_seed(1);
-        let n = Normal { mu: 0.0, sigma: 1.0 };
+        let n = Normal {
+            mu: 0.0,
+            sigma: 1.0,
+        };
         for _ in 0..256 {
             assert!(n.sample(&mut rng).is_finite());
         }
@@ -170,7 +170,10 @@ mod tests {
     #[test]
     fn uniform_distribution_in_range() {
         let mut rng = Random::from_u64_seed(1);
-        let u = Uniform { low: -5.0, high: 5.0 };
+        let u = Uniform {
+            low: -5.0,
+            high: 5.0,
+        };
         for _ in 0..256 {
             let s = u.sample(&mut rng);
             assert!((-5.0..5.0).contains(&s));

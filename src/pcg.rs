@@ -191,7 +191,8 @@ pub struct Pcg64 {
 // Multiplier from O'Neill's reference C++ implementation
 // (PCG-XSL-RR-128-64, default_multiplier<uint128_t>).
 const PCG64_MULT: u128 = 0x2360_ED05_1FC6_5DA4_4385_DF64_9FCC_F645;
-const PCG64_DEFAULT_INC: u128 = 0x5851_F42D_4C95_7F2D_1405_7B7E_F767_814F;
+const PCG64_DEFAULT_INC: u128 =
+    0x5851_F42D_4C95_7F2D_1405_7B7E_F767_814F;
 
 impl Pcg64 {
     /// Builds a `Pcg64` from a 128-bit seed and a 127-bit stream
@@ -297,10 +298,9 @@ impl SeedableRng for Pcg64 {
             seed[12], seed[13], seed[14], seed[15],
         ]);
         let stream = u128::from_le_bytes([
-            seed[16], seed[17], seed[18], seed[19], seed[20],
-            seed[21], seed[22], seed[23], seed[24], seed[25],
-            seed[26], seed[27], seed[28], seed[29], seed[30],
-            seed[31],
+            seed[16], seed[17], seed[18], seed[19], seed[20], seed[21],
+            seed[22], seed[23], seed[24], seed[25], seed[26], seed[27],
+            seed[28], seed[29], seed[30], seed[31],
         ]);
         Self::from_seed_stream(state, stream | 1)
     }
