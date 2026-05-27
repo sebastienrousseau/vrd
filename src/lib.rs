@@ -136,6 +136,9 @@ pub mod xoshiro;
 /// SIMD-batched `fill_bytes` (feature `simd`).
 #[cfg(feature = "simd")]
 pub mod xoshiro_simd;
+/// PCG32 / PCG64 generators (feature `pcg`).
+#[cfg(feature = "pcg")]
+pub mod pcg;
 /// Ziggurat sampler for `Random::normal()`.
 mod ziggurat;
 

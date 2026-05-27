@@ -32,6 +32,18 @@ fn bench_rng_u32(c: &mut Criterion) {
         b.iter(|| black_box(rng.rand()));
     });
 
+    #[cfg(feature = "pcg")]
+    group.bench_function("vrd::Random / PCG32", |b| {
+        let mut rng = Random::new_pcg32();
+        b.iter(|| black_box(rng.rand()));
+    });
+
+    #[cfg(feature = "pcg")]
+    group.bench_function("vrd::Random / PCG64", |b| {
+        let mut rng = Random::new_pcg64();
+        b.iter(|| black_box(rng.rand()));
+    });
+
     group.bench_function("fastrand", |b| {
         b.iter(|| black_box(fastrand::u32(..)));
     });
@@ -55,6 +67,18 @@ fn bench_rng_u64(c: &mut Criterion) {
 
     group.bench_function("vrd::Random / MersenneTwister", |b| {
         let mut rng = Random::new_mersenne_twister();
+        b.iter(|| black_box(rng.u64()));
+    });
+
+    #[cfg(feature = "pcg")]
+    group.bench_function("vrd::Random / PCG32", |b| {
+        let mut rng = Random::new_pcg32();
+        b.iter(|| black_box(rng.u64()));
+    });
+
+    #[cfg(feature = "pcg")]
+    group.bench_function("vrd::Random / PCG64", |b| {
+        let mut rng = Random::new_pcg64();
         b.iter(|| black_box(rng.u64()));
     });
 

@@ -209,6 +209,53 @@ mod tests {
         assert!(rng.split().is_none());
     }
 
+    /// PCG32 backend dispatches through `Random` and is
+    /// bit-deterministic given the same seed.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg32_backend_deterministic() {
+        let mut a = Random::new_pcg32_with_seed(42);
+        let mut b = Random::new_pcg32_with_seed(42);
+        for _ in 0..16 {
+            assert_eq!(a.rand(), b.rand());
+        }
+    }
+
+    /// PCG64 backend dispatches through `Random` and is
+    /// bit-deterministic given the same seed.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg64_backend_deterministic() {
+        let mut a = Random::new_pcg64_with_seed(0xDEAD_BEEF);
+        let mut b = Random::new_pcg64_with_seed(0xDEAD_BEEF);
+        for _ in 0..16 {
+            assert_eq!(a.u64(), b.u64());
+        }
+    }
+
+    /// PCG backends interop with `try_fill_bytes`.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg_fill_bytes() {
+        let mut a = Random::new_pcg32_with_seed(1);
+        let mut b = Random::new_pcg64_with_seed(1);
+        let mut buf = [0u8; 33];
+        a.try_fill_bytes(&mut buf).unwrap();
+        assert!(buf.iter().any(|&x| x != 0));
+        b.try_fill_bytes(&mut buf).unwrap();
+        assert!(buf.iter().any(|&x| x != 0));
+    }
+
+    /// `split()` is unsupported on PCG backends (no jump function).
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg_split_returns_none() {
+        let mut a = Random::new_pcg32_with_seed(1);
+        let mut b = Random::new_pcg64_with_seed(1);
+        assert!(a.split().is_none());
+        assert!(b.split().is_none());
+    }
+
     /// Display impl on the MT-backed `Random` includes the `mti` index;
     /// previous suite only exercised the Xoshiro Display branch.
     #[test]

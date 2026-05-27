@@ -444,6 +444,16 @@ pub enum RngBackend {
     /// ```
     #[cfg(feature = "alloc")]
     MersenneTwister(Box<MersenneTwister>),
+
+    /// PCG-XSH-RR-64/32 — 16-byte state, 32-bit output. Available
+    /// under the `pcg` feature.
+    #[cfg(feature = "pcg")]
+    Pcg32(crate::pcg::Pcg32),
+
+    /// PCG-XSL-RR-128/64 — 32-byte state, 64-bit output. Available
+    /// under the `pcg` feature.
+    #[cfg(feature = "pcg")]
+    Pcg64(crate::pcg::Pcg64),
 }
 
 // ---------------------------------------------------------------------------
@@ -596,6 +606,96 @@ impl Random {
         }
     }
 
+    /// Creates a PCG32-backed [`Random`] seeded from the given `u64`.
+    /// Requires the `pcg` feature. 16-byte state — the smallest of
+    /// the family.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "pcg")]
+    /// # {
+    /// let mut rng = Random::new_pcg32_with_seed(42);
+    /// let _ = rng.rand();
+    /// # }
+    /// ```
+    #[cfg(feature = "pcg")]
+    pub fn new_pcg32_with_seed(seed: u64) -> Self {
+        Self {
+            backend: RngBackend::Pcg32(
+                crate::pcg::Pcg32::from_u64_seed(seed),
+            ),
+        }
+    }
+
+    /// Creates an entropy-seeded PCG32-backed [`Random`]. Requires
+    /// the `pcg` feature and `std` for the OS entropy source.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(all(feature = "pcg", feature = "std"))]
+    /// # {
+    /// let mut rng = Random::new_pcg32();
+    /// let _ = rng.rand();
+    /// # }
+    /// ```
+    #[cfg(all(feature = "pcg", feature = "std"))]
+    pub fn new_pcg32() -> Self {
+        Self::new_pcg32_with_seed(rand::random())
+    }
+
+    /// Creates a PCG64-backed [`Random`] seeded from the given
+    /// `u128`. Requires the `pcg` feature. 32-byte state with
+    /// native 64-bit output.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "pcg")]
+    /// # {
+    /// let mut rng = Random::new_pcg64_with_seed(0xCAFE_F00D);
+    /// let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(feature = "pcg")]
+    pub fn new_pcg64_with_seed(seed: u128) -> Self {
+        Self {
+            backend: RngBackend::Pcg64(
+                crate::pcg::Pcg64::from_u128_seed(seed),
+            ),
+        }
+    }
+
+    /// Creates an entropy-seeded PCG64-backed [`Random`]. Requires
+    /// the `pcg` feature and `std` for the OS entropy source.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(all(feature = "pcg", feature = "std"))]
+    /// # {
+    /// let mut rng = Random::new_pcg64();
+    /// let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(all(feature = "pcg", feature = "std"))]
+    pub fn new_pcg64() -> Self {
+        let lo: u64 = rand::random();
+        let hi: u64 = rand::random();
+        Self::new_pcg64_with_seed(
+            (u128::from(hi) << 64) | u128::from(lo),
+        )
+    }
+
     /// Creates an entropy-seeded Mersenne-Twister-backed [`Random`].
     /// Requires `alloc` + `std`.
     ///
@@ -656,6 +756,10 @@ impl Random {
             RngBackend::Xoshiro256PlusPlus(xs) => xs.next_u32(),
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.rand(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => p.next_u32(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => p.next_u32(),
         }
     }
 
@@ -678,6 +782,10 @@ impl Random {
             RngBackend::Xoshiro256PlusPlus(xs) => xs.next_u64(),
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.next_u64(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => p.next_u64(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => p.next_u64(),
         }
     }
 
@@ -719,6 +827,14 @@ impl Random {
             }
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.seed(seed),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => {
+                *p = crate::pcg::Pcg32::from_u64_seed(seed as u64);
+            }
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => {
+                *p = crate::pcg::Pcg64::from_u128_seed(seed as u128);
+            }
         }
     }
 
@@ -772,6 +888,8 @@ impl Random {
             }
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(_) => None,
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(_) | RngBackend::Pcg64(_) => None,
         }
     }
 
@@ -1642,6 +1760,14 @@ impl core::fmt::Display for Random {
                 "Random {{ backend: MersenneTwister, mti: {} }}",
                 mt.mti
             ),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(_) => {
+                write!(f, "Random {{ backend: Pcg32 }}")
+            }
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(_) => {
+                write!(f, "Random {{ backend: Pcg64 }}")
+            }
         }
     }
 }
@@ -1667,6 +1793,10 @@ impl TryRng for Random {
             }
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.try_fill_bytes(dest),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => p.try_fill_bytes(dest),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => p.try_fill_bytes(dest),
         }
     }
 }

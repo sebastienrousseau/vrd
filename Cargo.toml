@@ -130,6 +130,10 @@ path = "examples/xoshiro.rs"
 name = "mersenne"
 path = "examples/mersenne.rs"
 [[example]]
+name = "pcg"
+path = "examples/pcg.rs"
+required-features = ["pcg"]
+[[example]]
 name = "backends"
 path = "examples/backends.rs"
 [[example]]
@@ -188,6 +192,9 @@ serde = ["dep:serde", "dep:serde-big-array"]
 # against the scalar path for throughput (~2.5–3× on AArch64 NEON and
 # x86_64 AVX2). Off by default; see `xoshiro_simd` for the contract.
 simd = []
+# Adds PCG32 and PCG64 as third / fourth backends. Small-state,
+# fast, statistically excellent — not a CSPRNG.
+pcg = []
 
 [package.metadata.docs.rs]
 all-features = true
