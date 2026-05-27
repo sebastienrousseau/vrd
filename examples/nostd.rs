@@ -37,7 +37,7 @@ fn main() {
         || {
             vec![
             "[dependencies]".into(),
-            "vrd = { version = \"0.0.10\", default-features = false }".into(),
+            "vrd = { version = \"0.0.11\", default-features = false }".into(),
             "".into(),
             "// In your lib.rs:".into(),
             "#![no_std]".into(),
@@ -52,7 +52,7 @@ fn main() {
         || {
             vec![
                 "Add the `alloc` feature:".into(),
-                "vrd = { version = \"0.0.10\", default-features = false, features = [\"alloc\"] }"
+                "vrd = { version = \"0.0.11\", default-features = false, features = [\"alloc\"] }"
                     .into(),
                 "".into(),
                 "Then `Random::bytes`, `Random::string`,".into(),

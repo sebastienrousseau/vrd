@@ -13,7 +13,7 @@
   <a href="https://crates.io/crates/vrd"><img src="https://img.shields.io/crates/v/vrd.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
   <a href="https://docs.rs/vrd"><img src="https://img.shields.io/badge/docs.rs-vrd-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
   <a href="https://codecov.io/gh/sebastienrousseau/vrd"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/vrd?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
-  <a href="https://lib.rs/crates/vrd"><img src="https://img.shields.io/badge/lib.rs-v0.0.10-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+  <a href="https://lib.rs/crates/vrd"><img src="https://img.shields.io/badge/lib.rs-v0.0.11-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
 </p>
 
 ---
@@ -28,7 +28,7 @@ Or in `Cargo.toml`:
 
 ```toml
 [dependencies]
-vrd = "0.0.10"
+vrd = "0.0.11"
 ```
 
 Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, `no_std` embedded targets (Cortex-M, `thumbv7em-none-eabihf`), and `wasm32-unknown-unknown` — all validated in CI.
@@ -57,8 +57,8 @@ Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Wi
 Disable defaults to ship into `no_std`:
 
 ```toml
-vrd = { version = "0.0.10", default-features = false }            # core only
-vrd = { version = "0.0.10", default-features = false, features = ["alloc"] }  # core + alloc
+vrd = { version = "0.0.11", default-features = false }            # core only
+vrd = { version = "0.0.11", default-features = false, features = ["alloc"] }  # core + alloc
 ```
 
 ---
@@ -279,7 +279,7 @@ For parallel deterministic streams that don't drift, a forking `Random::split()`
 Yes — enable the `serde` feature.
 
 ```toml
-vrd = { version = "0.0.10", features = ["serde"] }
+vrd = { version = "0.0.11", features = ["serde"] }
 ```
 
 ```rust,ignore
