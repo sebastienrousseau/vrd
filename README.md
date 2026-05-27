@@ -204,6 +204,10 @@ Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 
 ---
 
+## Statistical validation
+
+Beyond Xoshiro256++ and MT19937's published academic pedigree, vrd ships a reproducible PractRand harness. See [BENCHMARKS.md](BENCHMARKS.md) for the latest pass-count table per backend; reproduce locally with `cargo run --release --example crush --features crush`. The example is informational — CI does **not** gate on it.
+
 ## Quasi-random sequences
 
 Low-discrepancy sequences for Monte Carlo integration, ray-tracing, and high-dimensional optimisation. Variance scales `O((log n)^d / n)` rather than `O(1/√n)` for a uniform PRNG. Behind the `quasirandom` feature:

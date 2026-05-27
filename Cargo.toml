@@ -9,6 +9,7 @@ edition = "2021"
 exclude = ["/.git/*", "/.github/*", "/.gitignore", "/.vscode/*"]
 homepage = "https://vrdlib.com"
 include = [
+    "/BENCHMARKS.md",
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
     "/LICENSE-MIT",
@@ -139,6 +140,10 @@ name = "secure"
 path = "examples/secure.rs"
 required-features = ["crypto", "std"]
 [[example]]
+name = "crush"
+path = "examples/crush.rs"
+required-features = ["crush", "std"]
+[[example]]
 name = "halton"
 path = "examples/halton.rs"
 required-features = ["quasirandom"]
@@ -217,6 +222,10 @@ crypto = ["alloc", "dep:rand_chacha"]
 # Corput). For Monte Carlo integration, ray-tracing, financial
 # simulation — variance scales O((log n)^d / n).
 quasirandom = []
+# Enables the `crush` example, which pipes RNG output through an
+# external PractRand `RNG_test` binary for statistical validation.
+# Informational only — not run in CI.
+crush = []
 
 [package.metadata.docs.rs]
 all-features = true
