@@ -156,9 +156,9 @@ mod aarch64 {
             // SAFETY: vsetq_lane_u64 takes a valid lane index in [0, 2).
             unsafe {
                 let mut s = [vdupq_n_u64(0); 4];
-                for j in 0..4 {
-                    let r = vsetq_lane_u64::<0>(lane0[j], s[j]);
-                    s[j] = vsetq_lane_u64::<1>(lane1[j], r);
+                for (j, slot) in s.iter_mut().enumerate() {
+                    let r = vsetq_lane_u64::<0>(lane0[j], *slot);
+                    *slot = vsetq_lane_u64::<1>(lane1[j], r);
                 }
                 Self { s }
             }
@@ -291,8 +291,8 @@ mod x86_64 {
             // Transpose: register j holds
             //   [lane0[j], lane1[j], lane2[j], lane3[j]].
             let mut s = [_mm256_setzero_si256(); 4];
-            for j in 0..4 {
-                s[j] = _mm256_set_epi64x(
+            for (j, slot) in s.iter_mut().enumerate() {
+                *slot = _mm256_set_epi64x(
                     lane_states[3][j] as i64,
                     lane_states[2][j] as i64,
                     lane_states[1][j] as i64,
@@ -326,12 +326,12 @@ mod x86_64 {
         unsafe fn lane0_state(&self) -> [u64; 4] {
             let mut tmp = [0i64; 4];
             let mut out = [0u64; 4];
-            for j in 0..4 {
+            for (j, slot) in out.iter_mut().enumerate() {
                 _mm256_storeu_si256(
                     tmp.as_mut_ptr() as *mut __m256i,
                     self.s[j],
                 );
-                out[j] = tmp[0] as u64;
+                *slot = tmp[0] as u64;
             }
             out
         }
