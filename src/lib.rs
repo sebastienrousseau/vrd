@@ -130,6 +130,8 @@ pub mod mersenne_twister;
 pub mod random;
 /// Xoshiro256++ implementation.
 pub mod xoshiro;
+/// Ziggurat sampler for `Random::normal()`.
+mod ziggurat;
 
 pub use mersenne_twister::{
     MersenneTwisterConfig, MersenneTwisterError, MersenneTwisterParams,

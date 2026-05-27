@@ -1431,16 +1431,12 @@ impl Random {
 
     /// Standard normal sample, parameterized by `(mu, sigma)`.
     ///
-    /// Uses the **Marsaglia polar method**: rejection-sample two uniforms
-    /// inside the unit disc, then transform to a normal sample without
-    /// trigonometry. Acceptance probability is π/4 ≈ 78.5%, so the inner
-    /// loop runs ~1.27 times on average. Faster than Box-Muller (no
-    /// `cos` call) for the same statistical guarantees.
-    ///
-    /// For an even faster `normal()` based on the Ziggurat algorithm
-    /// (~3 ns/sample), see issue tracker — Ziggurat needs build-time
-    /// table generation and lives behind a `fast-distributions` feature
-    /// in a future release.
+    /// Uses the **256-strip Ziggurat method** (Marsaglia & Tsang, 2000)
+    /// with tables generated at build time. The fast path costs one
+    /// `u32` draw, one table lookup, and one `f64` multiply; the
+    /// overhang branch (~1% of calls) adds one `exp` and one `f64`
+    /// draw; the tail branch (~0.03% of calls) falls back to
+    /// exponential rejection.
     ///
     /// # Examples
     ///
@@ -1452,18 +1448,7 @@ impl Random {
     /// assert!(z.is_finite());
     /// ```
     pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
-        loop {
-            // Map u, v from [0, 1) to (-1, 1).
-            let u = 2.0 * self.f64() - 1.0;
-            let v = 2.0 * self.f64() - 1.0;
-            let s = u * u + v * v;
-            // Reject pairs that fall outside the open unit disc, plus
-            // the (origin) case where ln would diverge.
-            if s > 0.0 && s < 1.0 {
-                let factor = FloatExt::sqrt(-2.0 * FloatExt::ln(s) / s);
-                return mu + sigma * (u * factor);
-            }
-        }
+        mu + sigma * crate::ziggurat::sample_normal(self)
     }
 
     /// Exponential sample with the given `rate` (λ). Mean of the
@@ -1636,6 +1621,18 @@ impl SeedableRng for Random {
 
     fn from_seed(seed: Self::Seed) -> Self {
         Random::from_seed(seed)
+    }
+}
+
+impl crate::ziggurat::NormalSource for Random {
+    #[inline]
+    fn next_u32(&mut self) -> u32 {
+        self.rand()
+    }
+
+    #[inline]
+    fn next_f64(&mut self) -> f64 {
+        self.double()
     }
 }
 
