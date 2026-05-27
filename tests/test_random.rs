@@ -148,6 +148,31 @@ mod tests {
         assert!(dest.iter().any(|&x| x != 0));
     }
 
+    /// `fill_array` returns a stack array of the requested length.
+    /// Works in pure `no_std` without `alloc`.
+    #[test]
+    fn test_fill_array_lengths() {
+        let mut rng = Random::from_u64_seed(0x00C0_FFEE);
+        let a: [u8; 0] = rng.fill_array();
+        assert_eq!(a.len(), 0);
+        let b: [u8; 1] = rng.fill_array();
+        assert_eq!(b.len(), 1);
+        let c: [u8; 16] = rng.fill_array();
+        assert!(c.iter().any(|&x| x != 0));
+        let d: [u8; 64] = rng.fill_array();
+        assert!(d.iter().any(|&x| x != 0));
+    }
+
+    /// `fill_array` is deterministic given the same seed.
+    #[test]
+    fn test_fill_array_deterministic() {
+        let mut a = Random::from_u64_seed(42);
+        let mut b = Random::from_u64_seed(42);
+        let x: [u8; 32] = a.fill_array();
+        let y: [u8; 32] = b.fill_array();
+        assert_eq!(x, y);
+    }
+
     /// Display impl on the MT-backed `Random` includes the `mti` index;
     /// previous suite only exercised the Xoshiro Display branch.
     #[test]

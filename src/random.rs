@@ -995,6 +995,25 @@ impl Random {
 
     // -------------------------- byte / Vec output --------------------------
 
+    /// Returns `N` random bytes on the stack. Allocation-free; works
+    /// in pure `no_std` (no `alloc` feature required).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let buf: [u8; 32] = rng.fill_array();
+    /// assert!(buf.iter().any(|&b| b != 0));
+    /// ```
+    #[inline]
+    pub fn fill_array<const N: usize>(&mut self) -> [u8; N] {
+        let mut buf = [0u8; N];
+        let _ = TryRng::try_fill_bytes(self, &mut buf);
+        buf
+    }
+
     /// Returns a fresh `Vec<u8>` of `len` random bytes. Requires the
     /// `alloc` feature.
     ///
