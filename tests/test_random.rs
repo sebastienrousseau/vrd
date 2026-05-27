@@ -173,6 +173,42 @@ mod tests {
         assert_eq!(x, y);
     }
 
+    /// `split()` returns `Some(_)` on the Xoshiro backend and the
+    /// child produces a different stream than the parent.
+    #[test]
+    fn test_split_xoshiro_yields_independent_stream() {
+        let mut parent = Random::from_u64_seed(7);
+        let mut child =
+            parent.split().expect("Xoshiro backend supports split");
+        // Sibling streams shouldn't collide for the first dozen draws.
+        for _ in 0..16 {
+            assert_ne!(parent.u64(), child.u64());
+        }
+    }
+
+    /// `split()` is deterministic — splitting two same-seeded parents
+    /// produces two pairs of identical sibling streams.
+    #[test]
+    fn test_split_is_deterministic() {
+        let mut a_parent = Random::from_u64_seed(99);
+        let mut b_parent = Random::from_u64_seed(99);
+        let mut a_child = a_parent.split().unwrap();
+        let mut b_child = b_parent.split().unwrap();
+        for _ in 0..8 {
+            assert_eq!(a_parent.u64(), b_parent.u64());
+            assert_eq!(a_child.u64(), b_child.u64());
+        }
+    }
+
+    /// `split()` returns `None` on the Mersenne Twister backend —
+    /// MT19937 has no analogous fixed-distance jump.
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    fn test_split_mt_returns_none() {
+        let mut rng = Random::new_mersenne_twister_with_seed(42);
+        assert!(rng.split().is_none());
+    }
+
     /// Display impl on the MT-backed `Random` includes the `mti` index;
     /// previous suite only exercised the Xoshiro Display branch.
     #[test]

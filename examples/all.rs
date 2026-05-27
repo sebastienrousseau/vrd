@@ -17,6 +17,7 @@ const EXAMPLES: &[&str] = &[
     "hello",
     "basics",
     "seed",
+    "split",
     "bytes",
     "floats",
     "bools",

@@ -256,6 +256,19 @@ fn bench_scalar_misc(c: &mut Criterion) {
     group.finish();
 }
 
+/// Cost of `Random::split()` — one Xoshiro `jump()` plus a clone.
+/// Useful for sizing fan-out parallelism.
+fn bench_split_cost(c: &mut Criterion) {
+    let mut group = c.benchmark_group("split_cost");
+
+    group.bench_function("Random::split()", |b| {
+        let mut rng = Random::from_u64_seed(1);
+        b.iter(|| black_box(rng.split()));
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_rng_u32,
@@ -266,5 +279,6 @@ criterion_group!(
     bench_bounded_sampling,
     bench_slice_ops,
     bench_scalar_misc,
+    bench_split_cost,
 );
 criterion_main!(benches);

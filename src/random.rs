@@ -739,6 +739,42 @@ impl Random {
         &self.backend
     }
 
+    /// Splits this RNG into a second instance whose stream starts
+    /// 2¹²⁸ calls ahead of `self`. Both halves remain valid and
+    /// produce non-overlapping subsequences — safe to hand to two
+    /// parallel workers without contention.
+    ///
+    /// Available only on the Xoshiro256++ backend (which has the
+    /// `jump` operation). Returns `None` on the Mersenne Twister
+    /// backend, which has no analogous fixed-distance jump.
+    ///
+    /// Cost: one `jump()` on `self`, roughly 256 scalar
+    /// `next_u64` cycles.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut parent = Random::from_u64_seed(42);
+    /// let mut child = parent.split().expect("Xoshiro backend");
+    /// // Two independent streams from a single seed.
+    /// assert_ne!(parent.u64(), child.u64());
+    /// ```
+    pub fn split(&mut self) -> Option<Random> {
+        match &mut self.backend {
+            RngBackend::Xoshiro256PlusPlus(xs) => {
+                let child = *xs;
+                xs.jump();
+                Some(Random {
+                    backend: RngBackend::Xoshiro256PlusPlus(child),
+                })
+            }
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(_) => None,
+        }
+    }
+
     // -------------------------- bounded sampling ---------------------------
 
     /// Generates an unbiased `u32` in `[0, range)`.

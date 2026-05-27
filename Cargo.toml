@@ -75,6 +75,10 @@ path = "examples/basics.rs"
 name = "seed"
 path = "examples/seed.rs"
 [[example]]
+name = "split"
+path = "examples/split.rs"
+required-features = ["alloc"]
+[[example]]
 name = "bytes"
 path = "examples/bytes.rs"
 [[example]]
