@@ -13,7 +13,8 @@
 //! subsequent scalar calls remain consistent with the scalar-only
 //! path.
 //!
-//! An earlier draft used [`Xoshiro256PlusPlus::jump`] for 2¹²⁸-step
+//! An earlier draft used [`crate::xoshiro::Xoshiro256PlusPlus::jump`]
+//! for 2¹²⁸-step
 //! separation per lane, but at 256 scalar `next_u64`s per call its
 //! ~256 ns setup wiped out the SIMD win for buffers under ~4 KiB. The
 //! SplitMix derivation keeps lanes uncorrelated (probability of state
@@ -84,8 +85,8 @@ const SIMD_THRESHOLD: usize = 64;
 
 /// Fills `dest` with random bytes using the best SIMD path available
 /// for the active target. Falls back to the scalar generator for
-/// buffers smaller than [`SIMD_THRESHOLD`] (where setup cost beats
-/// the per-byte savings) and for the trailing bytes that don't fill a
+/// buffers smaller than 64 bytes (where setup cost beats the
+/// per-byte savings) and for the trailing bytes that don't fill a
 /// full SIMD register.
 #[inline]
 pub fn fill_bytes(rng: &mut Xoshiro256PlusPlus, dest: &mut [u8]) {

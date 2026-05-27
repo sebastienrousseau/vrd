@@ -11,12 +11,15 @@
 //!
 //! Three constructions are shipped:
 //!
-//! - [`VanDerCorputSequence`] — 1-D, any prime base.
-//! - [`HaltonSequence`] — multi-dim, Van der Corput across the first
-//!   primes. Supports up to 32 dimensions.
-//! - [`SobolSequence`] — multi-dim, uses precomputed direction
-//!   numbers. Supports up to 6 dimensions out of the box; the
-//!   Joe-Kuo D6 file would extend this past 21 000.
+//! - [`VanDerCorputSequence`](crate::quasirandom::VanDerCorputSequence)
+//!   — 1-D, any prime base.
+//! - [`HaltonSequence`](crate::quasirandom::HaltonSequence)
+//!   — multi-dim, Van der Corput across the first primes. Supports
+//!   up to 32 dimensions.
+//! - [`SobolSequence`](crate::quasirandom::SobolSequence)
+//!   — multi-dim, uses precomputed direction numbers. Supports up
+//!   to 6 dimensions out of the box; the Joe-Kuo D6 file would
+//!   extend this past 21 000.
 //!
 //! These are **not** PRNGs and live alongside, not inside,
 //! [`crate::Random`]. Use a PRNG when you want unpredictability;

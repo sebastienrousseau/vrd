@@ -5,11 +5,12 @@
 //!
 //! Two variants exported:
 //!
-//! - [`Pcg32`] — PCG-XSH-RR-64/32. 16-byte state, 32-bit output. The
-//!   smallest-state member of the family; faster per `u32` than
-//!   Xoshiro256++ on most CPUs.
-//! - [`Pcg64`] — PCG-XSL-RR-128/64. 32-byte state, 64-bit output.
-//!   Same state size as Xoshiro256++ with native 64-bit output.
+//! - [`Pcg32`](crate::pcg::Pcg32) — PCG-XSH-RR-64/32. 16-byte
+//!   state, 32-bit output. The smallest-state member of the family;
+//!   faster per `u32` than Xoshiro256++ on most CPUs.
+//! - [`Pcg64`](crate::pcg::Pcg64) — PCG-XSL-RR-128/64. 32-byte
+//!   state, 64-bit output. Same state size as Xoshiro256++ with
+//!   native 64-bit output.
 //!
 //! Both are statistically excellent (pass TestU01 BigCrush) but are
 //! **not** CSPRNGs — same caveat as Xoshiro and MT.
