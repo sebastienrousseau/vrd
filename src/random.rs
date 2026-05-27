@@ -81,52 +81,34 @@ pub trait FloatExt {
     fn exp(self) -> Self;
 }
 
+#[cfg(feature = "std")]
 impl FloatExt for f64 {
     #[inline]
     fn ln(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::ln(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::log(self)
-        }
+        f64::ln(self)
     }
     #[inline]
     fn sqrt(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::sqrt(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::sqrt(self)
-        }
+        f64::sqrt(self)
     }
     #[inline]
     fn cos(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::cos(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::cos(self)
-        }
+        f64::cos(self)
     }
     #[inline]
     fn exp(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::exp(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::exp(self)
-        }
+        f64::exp(self)
     }
 }
+
+// The no-std libm impl lives in `float_libm.rs`. Validated by the
+// no_std embedded CI job (`cargo check --no-default-features`);
+// excluded from coverage measurement via `.tarpaulin.toml` because
+// `cargo test` always runs with `std`, leaving the libm bodies
+// unobservable on a single-feature-set coverage run.
+#[cfg(not(feature = "std"))]
+#[path = "float_libm.rs"]
+mod float_libm;
 
 // ---------------------------------------------------------------------------
 // MersenneTwister generator — relegated, available only with `alloc`.

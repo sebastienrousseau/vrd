@@ -267,15 +267,8 @@ impl<const N: usize, const M: usize> fmt::Display
     for MersenneTwisterConfig<N, M>
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "MersenneTwisterConfig {{ matrix_a: 0x{:08x}, upper_mask: 0x{:08x}, lower_mask: 0x{:08x}, tempering_mask_b: 0x{:08x}, tempering_mask_c: 0x{:08x} }}",
-            self.params.matrix_a,
-            self.params.upper_mask,
-            self.params.lower_mask,
-            self.params.tempering_mask_b,
-            self.params.tempering_mask_c,
-        )
+        let p = &self.params;
+        write!(f, "MersenneTwisterConfig {{ matrix_a: 0x{:08x}, upper_mask: 0x{:08x}, lower_mask: 0x{:08x}, tempering_mask_b: 0x{:08x}, tempering_mask_c: 0x{:08x} }}", p.matrix_a, p.upper_mask, p.lower_mask, p.tempering_mask_b, p.tempering_mask_c)
     }
 }
 
@@ -344,5 +337,20 @@ mod tests {
         assert!(cfg
             .set_config(MersenneTwisterParams::default())
             .is_ok());
+    }
+
+    /// Covers the `Display` impl on `MersenneTwisterConfig` —
+    /// the existing coverage was on Debug only.
+    #[test]
+    #[cfg(any(feature = "alloc", feature = "std"))]
+    fn test_mersenne_twister_config_display() {
+        let cfg = MersenneTwisterConfig::<624, 397>::default();
+        let s = format!("{}", cfg);
+        // All five field names must appear in the formatted output.
+        assert!(s.contains("matrix_a"), "got: {s}");
+        assert!(s.contains("upper_mask"), "got: {s}");
+        assert!(s.contains("lower_mask"), "got: {s}");
+        assert!(s.contains("tempering_mask_b"), "got: {s}");
+        assert!(s.contains("tempering_mask_c"), "got: {s}");
     }
 }

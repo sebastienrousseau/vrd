@@ -168,4 +168,16 @@ mod tests {
             assert_eq!(ours.next_u64(), reference.next_u64());
         }
     }
+
+    /// Exercises the `TryRng` and `SeedableRng` impls (covers the
+    /// trait dispatch lines that the inherent-method tests miss).
+    #[test]
+    fn try_rng_and_seedable_impls() {
+        let mut rng = <ChaChaRng as SeedableRng>::from_seed([1u8; 32]);
+        assert!(TryRng::try_next_u32(&mut rng).is_ok());
+        assert!(TryRng::try_next_u64(&mut rng).is_ok());
+        let mut buf = [0u8; 16];
+        assert!(TryRng::try_fill_bytes(&mut rng, &mut buf).is_ok());
+        assert!(buf.iter().any(|&b| b != 0));
+    }
 }

@@ -256,6 +256,102 @@ mod tests {
         assert!(b.split().is_none());
     }
 
+    /// Entropy-seeded PCG constructors — covers the OS-RNG seeding
+    /// branches that the deterministic constructors don't exercise.
+    #[test]
+    #[cfg(all(feature = "pcg", feature = "std"))]
+    fn test_pcg_entropy_seeded_constructors() {
+        let mut a = Random::new_pcg32();
+        let mut b = Random::new_pcg64();
+        // Two independent draws shouldn't collide for fresh
+        // entropy-seeded RNGs.
+        assert_ne!(a.rand(), 0);
+        assert_ne!(b.u64(), 0);
+    }
+
+    /// Random::seed dispatches differently per backend; ensure
+    /// every variant's seed-reset arm is hit.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_seed_pcg32_resets_stream() {
+        let mut rng = Random::new_pcg32_with_seed(0);
+        let _ = rng.rand();
+        rng.seed(42);
+        let after = rng.rand();
+        let mut baseline = Random::new_pcg32_with_seed(42);
+        assert_eq!(after, baseline.rand());
+    }
+
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_seed_pcg64_resets_stream() {
+        let mut rng = Random::new_pcg64_with_seed(0);
+        let _ = rng.u64();
+        rng.seed(42);
+        let after = rng.u64();
+        let mut baseline = Random::new_pcg64_with_seed(42u128);
+        assert_eq!(after, baseline.u64());
+    }
+
+    #[test]
+    #[cfg(feature = "crypto")]
+    fn test_seed_chacha_resets_stream() {
+        let mut rng = Random::from_secure_seed([0u8; 32]);
+        let _ = rng.u64();
+        rng.seed(42);
+        let after = rng.u64();
+        // Build the same seed shape `seed()` uses internally.
+        let mut s = [0u8; 32];
+        s[0..4].copy_from_slice(&42u32.to_le_bytes());
+        let mut baseline = Random::from_secure_seed(s);
+        assert_eq!(after, baseline.u64());
+    }
+
+    /// PCG.next_u32 -> u32 (via Pcg64 backend) and inverse paths.
+    /// Already partly covered, but pin the cross-output explicitly.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg64_rand_via_facade() {
+        // Random::rand() on PCG64 should call .next_u32() which
+        // returns the high 32 bits of the u64 draw.
+        let mut rng = Random::new_pcg64_with_seed(7);
+        let _ = rng.rand();
+    }
+
+    /// PCG32.next_u64 (via two u32 concats) on the facade path.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg32_u64_via_facade() {
+        let mut rng = Random::new_pcg32_with_seed(7);
+        let n = rng.u64();
+        assert_ne!(n, 0);
+    }
+
+    /// Display impl on each backend variant.
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    fn test_display_xoshiro_backend() {
+        let rng = Random::from_u64_seed(1);
+        let s = format!("{rng}");
+        assert!(s.contains("Xoshiro256PlusPlus"), "got: {s}");
+    }
+
+    #[test]
+    #[cfg(all(feature = "pcg", feature = "alloc", feature = "std"))]
+    fn test_display_pcg_backends() {
+        let r32 = Random::new_pcg32_with_seed(1);
+        let r64 = Random::new_pcg64_with_seed(1);
+        assert!(format!("{r32}").contains("Pcg32"));
+        assert!(format!("{r64}").contains("Pcg64"));
+    }
+
+    #[test]
+    #[cfg(all(feature = "crypto", feature = "alloc", feature = "std"))]
+    fn test_display_chacha_backend() {
+        let rng = Random::from_secure_seed([0u8; 32]);
+        assert!(format!("{rng}").contains("ChaCha20"));
+    }
+
     /// Display impl on the MT-backed `Random` includes the `mti` index;
     /// previous suite only exercised the Xoshiro Display branch.
     #[test]

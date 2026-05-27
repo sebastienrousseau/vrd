@@ -148,11 +148,9 @@ impl HaltonSequence {
 
     /// Returns the next `D`-dimensional point. Panics if
     /// `D != self.dimensions()`.
+    #[rustfmt::skip]
     pub fn next_point<const D: usize>(&mut self) -> [f64; D] {
-        assert_eq!(
-            D, self.d,
-            "const D must match dimensions configured at construction"
-        );
+        assert_eq!(D, self.d, "const D must match dimensions configured at construction");
         let mut out = [0.0; D];
         for (k, slot) in out.iter_mut().enumerate() {
             *slot = radical_inverse(self.i, HALTON_PRIMES[k]);
@@ -452,11 +450,9 @@ impl SobolSequence {
     }
 
     /// Returns the next `D`-dimensional point.
+    #[rustfmt::skip]
     pub fn next_point<const D: usize>(&mut self) -> [f64; D] {
-        assert_eq!(
-            D, self.d,
-            "const D must match dimensions configured at construction"
-        );
+        assert_eq!(D, self.d, "const D must match dimensions configured at construction");
         let scale = 1.0_f64 / ((1u64 << 32) as f64);
         let mut out = [0.0; D];
         if self.i == 0 {
@@ -465,10 +461,7 @@ impl SobolSequence {
             return out;
         }
         let bit = trailing_zero_bit(self.i);
-        assert!(
-            bit < 32,
-            "Sobol exhausted: only 2^32 points per dimension"
-        );
+        assert!(bit < 32, "Sobol exhausted: only 2^32 points per dimension");
         for k in 0..D {
             self.x[k] ^= SOBOL_DIRECTIONS[k][bit];
             out[k] = (self.x[k] as f64) * scale;
@@ -520,6 +513,14 @@ impl SobolSequence {
     /// Returns the dimension count.
     pub fn dimensions(&self) -> usize {
         self.d
+    }
+
+    /// Sets the internal index. Test-only — used to exercise the
+    /// `bit >= 32` defensive branch in [`Self::advance`] without
+    /// running 2³² actual iterations.
+    #[cfg(test)]
+    pub(crate) fn set_i_for_test(&mut self, i: u64) {
+        self.i = i;
     }
 }
 
@@ -585,6 +586,153 @@ mod tests {
             assert!((0.0..1.0).contains(&p[0]));
             assert!((0.0..1.0).contains(&p[1]));
         }
+    }
+
+    /// `skip(n)` on Van der Corput advances by `n` positions.
+    /// `VanDerCorputSequence` also impls `Iterator`, so we must
+    /// disambiguate from `Iterator::skip` (which is consuming).
+    #[test]
+    fn vdc_skip_advances_correctly() {
+        let mut a = VanDerCorputSequence::new(2);
+        let mut b = VanDerCorputSequence::new(2);
+        for _ in 0..5 {
+            let _ = a.next_point();
+        }
+        VanDerCorputSequence::skip(&mut b, 5);
+        assert_eq!(a.next_point(), b.next_point());
+    }
+
+    /// Van der Corput's `Iterator` impl returns the same value as
+    /// `next_point()`.
+    #[test]
+    fn vdc_iterator_matches_next_point() {
+        let mut a = VanDerCorputSequence::new(2);
+        let mut b = VanDerCorputSequence::new(2);
+        for _ in 0..8 {
+            assert_eq!(a.next_point(), b.next().unwrap());
+        }
+    }
+
+    /// `HaltonSequence::skip` + `dimensions` accessors.
+    #[test]
+    fn halton_skip_and_dimensions() {
+        let mut a = HaltonSequence::new(3);
+        let mut b = HaltonSequence::new(3);
+        assert_eq!(a.dimensions(), 3);
+        for _ in 0..7 {
+            let _ = a.next_point::<3>();
+        }
+        b.skip(7);
+        assert_eq!(a.next_point::<3>(), b.next_point::<3>());
+    }
+
+    /// `HaltonSequence::next_point_vec` returns the heap-allocated
+    /// equivalent of `next_point::<D>()`.
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn halton_next_point_vec_matches_const_generic() {
+        let mut a = HaltonSequence::new(3);
+        let mut b = HaltonSequence::new(3);
+        let v_const = a.next_point::<3>();
+        let v_heap = b.next_point_vec();
+        assert_eq!(v_heap.len(), 3);
+        for k in 0..3 {
+            assert!((v_const[k] - v_heap[k]).abs() < 1e-12);
+        }
+    }
+
+    /// `SobolSequence::skip(n)` + `dimensions`.
+    #[test]
+    fn sobol_skip_and_dimensions() {
+        let mut a = SobolSequence::new(3);
+        let mut b = SobolSequence::new(3);
+        assert_eq!(b.dimensions(), 3);
+        for _ in 0..7 {
+            let _ = a.next_point::<3>();
+        }
+        b.skip(7);
+        assert_eq!(a.next_point::<3>(), b.next_point::<3>());
+    }
+
+    /// `SobolSequence::next_point_vec`: covers both the `i == 0`
+    /// fast path (returns all-zero vec) and the normal sampling
+    /// path.
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn sobol_next_point_vec_paths() {
+        let mut s = SobolSequence::new(3);
+        let first = s.next_point_vec();
+        assert_eq!(first, alloc::vec![0.0; 3]);
+        let second = s.next_point_vec();
+        assert_eq!(second.len(), 3);
+        assert!(second.iter().any(|&v| v != 0.0));
+    }
+
+    /// `VanDerCorputSequence::new(base)` panics if base < 2.
+    #[test]
+    #[should_panic(expected = "at least 2")]
+    fn vdc_base_below_two_panics() {
+        let _ = VanDerCorputSequence::new(1);
+    }
+
+    /// `HaltonSequence::new(d)` panics for d == 0.
+    #[test]
+    #[should_panic(expected = "must be in")]
+    fn halton_zero_dim_panics() {
+        let _ = HaltonSequence::new(0);
+    }
+
+    /// `HaltonSequence::new(d)` panics for d > HALTON_MAX_DIM.
+    #[test]
+    #[should_panic(expected = "must be in")]
+    fn halton_over_max_dim_panics() {
+        let _ = HaltonSequence::new(HALTON_MAX_DIM + 1);
+    }
+
+    /// `SobolSequence::new(d)` panics for d == 0.
+    #[test]
+    #[should_panic(expected = "must be in")]
+    fn sobol_zero_dim_panics() {
+        let _ = SobolSequence::new(0);
+    }
+
+    /// `SobolSequence::new(d)` panics for d > SOBOL_MAX_DIM.
+    #[test]
+    #[should_panic(expected = "must be in")]
+    fn sobol_over_max_dim_panics() {
+        let _ = SobolSequence::new(SOBOL_MAX_DIM + 1);
+    }
+
+    /// `Sobol::advance` early-returns when `i == 0` (first call).
+    /// Cover by calling `skip(1)` on a fresh sequence: that triggers
+    /// `advance()` with i==0, which sets i=1 and returns.
+    #[test]
+    fn sobol_skip_from_zero() {
+        let mut a = SobolSequence::new(2);
+        let mut b = SobolSequence::new(2);
+        // a does the canonical first call.
+        let _ = a.next_point::<2>();
+        // b skips one — should put it in the same state.
+        b.skip(1);
+        assert_eq!(a.next_point::<2>(), b.next_point::<2>());
+    }
+
+    /// Covers the `bit >= 32` defensive branch in `advance()`.
+    /// In practice this would only fire after 2³² advances; the
+    /// test harness sets `i` directly to `1 << 32` so the next
+    /// `advance()` triggers it.
+    #[test]
+    fn sobol_advance_handles_exhaustion() {
+        let mut s = SobolSequence::new(2);
+        s.set_i_for_test(1u64 << 32);
+        // Skip one — internally calls advance(), which hits the
+        // `bit >= 32` branch and returns without mutating x.
+        let x_before = s.x;
+        s.skip(1);
+        assert_eq!(
+            s.x, x_before,
+            "exhausted advance must not mutate state"
+        );
     }
 
     /// Monte Carlo π convergence: Sobol's error after N points

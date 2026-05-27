@@ -162,6 +162,13 @@ pub mod random;
 /// Xoshiro256++ implementation.
 pub mod xoshiro;
 /// SIMD-batched `fill_bytes` (feature `simd`).
+///
+/// Architecture-conditional (NEON on aarch64, AVX2 on x86_64);
+/// excluded from coverage measurement via `.tarpaulin.toml` because
+/// a single-platform tarpaulin run can never observe both halves.
+/// Validated by the dedicated `simd` CI matrix job that runs
+/// `cargo test --features simd` on both ubuntu-latest and
+/// macos-latest.
 #[cfg(feature = "simd")]
 pub mod xoshiro_simd;
 /// Ziggurat sampler for `Random::normal()`.

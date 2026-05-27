@@ -88,45 +88,49 @@ const SIMD_THRESHOLD: usize = 64;
 /// buffers smaller than 64 bytes (where setup cost beats the
 /// per-byte savings) and for the trailing bytes that don't fill a
 /// full SIMD register.
+///
+/// Three target-specific definitions live below; rustc only
+/// compiles the one matching the active `target_arch`.
+#[cfg(target_arch = "aarch64")]
 #[inline]
 pub fn fill_bytes(rng: &mut Xoshiro256PlusPlus, dest: &mut [u8]) {
     if dest.len() < SIMD_THRESHOLD {
         rng.fill_bytes_scalar(dest);
         return;
     }
-    #[cfg(target_arch = "aarch64")]
-    {
-        aarch64::fill_bytes_neon(rng, dest);
-    }
-    #[cfg(target_arch = "x86_64")]
-    {
-        if is_avx2_available() {
-            // SAFETY: gated on runtime AVX2 detection.
-            unsafe {
-                x86_64::fill_bytes_avx2(rng, dest);
-            }
-        } else {
-            rng.fill_bytes_scalar(dest);
-        }
-    }
-    #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
-    {
-        rng.fill_bytes_scalar(dest);
-    }
+    aarch64::fill_bytes_neon(rng, dest);
 }
 
+/// x86_64 dispatch: prefer AVX2 if the CPU supports it; else scalar.
 #[cfg(target_arch = "x86_64")]
 #[inline]
+pub fn fill_bytes(rng: &mut Xoshiro256PlusPlus, dest: &mut [u8]) {
+    if dest.len() < SIMD_THRESHOLD || !is_avx2_available() {
+        rng.fill_bytes_scalar(dest);
+        return;
+    }
+    // SAFETY: gated on runtime AVX2 detection above.
+    unsafe { x86_64::fill_bytes_avx2(rng, dest) };
+}
+
+/// Fallback for architectures without a SIMD path.
+#[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
+#[inline]
+pub fn fill_bytes(rng: &mut Xoshiro256PlusPlus, dest: &mut [u8]) {
+    rng.fill_bytes_scalar(dest);
+}
+
+#[cfg(all(target_arch = "x86_64", feature = "std"))]
+#[inline]
 fn is_avx2_available() -> bool {
-    #[cfg(feature = "std")]
-    {
-        std::is_x86_feature_detected!("avx2")
-    }
-    #[cfg(not(feature = "std"))]
-    {
-        // Without std we can't runtime-detect, so fall back to compile-time.
-        cfg!(target_feature = "avx2")
-    }
+    std::is_x86_feature_detected!("avx2")
+}
+
+#[cfg(all(target_arch = "x86_64", not(feature = "std")))]
+#[inline]
+fn is_avx2_available() -> bool {
+    // Without std we can't runtime-detect, so fall back to compile-time.
+    cfg!(target_feature = "avx2")
 }
 
 // --------------------------- AArch64 NEON -----------------------------
@@ -213,10 +217,8 @@ mod aarch64 {
         rng: &mut Xoshiro256PlusPlus,
         dest: &mut [u8],
     ) {
-        if dest.len() < 16 {
-            rng.fill_bytes_scalar(dest);
-            return;
-        }
+        // Caller (super::fill_bytes) guarantees dest.len() >= SIMD_THRESHOLD;
+        // no need for a redundant < 16 early-return.
         // Two independent 2-lane states give 4-way effective
         // parallelism, plenty for the M-series' 4-wide NEON pipeline.
         let four = super::derive_lanes::<4>(rng);
@@ -354,10 +356,8 @@ mod x86_64 {
         rng: &mut Xoshiro256PlusPlus,
         dest: &mut [u8],
     ) {
-        if dest.len() < 32 {
-            rng.fill_bytes_scalar(dest);
-            return;
-        }
+        // Caller (super::fill_bytes) guarantees dest.len() >= SIMD_THRESHOLD,
+        // which is well above 32 — no redundant early-return needed.
         let mut lanes = Lanes::from_rng(rng);
         let mut i = 0;
         while i + 32 <= dest.len() {

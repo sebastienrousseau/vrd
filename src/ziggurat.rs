@@ -147,6 +147,42 @@ mod tests {
         assert!(z.abs() >= ZIG_NORM_R);
     }
 
+    /// Forces both `u1 == 0.0` and `u2 == 0.0` guard branches in
+    /// `tail()` — these are dead-code paths in practice (probability
+    /// 2⁻⁵³) but the guards exist to avoid `ln(0) = -inf`. A custom
+    /// NormalSource that returns 0.0 once then non-zero exercises
+    /// the substitution to `f64::MIN_POSITIVE`.
+    #[test]
+    fn tail_handles_zero_uniforms() {
+        struct ZeroFirstSource {
+            calls: usize,
+            xs: Xoshiro256PlusPlus,
+        }
+        impl NormalSource for ZeroFirstSource {
+            fn next_u32(&mut self) -> u32 {
+                self.xs.next_u32()
+            }
+            fn next_f64(&mut self) -> f64 {
+                self.calls += 1;
+                // First two calls return 0.0 to trip both guards;
+                // subsequent calls fall back to the real Xoshiro
+                // path so the rejection loop terminates.
+                if self.calls <= 2 {
+                    0.0
+                } else {
+                    let bits = self.xs.next_u64() >> 11;
+                    (bits as f64) * (1.0 / ((1u64 << 53) as f64))
+                }
+            }
+        }
+        let mut rng = ZeroFirstSource {
+            calls: 0,
+            xs: Xoshiro256PlusPlus::from_u64_seed(5),
+        };
+        let z = tail(&mut rng, false);
+        assert!(z.is_finite() && z.abs() >= ZIG_NORM_R);
+    }
+
     /// Helper: emits 16 samples from a fixed seed in bit-exact form.
     /// Run with `cargo test --lib --release -- --ignored print_golden
     /// --nocapture` after intentional table changes to regenerate the
