@@ -142,6 +142,9 @@ pub mod pcg;
 /// ChaCha20 CSPRNG (feature `crypto`).
 #[cfg(feature = "crypto")]
 pub mod chacha;
+/// Quasi-random low-discrepancy sequences (feature `quasirandom`).
+#[cfg(feature = "quasirandom")]
+pub mod quasirandom;
 /// Ziggurat sampler for `Random::normal()`.
 mod ziggurat;
 

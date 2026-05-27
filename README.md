@@ -204,6 +204,33 @@ Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 
 ---
 
+## Quasi-random sequences
+
+Low-discrepancy sequences for Monte Carlo integration, ray-tracing, and high-dimensional optimisation. Variance scales `O((log n)^d / n)` rather than `O(1/√n)` for a uniform PRNG. Behind the `quasirandom` feature:
+
+```toml
+vrd = { version = "0.0.11", features = ["quasirandom"] }
+```
+
+```rust
+use vrd::quasirandom::{HaltonSequence, SobolSequence, VanDerCorputSequence};
+
+// 1-D Van der Corput in base 2: 0.5, 0.25, 0.75, 0.125, ...
+let mut vdc = VanDerCorputSequence::new(2);
+let _ = vdc.next_point();
+
+// 2-D Halton across primes (2, 3); up to 32 dimensions shipped.
+let mut h = HaltonSequence::new(2);
+let _ = h.next_point::<2>();
+
+// 6-D Sobol with Bratley-Fox direction numbers; up to 6 dimensions
+// shipped (extending past that needs the Joe-Kuo D6 table).
+let mut s = SobolSequence::new(6);
+let _ = s.next_point::<6>();
+```
+
+Three constructions cover the standard ground; see [`examples/halton.rs`](examples/halton.rs) and [`examples/sobol.rs`](examples/sobol.rs) for Monte Carlo π convergence demos.
+
 ## FAQ
 
 ### Which methods will I use most often?

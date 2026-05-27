@@ -280,6 +280,41 @@ fn bench_scalar_misc(c: &mut Criterion) {
     group.finish();
 }
 
+/// Cost per quasi-random point. Halton's per-dim cost is one
+/// radical-inverse pass; Sobol's is one trailing-zero count + one
+/// XOR per dim. Both dominate over the Random PRNG path that
+/// underlies the comparative `f64` bench.
+#[cfg(feature = "quasirandom")]
+fn bench_quasirandom(c: &mut Criterion) {
+    use vrd::quasirandom::{HaltonSequence, SobolSequence};
+    let mut group = c.benchmark_group("quasirandom");
+
+    group.bench_function("halton d=2 next_point", |b| {
+        let mut h = HaltonSequence::new(2);
+        b.iter(|| black_box(h.next_point::<2>()));
+    });
+
+    group.bench_function("halton d=4 next_point", |b| {
+        let mut h = HaltonSequence::new(4);
+        b.iter(|| black_box(h.next_point::<4>()));
+    });
+
+    group.bench_function("sobol d=2 next_point", |b| {
+        let mut s = SobolSequence::new(2);
+        b.iter(|| black_box(s.next_point::<2>()));
+    });
+
+    group.bench_function("sobol d=4 next_point", |b| {
+        let mut s = SobolSequence::new(4);
+        b.iter(|| black_box(s.next_point::<4>()));
+    });
+
+    group.finish();
+}
+
+#[cfg(not(feature = "quasirandom"))]
+fn bench_quasirandom(_c: &mut Criterion) {}
+
 /// Cost of `Random::split()` — one Xoshiro `jump()` plus a clone.
 /// Useful for sizing fan-out parallelism.
 fn bench_split_cost(c: &mut Criterion) {
@@ -304,5 +339,6 @@ criterion_group!(
     bench_slice_ops,
     bench_scalar_misc,
     bench_split_cost,
+    bench_quasirandom,
 );
 criterion_main!(benches);

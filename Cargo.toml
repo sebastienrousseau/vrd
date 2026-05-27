@@ -139,6 +139,14 @@ name = "secure"
 path = "examples/secure.rs"
 required-features = ["crypto", "std"]
 [[example]]
+name = "halton"
+path = "examples/halton.rs"
+required-features = ["quasirandom"]
+[[example]]
+name = "sobol"
+path = "examples/sobol.rs"
+required-features = ["quasirandom"]
+[[example]]
 name = "backends"
 path = "examples/backends.rs"
 [[example]]
@@ -205,6 +213,10 @@ pcg = []
 # audited reference implementation. Requires `alloc` because the
 # CSPRNG variant is boxed in `RngBackend` to keep the enum small.
 crypto = ["alloc", "dep:rand_chacha"]
+# Quasi-random low-discrepancy sequences (Halton, Sobol, Van der
+# Corput). For Monte Carlo integration, ray-tracing, financial
+# simulation — variance scales O((log n)^d / n).
+quasirandom = []
 
 [package.metadata.docs.rs]
 all-features = true

@@ -87,10 +87,10 @@ jobs:
       - name: cargo check (alloc only)
         run: cargo check --target thumbv7em-none-eabihf --no-default-features --features alloc
 
-  # PCG / crypto feature builds. Both are pure-Rust adds —
-  # ubuntu-latest is sufficient.
+  # PCG / crypto / quasirandom feature builds. All pure-Rust adds —
+  # no extra cross-arch matrix needed; ubuntu-latest is sufficient.
   optional-features:
-    name: Optional features (pcg, crypto)
+    name: Optional features (pcg, crypto, quasirandom)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -107,8 +107,17 @@ jobs:
       - name: cargo test --features crypto
         run: cargo test --features crypto
 
+      - name: cargo test --features quasirandom
+        run: cargo test --features quasirandom
+
       - name: cargo build --no-default-features --features crypto
         run: cargo build --no-default-features --features crypto
+
+      - name: cargo build --no-default-features --features quasirandom
+        run: cargo build --no-default-features --features quasirandom
+
+      - name: cargo test --all-features
+        run: cargo test --all-features
 
   # SIMD feature build + test on both supported architectures.
   # AArch64 NEON is covered by macos-latest (Apple Silicon); x86_64
