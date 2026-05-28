@@ -4,8 +4,8 @@
 # `pkg/VERIFY.md` - verification cookbook
 
 How downstream consumers verify the integrity and provenance
-of vrd's published artefacts. Scaffolded for v0.0.11; the real
-signing pipeline activates when `release-binaries.yml` lands
+of vrd's published artefacts. Scaffolded as of v0.0.12; the
+real signing pipeline activates when `release-binaries.yml` lands
 (see [`../PLAN.md`](../PLAN.md), Phase 6).
 
 ## crates.io tarball (current)
