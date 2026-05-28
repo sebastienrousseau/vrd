@@ -1,0 +1,51 @@
+# OpenSSF Security Scorecard - weekly scan + on every push
+# to main. Posts the score back to the README badge. Score
+# floor: 8/10 (we aim for 9; below 7 triggers an investigation).
+#
+# https://github.com/ossf/scorecard
+
+name: scorecard
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '37 6 * * 1'        # Mondays 06:37 UTC
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: OpenSSF Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write    # upload SARIF
+      id-token: write           # OIDC for OpenSSF publish-results
+      contents: read
+      actions: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run scorecard
+        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46  # v2.4.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload SARIF to GitHub code-scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 14

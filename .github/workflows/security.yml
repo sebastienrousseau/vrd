@@ -1,0 +1,58 @@
+# Supplementary security checks. The main CI workflow already
+# runs `cargo audit` and `cargo deny check` per PR; this file
+# adds:
+#
+# * Trivy filesystem scan - catches secrets, misconfigured
+#   files, and CVEs in any vendored dependency.
+# * cargo-vet attestation check - once we wire supply-chain/.
+#
+# Scheduled weekly so CVE feeds catch up.
+
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '13 4 * * 2'        # Tuesdays 04:13 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write    # SARIF upload
+
+jobs:
+  trivy:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # aquasecurity/trivy-action@0.28.0 carried a CRITICAL
+      # supply-chain compromise advisory; pin to a clean
+      # SHA (v0.36.0, the current release as of 2026-05) rather
+      # than a moving tag to mitigate future repeats.
+      - name: Run Trivy in fs mode
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8  # v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy.sarif'
+          # Don't fail the build on findings - the SARIF
+          # upload makes them visible in code-scanning UI.
+          exit-code: '0'
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy.sarif'
+          category: 'trivy'

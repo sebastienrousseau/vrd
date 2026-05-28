@@ -26,7 +26,7 @@ fn from_secure_seed_is_deterministic() {
 #[test]
 fn distributions_dispatch_through_chacha() {
     let mut rng = Random::from_secure_seed([7u8; 32]);
-    // The Ziggurat normal() sampler is backend-agnostic — confirm
+    // The Ziggurat normal() sampler is backend-agnostic - confirm
     // it still produces finite samples on ChaCha20.
     for _ in 0..1024 {
         assert!(rng.normal(0.0, 1.0).is_finite());

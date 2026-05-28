@@ -10,8 +10,8 @@
 //!    [`vrd::ziggurat`] to sample `Random::normal()` in ~4 ns/sample.
 //!
 //! Generating at build time (rather than checking in 768 hand-written
-//! magic constants) means a single deterministic recurrence — Marsaglia
-//! & Tsang (2000), *J. Stat. Software* 5(8) — is the source of truth. A
+//! magic constants) means a single deterministic recurrence - Marsaglia
+//! & Tsang (2000), *J. Stat. Software* 5(8) - is the source of truth. A
 //! typo in the recurrence is caught immediately by the crate's golden
 //! vector test; there is no way for individual table entries to silently
 //! drift.
@@ -27,6 +27,8 @@ fn main() {
     emit_ziggurat_tables();
 }
 
+/// Aborts the build if the active `rustc` is older than
+/// `min_version`. Called from `main` before any code generation.
 fn check_min_rustc(min_version: &str) {
     match version_check::is_min_version(min_version) {
         Some(true) => {}
@@ -116,6 +118,8 @@ fn emit_ziggurat_tables() {
     println!("cargo:rerun-if-changed=build.rs");
 }
 
+/// Emits a `pub(crate) static NAME: [u32; N] = [...];` declaration
+/// to `out`, used to write the Ziggurat `K` threshold table.
 fn write_u32_table(out: &mut fs::File, name: &str, table: &[u32]) {
     writeln!(
         out,
@@ -138,6 +142,8 @@ fn write_u32_table(out: &mut fs::File, name: &str, table: &[u32]) {
     writeln!(out, "];").unwrap();
 }
 
+/// Emits a `pub(crate) static NAME: [f64; N] = [...];` declaration
+/// to `out`, used to write the Ziggurat `W` and `F` lookup tables.
 fn write_f64_table(out: &mut fs::File, name: &str, table: &[f64]) {
     writeln!(
         out,

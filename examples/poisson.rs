@@ -14,7 +14,7 @@ fn main() {
     support::header("vrd -- poisson");
 
     support::task_with_output(
-        "poisson(3.0) — first 12 samples",
+        "poisson(3.0) - first 12 samples",
         || {
             let mut rng = Random::from_u64_seed(0xF15);
             (0..12).map(|_| format!("{}", rng.poisson(3.0))).collect()

@@ -18,7 +18,7 @@
 //! separation per lane, but at 256 scalar `next_u64`s per call its
 //! ~256 ns setup wiped out the SIMD win for buffers under ~4 KiB. The
 //! SplitMix derivation keeps lanes uncorrelated (probability of state
-//! collision is ≤ K²/2²⁵⁶ — negligible) at a fraction of the cost.
+//! collision is ≤ K²/2²⁵⁶ - negligible) at a fraction of the cost.
 //!
 //! # Reproducibility contract
 //!
@@ -29,7 +29,7 @@
 //! would produce. Code that depends on bit-for-bit reproducibility
 //! across feature sets must use the scalar path.
 //!
-//! Statistical quality is unchanged — each lane is a full Xoshiro256++
+//! Statistical quality is unchanged - each lane is a full Xoshiro256++
 //! and inherits all of its properties.
 
 #![allow(unsafe_code)]
@@ -68,6 +68,9 @@ fn derive_lanes<const K: usize>(
     out
 }
 
+/// SplitMix64 - Stafford's variant 13. Used to whiten the
+/// per-lane seed material derived from the scalar generator's
+/// state so the SIMD lanes are statistically independent.
 #[inline]
 fn splitmix64(state: &mut u64) -> u64 {
     *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
@@ -120,16 +123,21 @@ pub fn fill_bytes(rng: &mut Xoshiro256PlusPlus, dest: &mut [u8]) {
     rng.fill_bytes_scalar(dest);
 }
 
+/// Runtime AVX2 detection (std path) - uses
+/// `std::is_x86_feature_detected!`.
 #[cfg(all(target_arch = "x86_64", feature = "std"))]
 #[inline]
 fn is_avx2_available() -> bool {
     std::is_x86_feature_detected!("avx2")
 }
 
+/// Compile-time AVX2 detection (no_std path) - `std` isn't
+/// available, so we fall back to `cfg!(target_feature = "avx2")`
+/// which only reports `true` when the crate was built with
+/// `target-cpu` exposing AVX2.
 #[cfg(all(target_arch = "x86_64", not(feature = "std")))]
 #[inline]
 fn is_avx2_available() -> bool {
-    // Without std we can't runtime-detect, so fall back to compile-time.
     cfg!(target_feature = "avx2")
 }
 
@@ -140,6 +148,9 @@ fn is_avx2_available() -> bool {
 // `u64`. Throughput target on Apple M-series: ~20 GB/s (vs. 7.5 GB/s
 // scalar baseline).
 
+/// AArch64 NEON 2-lane implementation. K = 2 Xoshiro256++
+/// states held in `uint64x2_t` registers; 16 bytes emitted per
+/// inner step.
 #[cfg(target_arch = "aarch64")]
 mod aarch64 {
     use super::Xoshiro256PlusPlus;
@@ -148,12 +159,14 @@ mod aarch64 {
     /// Two independent Xoshiro256++ states packed into 4 × `uint64x2_t`
     /// registers. Lane i of register `s[j]` is word j of state i.
     struct Lanes {
+        /// Four 128-bit registers. Each holds the i-th word of
+        /// both lanes' Xoshiro256++ state.
         s: [uint64x2_t; 4],
     }
 
     impl Lanes {
         /// Build a 2-lane `Lanes` from two pre-computed Xoshiro256++
-        /// states. `rng` is **not** mutated by [`fill_bytes_neon`] —
+        /// states. `rng` is **not** mutated by [`fill_bytes_neon`] -
         /// the scalar state is advanced once after the SIMD loop by
         /// reading lane 0's final state and writing it back.
         #[inline]
@@ -206,6 +219,13 @@ mod aarch64 {
         }
     }
 
+    /// Vector rotate-left for two lanes. NEON has no native
+    /// rotate; emulate via shift + or. `N_INV` must equal
+    /// `64 - N` (the call sites use 23/41 and 45/19).
+    ///
+    /// # Safety
+    /// Sound for any `N` and `N_INV` in `0..64`. Const-generic
+    /// arguments are checked at compile time.
     #[inline]
     unsafe fn rotl<const N: i32, const N_INV: i32>(
         x: uint64x2_t,
@@ -213,6 +233,9 @@ mod aarch64 {
         vorrq_u64(vshlq_n_u64::<N>(x), vshrq_n_u64::<N_INV>(x))
     }
 
+    /// NEON `fill_bytes` entry point - called by the parent
+    /// module's dispatch when the buffer is ≥ `SIMD_THRESHOLD`
+    /// bytes on AArch64.
     pub(super) fn fill_bytes_neon(
         rng: &mut Xoshiro256PlusPlus,
         dest: &mut [u8],
@@ -265,7 +288,7 @@ mod aarch64 {
             i += 16;
         }
         // Advance the scalar state by taking lanes_a's lane-0 final
-        // state — deterministic, well-randomised Xoshiro256++.
+        // state - deterministic, well-randomised Xoshiro256++.
         rng.set_state(lanes_a.lane0_state());
         if i < dest_len {
             rng.fill_bytes_scalar(&mut dest[i..]);
@@ -278,16 +301,33 @@ mod aarch64 {
 // 4-lane Xoshiro256++. Each iteration writes 32 output bytes.
 // Throughput target on a modern AVX2 part: ~25–40 GB/s.
 
+/// x86_64 AVX2 4-lane implementation. K = 4 Xoshiro256++
+/// states held in `__m256i` registers; 32 bytes emitted per
+/// inner step.
 #[cfg(target_arch = "x86_64")]
 mod x86_64 {
     use super::Xoshiro256PlusPlus;
     use core::arch::x86_64::*;
 
+    /// Four independent Xoshiro256++ states packed into 4 ×
+    /// `__m256i` registers. Each register holds the i-th word
+    /// of all four lanes' state.
     struct Lanes {
+        /// Four 256-bit registers; each register `s[j]` holds
+        /// the j-th word of all four lanes' Xoshiro256++ state.
         s: [__m256i; 4],
     }
 
     impl Lanes {
+        /// Derives four independent lane states from the
+        /// scalar generator (via SplitMix64 whitening) and
+        /// loads them into `__m256i` registers in transposed
+        /// layout.
+        ///
+        /// # Safety
+        /// Requires the AVX2 target feature at runtime; enforced
+        /// by `#[target_feature(enable = "avx2")]` and the
+        /// runtime detection in the parent `fill_bytes`.
         #[target_feature(enable = "avx2")]
         unsafe fn from_rng(rng: &Xoshiro256PlusPlus) -> Self {
             let lane_states = super::derive_lanes::<4>(rng);
@@ -305,6 +345,12 @@ mod x86_64 {
             Self { s }
         }
 
+        /// One Xoshiro256++ step across all four lanes.
+        /// Returns the per-lane outputs as a single `__m256i`
+        /// (= 32 bytes when stored).
+        ///
+        /// # Safety
+        /// Same AVX2 contract as [`Self::from_rng`].
         #[inline]
         #[target_feature(enable = "avx2")]
         unsafe fn step(&mut self) -> __m256i {
@@ -340,6 +386,12 @@ mod x86_64 {
         }
     }
 
+    /// Vector rotate-left for four lanes. AVX2 has no native
+    /// rotate; emulate via shift + or. `N_INV` must equal
+    /// `64 - N` (call sites use 23/41 and 45/19).
+    ///
+    /// # Safety
+    /// AVX2 target feature required.
     #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn rotl<const N: i32, const N_INV: i32>(
@@ -351,13 +403,20 @@ mod x86_64 {
         )
     }
 
+    /// AVX2 `fill_bytes` entry point - called by the parent
+    /// module's dispatch when the buffer is ≥ `SIMD_THRESHOLD`
+    /// bytes on x86_64 and the runtime CPU advertises AVX2.
+    ///
+    /// # Safety
+    /// Caller (`super::fill_bytes`) verifies AVX2 availability
+    /// via `is_avx2_available()` before calling.
     #[target_feature(enable = "avx2")]
     pub(super) unsafe fn fill_bytes_avx2(
         rng: &mut Xoshiro256PlusPlus,
         dest: &mut [u8],
     ) {
         // Caller (super::fill_bytes) guarantees dest.len() >= SIMD_THRESHOLD,
-        // which is well above 32 — no redundant early-return needed.
+        // which is well above 32 - no redundant early-return needed.
         let mut lanes = Lanes::from_rng(rng);
         let mut i = 0;
         while i + 32 <= dest.len() {
@@ -432,7 +491,7 @@ mod tests {
     }
 
     /// SIMD must produce a different stream than scalar from the same
-    /// seed — this is the documented contract. Only meaningful on
+    /// seed - this is the documented contract. Only meaningful on
     /// architectures with a real SIMD path.
     #[test]
     #[cfg(any(target_arch = "aarch64", target_arch = "x86_64"))]

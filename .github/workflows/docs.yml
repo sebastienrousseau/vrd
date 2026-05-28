@@ -1,0 +1,96 @@
+# Builds the rustdoc bundle and deploys it to GitHub Pages.
+# Runs:
+#   * on every push to `main` (continuous rebuild - every merge
+#     refreshes https://doc.vrdlib.com),
+#   * on every published release (rebuild against the tagged
+#     source so a downloader sees docs that match the published
+#     crate),
+#   * on every pull request (build only - doesn't deploy; the
+#     job is the gate for broken intra-doc links).
+#
+# Pages must be configured to "Build and deployment → Source:
+# GitHub Actions" (see `gh api repos/.../pages -X PUT -f
+# build_type=workflow`).
+
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, "feat/**"]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # PR / push: build cargo doc with `-D warnings`. Catches
+  # broken intra-doc links, missing-docs gaps (lib has
+  # `#![deny(missing_docs)]`), and private-doc gaps via the
+  # clippy::missing_docs_in_private_items lint.
+  build:
+    name: cargo doc --all-features
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo doc --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps --all-features
+
+      - name: Add landing redirect + custom domain CNAME
+        if: github.event_name == 'push' || github.event_name == 'release'
+        run: |
+          # /vrd is rustdoc's per-crate index; the Pages root
+          # needs an HTML redirect into it.
+          cat > target/doc/index.html <<'EOF'
+          <!doctype html>
+          <html><head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=vrd/index.html">
+            <link rel="canonical" href="vrd/index.html">
+            <title>vrd documentation</title>
+          </head><body>
+            <a href="vrd/index.html">vrd documentation →</a>
+          </body></html>
+          EOF
+          # Custom domain.
+          echo 'doc.vrdlib.com' > target/doc/CNAME
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' || github.event_name == 'release'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/doc
+
+  # Push to main + release: deploy the artifact to Pages.
+  # Skipped on PRs (no secrets, no production endpoint).
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push' || github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write          # write to Pages
+      id-token: write       # OIDC for `actions/deploy-pages`
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

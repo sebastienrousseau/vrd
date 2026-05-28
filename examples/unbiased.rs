@@ -19,7 +19,7 @@ fn main() {
     let n = 1_000_000usize;
     let range = 7u32;
 
-    support::task_with_output("bounded(7) — bucket counts", || {
+    support::task_with_output("bounded(7) - bucket counts", || {
         let mut rng = Random::from_u64_seed(0xD15EA5E);
         let mut counts = [0u64; 7];
         for _ in 0..n {

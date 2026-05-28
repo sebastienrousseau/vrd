@@ -251,7 +251,7 @@ mod tests {
         validation_result.unwrap();
     }
 
-    /// Round-trips `set_config` against the canonical params — exercises
+    /// Round-trips `set_config` against the canonical params - exercises
     /// the in-place setter that `validate()` covers but the previous
     /// suite never invoked.
     #[test]

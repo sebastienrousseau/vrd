@@ -42,7 +42,7 @@ jobs:
       type: rust
       redirect-crate: vrd
 
-  # WebAssembly check — confirms the no_std core compiles for the
+  # WebAssembly check - confirms the no_std core compiles for the
   # browser/wasm runtime path. We test default-off and `alloc` only;
   # the `std` path on `wasm32-unknown-unknown` requires getrandom's
   # `js` shim and is downstream's responsibility, not ours.
@@ -66,7 +66,7 @@ jobs:
       - name: cargo check (alloc only)
         run: cargo check --target wasm32-unknown-unknown --no-default-features --features alloc
 
-  # no_std embedded target build — confirms the crate stays portable.
+  # no_std embedded target build - confirms the crate stays portable.
   embedded:
     name: no_std (thumbv7em-none-eabihf)
     runs-on: ubuntu-latest
@@ -87,7 +87,7 @@ jobs:
       - name: cargo check (alloc only)
         run: cargo check --target thumbv7em-none-eabihf --no-default-features --features alloc
 
-  # PCG / crypto / quasirandom feature builds. All pure-Rust adds —
+  # PCG / crypto / quasirandom feature builds. All pure-Rust adds -
   # no extra cross-arch matrix needed; ubuntu-latest is sufficient.
   optional-features:
     name: Optional features (pcg, crypto, quasirandom)

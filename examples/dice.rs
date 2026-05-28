@@ -27,7 +27,7 @@ fn main() {
     });
 
     support::task_with_output(
-        "4d6 — drop the lowest (D&D ability rolls)",
+        "4d6 - drop the lowest (D&D ability rolls)",
         || {
             let mut rng = Random::from_u64_seed(0xD6D6);
             (0..6)

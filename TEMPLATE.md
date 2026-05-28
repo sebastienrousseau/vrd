@@ -28,7 +28,7 @@ with optional Mersenne Twister support.
 ## Overview
 
 `vrd` generates high-quality random numbers in Rust. The default backend is
-**Xoshiro256++** — 32-byte state, period 2^256 - 1, with SplitMix64 seed
+**Xoshiro256++** - 32-byte state, period 2^256 - 1, with SplitMix64 seed
 whitening. **Mersenne Twister (MT19937)** is opt-in for legacy
 reproducibility.
 
@@ -36,7 +36,7 @@ Bounded integer sampling is unbiased (Lemire's nearly-divisionless method);
 floats carry full 24-bit (`f32`) and 53-bit (`f64`) mantissa precision; the
 crate compiles for `no_std` targets such as Cortex-M
 (`thumbv7em-none-eabihf`) and WebAssembly (`wasm32-unknown-unknown`) with
-no allocator — both validated in CI.
+no allocator - both validated in CI.
 
 [00]: https://vrdlib.com "vrd"
 [03]: https://github.com/sebastienrousseau/vrd/issues "Issues"
@@ -55,7 +55,7 @@ no allocator — both validated in CI.
 [divider]: https://kura.pro/common/images/elements/divider.svg "divider"
 [docs-badge]: https://img.shields.io/docsrs/vrd.svg?style=for-the-badge 'Docs.rs badge'
 [github-badge]: https://img.shields.io/badge/github-sebastienrousseau/vrd-8da0cb?style=for-the-badge&labelColor=555555&logo=github "GitHub"
-[libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.11-orange.svg?style=for-the-badge 'Lib.rs badge'
+[libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.12-orange.svg?style=for-the-badge 'Lib.rs badge'
 [made-with-rust]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust 'Made With Rust'
 
 ## Changelog 📚

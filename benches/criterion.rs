@@ -55,7 +55,7 @@ fn bench_rng_u32(c: &mut Criterion) {
     group.finish();
 }
 
-/// `u64` generation — exercises Xoshiro's native 64-bit path versus the
+/// `u64` generation - exercises Xoshiro's native 64-bit path versus the
 /// MT path that concatenates two `u32`s.
 fn bench_rng_u64(c: &mut Criterion) {
     let mut group = c.benchmark_group("u64");
@@ -93,7 +93,7 @@ fn bench_rng_u64(c: &mut Criterion) {
     group.finish();
 }
 
-/// 1 KiB byte-fill — exercises the bulk byte generation path.
+/// 1 KiB byte-fill - exercises the bulk byte generation path.
 fn bench_fill_bytes(c: &mut Criterion) {
     let mut group = c.benchmark_group("fill_1024_bytes");
 
@@ -145,9 +145,9 @@ fn bench_distributions(c: &mut Criterion) {
 }
 
 /// Pins the `Random` enum-dispatch overhead against raw
-/// `Xoshiro256PlusPlus`. Both columns should land within criterion noise
-/// — if a refactor regresses this group, the wrapper has stopped being
-/// inlined.
+/// `Xoshiro256PlusPlus`. Both columns should land within criterion
+/// noise; if a refactor regresses this group, the wrapper has stopped
+/// being inlined.
 fn bench_wrapper_overhead(c: &mut Criterion) {
     let mut group = c.benchmark_group("wrapper_overhead");
 
@@ -174,18 +174,18 @@ fn bench_wrapper_overhead(c: &mut Criterion) {
     group.finish();
 }
 
-/// Bounded integer sampling — the foundation of `int`/`uint`/
+/// Bounded integer sampling - the foundation of `int`/`uint`/
 /// `random_range`/`range`/`choose`/`shuffle`/`sample`. All routes
 /// land here, so a regression on `bounded` shows up everywhere.
 fn bench_bounded_sampling(c: &mut Criterion) {
     let mut group = c.benchmark_group("bounded_sampling");
 
-    group.bench_function("bounded(7) — Lemire rejection ~hot", |b| {
+    group.bench_function("bounded(7) - Lemire rejection ~hot", |b| {
         let mut rng = Random::from_u64_seed(1);
         b.iter(|| black_box(rng.bounded(7)));
     });
 
-    group.bench_function("bounded(1024) — power of two", |b| {
+    group.bench_function("bounded(1024) - power of two", |b| {
         let mut rng = Random::from_u64_seed(1);
         b.iter(|| black_box(rng.bounded(1024)));
     });
@@ -252,12 +252,12 @@ fn bench_slice_ops(c: &mut Criterion) {
 fn bench_scalar_misc(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_misc");
 
-    group.bench_function("float() — f32 in [0, 1)", |b| {
+    group.bench_function("float() - f32 in [0, 1)", |b| {
         let mut rng = Random::from_u64_seed(1);
         b.iter(|| black_box(rng.float()));
     });
 
-    group.bench_function("double() — f64 in [0, 1)", |b| {
+    group.bench_function("double() - f64 in [0, 1)", |b| {
         let mut rng = Random::from_u64_seed(1);
         b.iter(|| black_box(rng.double()));
     });
@@ -315,7 +315,7 @@ fn bench_quasirandom(c: &mut Criterion) {
 #[cfg(not(feature = "quasirandom"))]
 fn bench_quasirandom(_c: &mut Criterion) {}
 
-/// Cost of `Random::split()` — one Xoshiro `jump()` plus a clone.
+/// Cost of `Random::split()` - one Xoshiro `jump()` plus a clone.
 /// Useful for sizing fan-out parallelism.
 fn bench_split_cost(c: &mut Criterion) {
     let mut group = c.benchmark_group("split_cost");

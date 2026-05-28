@@ -1,0 +1,6 @@
+# Pin the toolchain so contributor environments and CI match.
+# Bump in lockstep with the `rust-version` field in Cargo.toml.
+
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]

@@ -1,7 +1,7 @@
 // Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! Sobol low-discrepancy sequence — typically the best choice in
+//! Sobol low-discrepancy sequence - typically the best choice in
 //! higher dimensions. Shows the standard convention `point 0 =
 //! (0, 0, ..., 0)`.
 //!
@@ -26,7 +26,7 @@ fn main() {
     });
 
     support::task_with_output(
-        "First 6 points of Sobol(6-D) — all dims supported",
+        "First 6 points of Sobol(6-D) - all dims supported",
         || {
             let mut s = SobolSequence::new(6);
             (0..6)

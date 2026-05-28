@@ -47,7 +47,7 @@ impl std::error::Error for MersenneTwisterError {}
 /// Parameter values for the Mersenne Twister algorithm.
 ///
 /// The defaults match the canonical MT19937 constants. Custom parameters
-/// must satisfy the well-known invariants — see
+/// must satisfy the well-known invariants - see
 /// [`MersenneTwisterConfig::validate`].
 ///
 /// # Examples
@@ -339,7 +339,7 @@ mod tests {
             .is_ok());
     }
 
-    /// Covers the `Display` impl on `MersenneTwisterConfig` —
+    /// Covers the `Display` impl on `MersenneTwisterConfig` -
     /// the existing coverage was on Debug only.
     #[test]
     #[cfg(any(feature = "alloc", feature = "std"))]

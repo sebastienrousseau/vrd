@@ -1,19 +1,19 @@
 // Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! PCG (Permuted Congruential Generator) family — O'Neill, 2014.
+//! PCG (Permuted Congruential Generator) family - O'Neill, 2014.
 //!
 //! Two variants exported:
 //!
-//! - [`Pcg32`](crate::pcg::Pcg32) — PCG-XSH-RR-64/32. 16-byte
+//! - [`Pcg32`](crate::pcg::Pcg32) - PCG-XSH-RR-64/32. 16-byte
 //!   state, 32-bit output. The smallest-state member of the family;
 //!   faster per `u32` than Xoshiro256++ on most CPUs.
-//! - [`Pcg64`](crate::pcg::Pcg64) — PCG-XSL-RR-128/64. 32-byte
+//! - [`Pcg64`](crate::pcg::Pcg64) - PCG-XSL-RR-128/64. 32-byte
 //!   state, 64-bit output. Same state size as Xoshiro256++ with
 //!   native 64-bit output.
 //!
 //! Both are statistically excellent (pass TestU01 BigCrush) but are
-//! **not** CSPRNGs — same caveat as Xoshiro and MT.
+//! **not** CSPRNGs - same caveat as Xoshiro and MT.
 //!
 //! Reference: O'Neill, M. E. (2014), *PCG: A Family of Simple Fast
 //! Space-Efficient Statistically Good Algorithms for Random Number
@@ -44,11 +44,19 @@ use rand::rand_core::{SeedableRng, TryRng};
     derive(serde::Serialize, serde::Deserialize)
 )]
 pub struct Pcg32 {
+    /// 64-bit LCG state - updated as `state = state * MULT + inc`
+    /// on every call.
     state: u64,
+    /// Stream-selecting odd increment. Allows independent
+    /// substreams sharing the same multiplier.
     inc: u64,
 }
 
+/// LCG multiplier - from the reference PCG implementation
+/// (O'Neill 2014). 64-bit prime with full period.
 const PCG32_MULT: u64 = 6_364_136_223_846_793_005;
+/// Default increment when a stream selector isn't given. Any odd
+/// number works; this one matches O'Neill's reference C.
 const PCG32_DEFAULT_INC: u64 = 1_442_695_040_888_963_407;
 
 impl Pcg32 {
@@ -97,7 +105,7 @@ impl Pcg32 {
         let old = self.state;
         self.state =
             old.wrapping_mul(PCG32_MULT).wrapping_add(self.inc);
-        // XSH-RR — XOR-shift-high then random-rotate.
+        // XSH-RR - XOR-shift-high then random-rotate.
         let xorshifted = (((old >> 18) ^ old) >> 27) as u32;
         let rot = (old >> 59) as u32;
         xorshifted.rotate_right(rot)
@@ -185,13 +193,17 @@ impl SeedableRng for Pcg32 {
     derive(serde::Serialize, serde::Deserialize)
 )]
 pub struct Pcg64 {
+    /// 128-bit LCG state - updated as `state = state * MULT + inc`
+    /// on every call.
     state: u128,
+    /// Stream-selecting odd increment.
     inc: u128,
 }
 
-// Multiplier from O'Neill's reference C++ implementation
-// (PCG-XSL-RR-128-64, default_multiplier<uint128_t>).
+/// 128-bit LCG multiplier from O'Neill's reference C++
+/// implementation (PCG-XSL-RR-128-64, `default_multiplier`).
 const PCG64_MULT: u128 = 0x2360_ED05_1FC6_5DA4_4385_DF64_9FCC_F645;
+/// Default 128-bit increment when no stream selector is given.
 const PCG64_DEFAULT_INC: u128 =
     0x5851_F42D_4C95_7F2D_1405_7B7E_F767_814F;
 
@@ -241,7 +253,7 @@ impl Pcg64 {
         let old = self.state;
         self.state =
             old.wrapping_mul(PCG64_MULT).wrapping_add(self.inc);
-        // XSL-RR — XOR-shift-low then random-rotate (6-bit rot).
+        // XSL-RR - XOR-shift-low then random-rotate (6-bit rot).
         let half = ((old >> 64) as u64) ^ (old as u64);
         let rot = (old >> 122) as u32;
         half.rotate_right(rot)

@@ -29,10 +29,13 @@ use rand::rand_core::{SeedableRng, TryRng};
     derive(serde::Serialize, serde::Deserialize)
 )]
 pub struct Xoshiro256PlusPlus {
+    /// 256-bit state, four 64-bit words. Combined via XOR /
+    /// shift / rotate to produce each output. Never observed
+    /// directly except via `jump()` derivatives.
     state: [u64; 4],
 }
 
-/// SplitMix64 — a fast, well-distributed 64-bit mixer used to whiten seed
+/// SplitMix64 - a fast, well-distributed 64-bit mixer used to whiten seed
 /// material before priming the main generator. Constants from
 /// <https://prng.di.unimi.it/splitmix64.c>.
 #[inline]
@@ -157,7 +160,7 @@ impl Xoshiro256PlusPlus {
     /// path that holds K independent Xoshiro256++ lanes in vector
     /// registers (K = 2 on AArch64 NEON, K = 4 on x86_64 AVX2). Same
     /// seed produces a **different** byte stream under `simd` vs.
-    /// scalar — see [`crate::xoshiro_simd`] for the contract.
+    /// scalar - see [`crate::xoshiro_simd`] for the contract.
     ///
     /// # Examples
     ///
@@ -175,7 +178,7 @@ impl Xoshiro256PlusPlus {
         self.fill_bytes_scalar(dest);
     }
 
-    /// Scalar `fill_bytes` — always available; the SIMD path falls
+    /// Scalar `fill_bytes` - always available; the SIMD path falls
     /// back to this for the trailing bytes that don't fill a full
     /// register.
     pub(crate) fn fill_bytes_scalar(&mut self, dest: &mut [u8]) {

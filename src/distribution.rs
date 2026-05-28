@@ -43,7 +43,7 @@ use crate::Random;
 
 /// A distribution that can be sampled with a mutable [`Random`].
 ///
-/// `T` is the sample type — usually `f64` for continuous
+/// `T` is the sample type - usually `f64` for continuous
 /// distributions, `u64` for integer ones, but any `T` is allowed.
 pub trait Distribution<T> {
     /// Draws one sample from `self` using `rng`.
@@ -66,8 +66,11 @@ pub trait Distribution<T> {
 /// Iterator returned by [`Distribution::samples`].
 #[derive(Debug)]
 pub struct Iter<'a, D: Distribution<T> + ?Sized, T> {
+    /// The distribution being sampled.
     dist: &'a D,
+    /// The RNG `dist` draws from on each `next()` call.
     rng: &'a mut Random,
+    /// Anchors the unconstrained type parameter `T`.
     _t: core::marker::PhantomData<T>,
 }
 
@@ -81,7 +84,7 @@ impl<D: Distribution<T>, T> Iterator for Iter<'_, D, T> {
 
 // ---------------- Built-in continuous distributions ----------------------
 
-/// Standard normal `N(mu, sigma^2)` — Ziggurat sampler, see
+/// Standard normal `N(mu, sigma^2)` - Ziggurat sampler, see
 /// [`Random::normal`].
 #[derive(Clone, Copy, Debug)]
 pub struct Normal {

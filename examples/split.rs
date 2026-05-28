@@ -1,7 +1,7 @@
 // Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! `Random::split()` — derive a parallel-safe sibling stream that
+//! `Random::split()` - derive a parallel-safe sibling stream that
 //! starts 2¹²⁸ calls ahead of the parent. Each half is independent;
 //! both remain valid.
 //!

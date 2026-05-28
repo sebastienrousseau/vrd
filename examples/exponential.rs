@@ -14,7 +14,7 @@ fn main() {
     support::header("vrd -- exponential");
 
     support::task_with_output(
-        "exponential(1.0) — first 8 samples",
+        "exponential(1.0) - first 8 samples",
         || {
             let mut rng = Random::from_u64_seed(0xEFFE);
             (0..8)

@@ -3,7 +3,7 @@
 
 //! ChaCha20-based CSPRNG backend (feature `crypto`).
 //!
-//! Thin wrapper around `rand_chacha::ChaCha20Rng` — the
+//! Thin wrapper around `rand_chacha::ChaCha20Rng` - the
 //! `rand`-ecosystem reference implementation, audited via its
 //! upstream maintainers. vrd does not roll its own crypto.
 //!
@@ -43,6 +43,8 @@ use rand_chacha::ChaCha20Rng;
     derive(serde::Serialize, serde::Deserialize)
 )]
 pub struct ChaChaRng {
+    /// Wrapped `rand_chacha::ChaCha20Rng` - vrd doesn't roll its
+    /// own crypto, this is the audited reference implementation.
     inner: ChaCha20Rng,
 }
 
