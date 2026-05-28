@@ -19,7 +19,10 @@ fuzz_target!(|data: &[u8]| {
     let mut x = [0u8; 8];
     s.copy_from_slice(&data[0..8]);
     x.copy_from_slice(&data[8..16]);
-    let mut p32 = Pcg32::from_seed_stream(u64::from_le_bytes(s), u64::from_le_bytes(x));
+    let mut p32 = Pcg32::from_seed_stream(
+        u64::from_le_bytes(s),
+        u64::from_le_bytes(x),
+    );
     for _ in 0..64 {
         let _ = p32.next_u32();
         let _ = p32.next_u64();
@@ -32,7 +35,10 @@ fuzz_target!(|data: &[u8]| {
     let mut x = [0u8; 16];
     s.copy_from_slice(&data[0..16]);
     x.copy_from_slice(&data[16..32]);
-    let mut p64 = Pcg64::from_seed_stream(u128::from_le_bytes(s), u128::from_le_bytes(x));
+    let mut p64 = Pcg64::from_seed_stream(
+        u128::from_le_bytes(s),
+        u128::from_le_bytes(x),
+    );
     for _ in 0..64 {
         let _ = p64.next_u32();
         let _ = p64.next_u64();

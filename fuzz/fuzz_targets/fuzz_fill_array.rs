@@ -9,7 +9,6 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use rand::rand_core::TryRng;
 use vrd::Random;
 
 fuzz_target!(|data: &[u8]| {
@@ -22,7 +21,13 @@ fuzz_target!(|data: &[u8]| {
     let len = (data[32] as usize) * 8;
 
     let mut rng = Random::from_seed(seed);
-    let mut buf = vec![0u8; len];
-    let _ = rng.try_fill_bytes(&mut buf);
+    // Exercises vrd's heap bulk-byte path (alloc-only); the
+    // returned Vec must always match the requested length.
+    let buf = rng.bytes(len);
     assert_eq!(buf.len(), len);
+
+    // Also exercise the const-generic stack path for a fixed
+    // size — catches alignment / init regressions independent
+    // of the alloc path.
+    let _arr: [u8; 64] = rng.fill_array();
 });

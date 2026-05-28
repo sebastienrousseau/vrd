@@ -39,10 +39,7 @@ fn main() {
             };
             (0..5)
                 .map(|i| {
-                    format!(
-                        "draw {i}: {:>9.5}",
-                        n.sample(&mut rng)
-                    )
+                    format!("draw {i}: {:>9.5}", n.sample(&mut rng))
                 })
                 .collect()
         },
@@ -59,18 +56,12 @@ fn main() {
             };
             let p = Poisson { mean: 3.0 };
             vec![
-                format!(
-                    "Exponential(1.5) = {:.5}",
-                    e.sample(&mut rng)
-                ),
+                format!("Exponential(1.5) = {:.5}", e.sample(&mut rng)),
                 format!(
                     "Uniform(-1, 1)   = {:>8.5}",
                     u.sample(&mut rng)
                 ),
-                format!(
-                    "Poisson(3.0)     = {}",
-                    p.sample(&mut rng)
-                ),
+                format!("Poisson(3.0)     = {}", p.sample(&mut rng)),
             ]
         },
     );
@@ -80,8 +71,7 @@ fn main() {
         || {
             let mut rng = Random::from_u64_seed(42);
             let b = Bernoulli { p: 0.7 };
-            let xs: Vec<bool> =
-                b.samples(&mut rng).take(10).collect();
+            let xs: Vec<bool> = b.samples(&mut rng).take(10).collect();
             let trues = xs.iter().filter(|&&x| x).count();
             vec![
                 format!("samples = {:?}", xs),
@@ -98,22 +88,15 @@ fn main() {
                 mu: 0.0,
                 sigma: 1.0,
             };
-            let xs: Vec<f64> =
-                n.samples(&mut rng).take(1000).collect();
-            let mean: f64 =
-                xs.iter().sum::<f64>() / xs.len() as f64;
-            let var: f64 = xs
-                .iter()
-                .map(|x| (x - mean).powi(2))
-                .sum::<f64>()
-                / xs.len() as f64;
+            let xs: Vec<f64> = n.samples(&mut rng).take(1000).collect();
+            let mean: f64 = xs.iter().sum::<f64>() / xs.len() as f64;
+            let var: f64 =
+                xs.iter().map(|x| (x - mean).powi(2)).sum::<f64>()
+                    / xs.len() as f64;
             vec![
                 format!("N = {} samples", xs.len()),
                 format!("empirical mean   = {:>8.5}", mean),
-                format!(
-                    "empirical stddev = {:>8.5}",
-                    var.sqrt()
-                ),
+                format!("empirical stddev = {:>8.5}", var.sqrt()),
                 "(both should be ~0 and ~1 for N(0,1))".to_string(),
             ]
         },
