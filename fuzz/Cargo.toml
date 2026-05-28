@@ -1,0 +1,60 @@
+[package]
+name = "vrd-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.vrd]
+path = ".."
+features = ["alloc", "std", "pcg", "crypto", "quasirandom"]
+
+# ── Fuzz Targets ─────────────────────────────────────────────────────
+
+[[bin]]
+name = "fuzz_xoshiro_seed"
+path = "fuzz_targets/fuzz_xoshiro_seed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_mt_seed"
+path = "fuzz_targets/fuzz_mt_seed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_pcg_seed"
+path = "fuzz_targets/fuzz_pcg_seed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_fill_array"
+path = "fuzz_targets/fuzz_fill_array.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_uniform_range"
+path = "fuzz_targets/fuzz_uniform_range.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_quasirandom"
+path = "fuzz_targets/fuzz_quasirandom.rs"
+test = false
+doc = false
+bench = false
