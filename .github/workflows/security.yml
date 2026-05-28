@@ -34,11 +34,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # aquasecurity/trivy-action@0.28.0 had a CRITICAL supply-
-      # chain compromise advisory; pin to a clean version
-      # (v0.36.0 is the current release as of 2026-05).
+      # aquasecurity/trivy-action@0.28.0 carried a CRITICAL
+      # supply-chain compromise advisory; pin to a clean
+      # SHA (v0.36.0, the current release as of 2026-05) rather
+      # than a moving tag to mitigate future repeats.
       - name: Run Trivy in fs mode
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8  # v0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
