@@ -296,16 +296,33 @@ mod aarch64 {
 // 4-lane Xoshiro256++. Each iteration writes 32 output bytes.
 // Throughput target on a modern AVX2 part: ~25–40 GB/s.
 
+/// x86_64 AVX2 4-lane implementation. K = 4 Xoshiro256++
+/// states held in `__m256i` registers; 32 bytes emitted per
+/// inner step.
 #[cfg(target_arch = "x86_64")]
 mod x86_64 {
     use super::Xoshiro256PlusPlus;
     use core::arch::x86_64::*;
 
+    /// Four independent Xoshiro256++ states packed into 4 ×
+    /// `__m256i` registers. Each register holds the i-th word
+    /// of all four lanes' state.
     struct Lanes {
+        /// Four 256-bit registers; each register `s[j]` holds
+        /// the j-th word of all four lanes' Xoshiro256++ state.
         s: [__m256i; 4],
     }
 
     impl Lanes {
+        /// Derives four independent lane states from the
+        /// scalar generator (via SplitMix64 whitening) and
+        /// loads them into `__m256i` registers in transposed
+        /// layout.
+        ///
+        /// # Safety
+        /// Requires the AVX2 target feature at runtime; enforced
+        /// by `#[target_feature(enable = "avx2")]` and the
+        /// runtime detection in the parent `fill_bytes`.
         #[target_feature(enable = "avx2")]
         unsafe fn from_rng(rng: &Xoshiro256PlusPlus) -> Self {
             let lane_states = super::derive_lanes::<4>(rng);
@@ -323,6 +340,12 @@ mod x86_64 {
             Self { s }
         }
 
+        /// One Xoshiro256++ step across all four lanes.
+        /// Returns the per-lane outputs as a single `__m256i`
+        /// (= 32 bytes when stored).
+        ///
+        /// # Safety
+        /// Same AVX2 contract as [`Self::from_rng`].
         #[inline]
         #[target_feature(enable = "avx2")]
         unsafe fn step(&mut self) -> __m256i {
@@ -358,6 +381,12 @@ mod x86_64 {
         }
     }
 
+    /// Vector rotate-left for four lanes. AVX2 has no native
+    /// rotate; emulate via shift + or. `N_INV` must equal
+    /// `64 - N` (call sites use 23/41 and 45/19).
+    ///
+    /// # Safety
+    /// AVX2 target feature required.
     #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn rotl<const N: i32, const N_INV: i32>(
@@ -369,6 +398,13 @@ mod x86_64 {
         )
     }
 
+    /// AVX2 `fill_bytes` entry point — called by the parent
+    /// module's dispatch when the buffer is ≥ `SIMD_THRESHOLD`
+    /// bytes on x86_64 and the runtime CPU advertises AVX2.
+    ///
+    /// # Safety
+    /// Caller (`super::fill_bytes`) verifies AVX2 availability
+    /// via `is_avx2_available()` before calling.
     #[target_feature(enable = "avx2")]
     pub(super) unsafe fn fill_bytes_avx2(
         rng: &mut Xoshiro256PlusPlus,
