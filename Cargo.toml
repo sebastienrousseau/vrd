@@ -111,6 +111,9 @@ path = "examples/exponential.rs"
 name = "poisson"
 path = "examples/poisson.rs"
 [[example]]
+name = "distribution"
+path = "examples/distribution.rs"
+[[example]]
 name = "choose"
 path = "examples/choose.rs"
 [[example]]

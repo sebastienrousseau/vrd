@@ -30,6 +30,7 @@ const EXAMPLES: &[&str] = &[
     "normal",
     "exponential",
     "poisson",
+    "distribution",
     // Slice operations
     "choose",
     "shuffle",
