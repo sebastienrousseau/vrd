@@ -1,0 +1,19 @@
+# `cargo tarpaulin` configuration.
+#
+# Excludes platform-conditional code from coverage measurement.
+# A single-platform tarpaulin run cannot observe code that is
+# `#[cfg]`-gated away from that platform, so counting those source
+# lines in the denominator would only penalise us for shipping
+# multi-target code. The excluded paths still have their own
+# dedicated CI gates:
+#
+# - `src/xoshiro_simd.rs` is tested by the `simd` matrix job
+#   (`cargo test --features simd` on both ubuntu-latest and
+#   macos-latest, covering AVX2 and NEON respectively).
+# - `src/float_libm.rs` is the `no_std` `FloatExt` impl that only
+#   compiles under `cfg(not(feature = "std"))`. `cargo test` always
+#   pulls in `std`, so the bodies never execute under tarpaulin.
+#   The pure no_std build is validated by the
+#   `no_std (thumbv7em-none-eabihf)` CI job.
+[config]
+exclude-files = ["src/xoshiro_simd.rs", "src/float_libm.rs"]

@@ -13,7 +13,7 @@
   <a href="https://crates.io/crates/vrd"><img src="https://img.shields.io/crates/v/vrd.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
   <a href="https://docs.rs/vrd"><img src="https://img.shields.io/badge/docs.rs-vrd-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
   <a href="https://codecov.io/gh/sebastienrousseau/vrd"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/vrd?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
-  <a href="https://lib.rs/crates/vrd"><img src="https://img.shields.io/badge/lib.rs-v0.0.10-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+  <a href="https://lib.rs/crates/vrd"><img src="https://img.shields.io/badge/lib.rs-v0.0.11-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
 </p>
 
 ---
@@ -28,7 +28,7 @@ Or in `Cargo.toml`:
 
 ```toml
 [dependencies]
-vrd = "0.0.10"
+vrd = "0.0.11"
 ```
 
 Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, `no_std` embedded targets (Cortex-M, `thumbv7em-none-eabihf`), and `wasm32-unknown-unknown` — all validated in CI.
@@ -53,12 +53,16 @@ Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Wi
 | `std` | yes | Entropy seeding via `rand::rng()`; `std::error::Error` impls. |
 | `alloc` | via `std` | `Random::bytes`, `Random::string`, `Random::sample`, `Random::uuid_v4`, `Random::hex_token`, `Random::base64_token`, the heap-stored Mersenne Twister backend. |
 | `serde` | no | `Serialize` / `Deserialize` derives for the public types. |
+| `simd` | no | SIMD-batched `fill_bytes` on AArch64 NEON / x86_64 AVX2 (~2–3× on bulk byte fills). |
+| `pcg` | no | PCG32 (16 B state) and PCG64 (32 B state) as additional backends. |
+| `crypto` | no | ChaCha20 CSPRNG backend: `Random::new_secure()`, `Random::from_secure_seed`. |
+| `quasirandom` | no | Halton / Sobol / Van der Corput low-discrepancy sequences for Monte Carlo. |
 
 Disable defaults to ship into `no_std`:
 
 ```toml
-vrd = { version = "0.0.10", default-features = false }            # core only
-vrd = { version = "0.0.10", default-features = false, features = ["alloc"] }  # core + alloc
+vrd = { version = "0.0.11", default-features = false }            # core only
+vrd = { version = "0.0.11", default-features = false, features = ["alloc"] }  # core + alloc
 ```
 
 ---
@@ -153,6 +157,14 @@ rustflags = ["-C", "target-cpu=native"]
 
 `target-cpu=native` is **not** baked into vrd's release profile because it would break `cargo install` for users on machines that download crates as binaries. Set it in the consuming crate.
 
+**`simd` feature for bulk byte generation** — opts into SIMD-batched `fill_bytes` that holds K independent Xoshiro256++ states in vector registers (K = 2 on AArch64 NEON, K = 4 on x86_64 AVX2). ~2.2× faster on 1 KiB and ~3× on 16 KiB:
+
+```toml
+vrd = { version = "0.0.11", features = ["simd"] }
+```
+
+The SIMD path produces a **different byte stream** than the scalar path for the same seed — see [`xoshiro_simd`](https://docs.rs/vrd/latest/vrd/xoshiro_simd/) for the contract. Reproducibility-sensitive code must stay on the scalar default.
+
 **Profile-Guided Optimization (PGO)** — typically yields 5–15% on hot loops:
 
 ```bash
@@ -203,6 +215,37 @@ Pulling `vrd` in instead of `rand` + companion crates typically lets you drop th
 Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 
 ---
+
+## Statistical validation
+
+Beyond Xoshiro256++ and MT19937's published academic pedigree, vrd ships a reproducible PractRand harness. See [BENCHMARKS.md](BENCHMARKS.md) for the latest pass-count table per backend; reproduce locally with `cargo run --release --example crush --features crush`. The example is informational — CI does **not** gate on it.
+
+## Quasi-random sequences
+
+Low-discrepancy sequences for Monte Carlo integration, ray-tracing, and high-dimensional optimisation. Variance scales `O((log n)^d / n)` rather than `O(1/√n)` for a uniform PRNG. Behind the `quasirandom` feature:
+
+```toml
+vrd = { version = "0.0.11", features = ["quasirandom"] }
+```
+
+```rust
+use vrd::quasirandom::{HaltonSequence, SobolSequence, VanDerCorputSequence};
+
+// 1-D Van der Corput in base 2: 0.5, 0.25, 0.75, 0.125, ...
+let mut vdc = VanDerCorputSequence::new(2);
+let _ = vdc.next_point();
+
+// 2-D Halton across primes (2, 3); up to 32 dimensions shipped.
+let mut h = HaltonSequence::new(2);
+let _ = h.next_point::<2>();
+
+// 6-D Sobol with Bratley-Fox direction numbers; up to 6 dimensions
+// shipped (extending past that needs the Joe-Kuo D6 table).
+let mut s = SobolSequence::new(6);
+let _ = s.next_point::<6>();
+```
+
+Three constructions cover the standard ground; see [`examples/halton.rs`](examples/halton.rs) and [`examples/sobol.rs`](examples/sobol.rs) for Monte Carlo π convergence demos.
 
 ## FAQ
 
@@ -279,7 +322,7 @@ For parallel deterministic streams that don't drift, a forking `Random::split()`
 Yes — enable the `serde` feature.
 
 ```toml
-vrd = { version = "0.0.10", features = ["serde"] }
+vrd = { version = "0.0.11", features = ["serde"] }
 ```
 
 ```rust,ignore
@@ -295,7 +338,16 @@ assert_eq!(rng.rand(), restored.rand());      // identical state, identical outp
 `Random`, `Xoshiro256PlusPlus`, `MersenneTwisterParams`, and `MersenneTwisterConfig` all derive `Serialize` / `Deserialize` under the `serde` feature.
 
 ### Is `vrd` cryptographically secure?
-No. `Random` is a non-cryptographic PRNG built on Xoshiro256++. For credentials, secrets, session IDs, or anything that an attacker would benefit from predicting, use a CSPRNG such as `rand::rngs::OsRng` or the `getrandom` crate. A built-in ChaCha20-based CSPRNG backend is tracked in [#90](https://github.com/sebastienrousseau/vrd/issues/90).
+Yes — when the `crypto` feature is enabled and you construct via `Random::new_secure()` or `Random::from_secure_seed([u8; 32])`. That backend wraps `rand_chacha::ChaCha20Rng`, the rand-ecosystem reference ChaCha20 implementation. Bit-for-bit equivalent to `rand_chacha::ChaCha20Rng::from_seed(...)`, so callers already on `rand_chacha` can drop in without behavioural surprises.
+
+The other backends (Xoshiro256++ default, MT19937, PCG) are **not** CSPRNGs. Pick the backend that matches the use case:
+
+| Backend | Constructor | State | Speed | Crypto-quality? |
+| :--- | :--- | :---: | :---: | :---: |
+| **Xoshiro256++** | `Random::new()` | 32 B | fastest | no |
+| **MT19937** | `Random::new_mersenne_twister()` | 2 488 B | slow | no |
+| **PCG32 / PCG64** | `Random::new_pcg32()` / `new_pcg64()` | 16 / 32 B | fastest | no |
+| **ChaCha20** | `Random::new_secure()` | ~256 B | ~3× slower than Xoshiro | **yes** |
 
 ### Does `vrd` work without `std`?
 Yes. With `default-features = false`, `vrd` compiles for pure `no_std` targets — Cortex-M is gated in CI on every PR. The `alloc` feature unlocks `Vec`/`String`/`Box`-backed APIs (`bytes`, `string`, `sample`, `shuffle`, `uuid_v4`, `hex_token`, `base64_token`, the Mersenne Twister backend). Without `alloc`, `Random::from_seed([u8; 32])` and `Random::from_u64_seed(u64)` give you a fully-functional Xoshiro256++ on bare metal.

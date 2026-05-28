@@ -87,6 +87,63 @@ jobs:
       - name: cargo check (alloc only)
         run: cargo check --target thumbv7em-none-eabihf --no-default-features --features alloc
 
+  # PCG / crypto / quasirandom feature builds. All pure-Rust adds —
+  # no extra cross-arch matrix needed; ubuntu-latest is sufficient.
+  optional-features:
+    name: Optional features (pcg, crypto, quasirandom)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo test --features pcg
+        run: cargo test --features pcg
+
+      - name: cargo test --features crypto
+        run: cargo test --features crypto
+
+      - name: cargo test --features quasirandom
+        run: cargo test --features quasirandom
+
+      - name: cargo build --no-default-features --features crypto
+        run: cargo build --no-default-features --features crypto
+
+      - name: cargo build --no-default-features --features quasirandom
+        run: cargo build --no-default-features --features quasirandom
+
+      - name: cargo test --all-features
+        run: cargo test --all-features
+
+  # SIMD feature build + test on both supported architectures.
+  # AArch64 NEON is covered by macos-latest (Apple Silicon); x86_64
+  # AVX2 by ubuntu-latest (with runtime feature detection).
+  simd:
+    name: SIMD (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo build --features simd
+        run: cargo build --features simd
+
+      - name: cargo test --features simd
+        run: cargo test --features simd
+
   # Compile-only check on the criterion bench suite. Catches accidental
   # bench breakage from API refactors without paying for a full timing
   # run on every PR.

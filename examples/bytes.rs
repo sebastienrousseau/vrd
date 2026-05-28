@@ -51,7 +51,19 @@ fn main() {
         ]
     });
 
-    support::summary(3);
+    support::task_with_output(
+        "fill_array::<N> -> stack-allocated [u8; N] (no alloc)",
+        || {
+            let mut rng = Random::from_u64_seed(0xB17E5);
+            let buf: [u8; 16] = rng.fill_array();
+            vec![
+                format!("len = {}", buf.len()),
+                format!("hex = {}", to_hex(&buf)),
+            ]
+        },
+    );
+
+    support::summary(4);
 }
 
 fn to_hex(b: &[u8]) -> String {

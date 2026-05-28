@@ -13,7 +13,10 @@
 #![crate_type = "lib"]
 #![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
-#![forbid(unsafe_code)]
+// `deny`, not `forbid`, so the optional `simd` module (which needs
+// architecture intrinsics) can lift it with a module-local `#[allow]`.
+// All other modules must remain free of `unsafe`.
+#![deny(unsafe_code)]
 #![doc = "Minimum supported Rust version: 1.70.0"]
 
 //! # Versatile Random Distributions (VRD)
@@ -68,13 +71,30 @@
 //! when you need bit-for-bit MT19937 reproducibility against existing
 //! test vectors.
 //!
-//! ## Not a CSPRNG
+//! ## Choosing a backend
 //!
-//! `Random` is **not** cryptographically secure. For credentials,
-//! session IDs, or anything an attacker would benefit from predicting,
-//! use `rand::rngs::OsRng` or `getrandom`. A built-in ChaCha20-based
-//! CSPRNG backend is tracked in
-//! [issue #90](https://github.com/sebastienrousseau/vrd/issues/90).
+//! Default `Random` is non-cryptographic Xoshiro256++. For
+//! credentials, session IDs, or anything an attacker would benefit
+//! from predicting, enable the `crypto` feature and construct via
+//! [`Random::new_secure`] (entropy-seeded) or
+//! [`Random::from_secure_seed`] (deterministic). The other backends
+//! cover different speed / state-size / reproducibility points:
+//!
+//! | Backend | Constructor | State | Crypto-quality? |
+//! | :--- | :--- | ---: | :---: |
+//! | Xoshiro256++ | [`Random::new`] | 32 B | no |
+//! | MT19937 | [`Random::new_mersenne_twister`] | 2 488 B | no |
+//! | PCG32 / PCG64 | [`Random::new_pcg32`] / [`Random::new_pcg64`] | 16 / 32 B | no |
+//! | ChaCha20 | [`Random::new_secure`] | ~256 B | **yes** |
+//!
+//! ## Optional features
+//!
+//! - `simd` — SIMD-batched `fill_bytes` (~2–3× bulk throughput).
+//! - `pcg` — PCG32 / PCG64 backends.
+//! - `crypto` — ChaCha20 CSPRNG backend.
+//! - `quasirandom` — Halton / Sobol / Van der Corput low-discrepancy
+//!   sequences for Monte Carlo integration.
+//! - `serde` — `Serialize` / `Deserialize` on the public types.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -122,15 +142,39 @@ impl fmt::Display for VrdError {
 #[cfg(feature = "std")]
 impl std::error::Error for VrdError {}
 
+/// ChaCha20 CSPRNG (feature `crypto`).
+#[cfg(feature = "crypto")]
+pub mod chacha;
+/// Pluggable `Distribution` trait and built-in samplers.
+pub mod distribution;
 /// Convenience macros.
 pub mod macros;
 /// Mersenne Twister configuration and constants.
 pub mod mersenne_twister;
+/// PCG32 / PCG64 generators (feature `pcg`).
+#[cfg(feature = "pcg")]
+pub mod pcg;
+/// Quasi-random low-discrepancy sequences (feature `quasirandom`).
+#[cfg(feature = "quasirandom")]
+pub mod quasirandom;
 /// The core `Random` facade.
 pub mod random;
 /// Xoshiro256++ implementation.
 pub mod xoshiro;
+/// SIMD-batched `fill_bytes` (feature `simd`).
+///
+/// Architecture-conditional (NEON on aarch64, AVX2 on x86_64);
+/// excluded from coverage measurement via `.tarpaulin.toml` because
+/// a single-platform tarpaulin run can never observe both halves.
+/// Validated by the dedicated `simd` CI matrix job that runs
+/// `cargo test --features simd` on both ubuntu-latest and
+/// macos-latest.
+#[cfg(feature = "simd")]
+pub mod xoshiro_simd;
+/// Ziggurat sampler for `Random::normal()`.
+mod ziggurat;
 
+pub use distribution::Distribution;
 pub use mersenne_twister::{
     MersenneTwisterConfig, MersenneTwisterError, MersenneTwisterParams,
 };

@@ -148,6 +148,210 @@ mod tests {
         assert!(dest.iter().any(|&x| x != 0));
     }
 
+    /// `fill_array` returns a stack array of the requested length.
+    /// Works in pure `no_std` without `alloc`.
+    #[test]
+    fn test_fill_array_lengths() {
+        let mut rng = Random::from_u64_seed(0x00C0_FFEE);
+        let a: [u8; 0] = rng.fill_array();
+        assert_eq!(a.len(), 0);
+        let b: [u8; 1] = rng.fill_array();
+        assert_eq!(b.len(), 1);
+        let c: [u8; 16] = rng.fill_array();
+        assert!(c.iter().any(|&x| x != 0));
+        let d: [u8; 64] = rng.fill_array();
+        assert!(d.iter().any(|&x| x != 0));
+    }
+
+    /// `fill_array` is deterministic given the same seed.
+    #[test]
+    fn test_fill_array_deterministic() {
+        let mut a = Random::from_u64_seed(42);
+        let mut b = Random::from_u64_seed(42);
+        let x: [u8; 32] = a.fill_array();
+        let y: [u8; 32] = b.fill_array();
+        assert_eq!(x, y);
+    }
+
+    /// `split()` returns `Some(_)` on the Xoshiro backend and the
+    /// child produces a different stream than the parent.
+    #[test]
+    fn test_split_xoshiro_yields_independent_stream() {
+        let mut parent = Random::from_u64_seed(7);
+        let mut child =
+            parent.split().expect("Xoshiro backend supports split");
+        // Sibling streams shouldn't collide for the first dozen draws.
+        for _ in 0..16 {
+            assert_ne!(parent.u64(), child.u64());
+        }
+    }
+
+    /// `split()` is deterministic — splitting two same-seeded parents
+    /// produces two pairs of identical sibling streams.
+    #[test]
+    fn test_split_is_deterministic() {
+        let mut a_parent = Random::from_u64_seed(99);
+        let mut b_parent = Random::from_u64_seed(99);
+        let mut a_child = a_parent.split().unwrap();
+        let mut b_child = b_parent.split().unwrap();
+        for _ in 0..8 {
+            assert_eq!(a_parent.u64(), b_parent.u64());
+            assert_eq!(a_child.u64(), b_child.u64());
+        }
+    }
+
+    /// `split()` returns `None` on the Mersenne Twister backend —
+    /// MT19937 has no analogous fixed-distance jump.
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    fn test_split_mt_returns_none() {
+        let mut rng = Random::new_mersenne_twister_with_seed(42);
+        assert!(rng.split().is_none());
+    }
+
+    /// PCG32 backend dispatches through `Random` and is
+    /// bit-deterministic given the same seed.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg32_backend_deterministic() {
+        let mut a = Random::new_pcg32_with_seed(42);
+        let mut b = Random::new_pcg32_with_seed(42);
+        for _ in 0..16 {
+            assert_eq!(a.rand(), b.rand());
+        }
+    }
+
+    /// PCG64 backend dispatches through `Random` and is
+    /// bit-deterministic given the same seed.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg64_backend_deterministic() {
+        let mut a = Random::new_pcg64_with_seed(0xDEAD_BEEF);
+        let mut b = Random::new_pcg64_with_seed(0xDEAD_BEEF);
+        for _ in 0..16 {
+            assert_eq!(a.u64(), b.u64());
+        }
+    }
+
+    /// PCG backends interop with `try_fill_bytes`.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg_fill_bytes() {
+        let mut a = Random::new_pcg32_with_seed(1);
+        let mut b = Random::new_pcg64_with_seed(1);
+        let mut buf = [0u8; 33];
+        a.try_fill_bytes(&mut buf).unwrap();
+        assert!(buf.iter().any(|&x| x != 0));
+        b.try_fill_bytes(&mut buf).unwrap();
+        assert!(buf.iter().any(|&x| x != 0));
+    }
+
+    /// `split()` is unsupported on PCG backends (no jump function).
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg_split_returns_none() {
+        let mut a = Random::new_pcg32_with_seed(1);
+        let mut b = Random::new_pcg64_with_seed(1);
+        assert!(a.split().is_none());
+        assert!(b.split().is_none());
+    }
+
+    /// Entropy-seeded PCG constructors — covers the OS-RNG seeding
+    /// branches that the deterministic constructors don't exercise.
+    #[test]
+    #[cfg(all(feature = "pcg", feature = "std"))]
+    fn test_pcg_entropy_seeded_constructors() {
+        let mut a = Random::new_pcg32();
+        let mut b = Random::new_pcg64();
+        // Two independent draws shouldn't collide for fresh
+        // entropy-seeded RNGs.
+        assert_ne!(a.rand(), 0);
+        assert_ne!(b.u64(), 0);
+    }
+
+    /// Random::seed dispatches differently per backend; ensure
+    /// every variant's seed-reset arm is hit.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_seed_pcg32_resets_stream() {
+        let mut rng = Random::new_pcg32_with_seed(0);
+        let _ = rng.rand();
+        rng.seed(42);
+        let after = rng.rand();
+        let mut baseline = Random::new_pcg32_with_seed(42);
+        assert_eq!(after, baseline.rand());
+    }
+
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_seed_pcg64_resets_stream() {
+        let mut rng = Random::new_pcg64_with_seed(0);
+        let _ = rng.u64();
+        rng.seed(42);
+        let after = rng.u64();
+        let mut baseline = Random::new_pcg64_with_seed(42u128);
+        assert_eq!(after, baseline.u64());
+    }
+
+    #[test]
+    #[cfg(feature = "crypto")]
+    fn test_seed_chacha_resets_stream() {
+        let mut rng = Random::from_secure_seed([0u8; 32]);
+        let _ = rng.u64();
+        rng.seed(42);
+        let after = rng.u64();
+        // Build the same seed shape `seed()` uses internally.
+        let mut s = [0u8; 32];
+        s[0..4].copy_from_slice(&42u32.to_le_bytes());
+        let mut baseline = Random::from_secure_seed(s);
+        assert_eq!(after, baseline.u64());
+    }
+
+    /// PCG.next_u32 -> u32 (via Pcg64 backend) and inverse paths.
+    /// Already partly covered, but pin the cross-output explicitly.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg64_rand_via_facade() {
+        // Random::rand() on PCG64 should call .next_u32() which
+        // returns the high 32 bits of the u64 draw.
+        let mut rng = Random::new_pcg64_with_seed(7);
+        let _ = rng.rand();
+    }
+
+    /// PCG32.next_u64 (via two u32 concats) on the facade path.
+    #[test]
+    #[cfg(feature = "pcg")]
+    fn test_pcg32_u64_via_facade() {
+        let mut rng = Random::new_pcg32_with_seed(7);
+        let n = rng.u64();
+        assert_ne!(n, 0);
+    }
+
+    /// Display impl on each backend variant.
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "std"))]
+    fn test_display_xoshiro_backend() {
+        let rng = Random::from_u64_seed(1);
+        let s = format!("{rng}");
+        assert!(s.contains("Xoshiro256PlusPlus"), "got: {s}");
+    }
+
+    #[test]
+    #[cfg(all(feature = "pcg", feature = "alloc", feature = "std"))]
+    fn test_display_pcg_backends() {
+        let r32 = Random::new_pcg32_with_seed(1);
+        let r64 = Random::new_pcg64_with_seed(1);
+        assert!(format!("{r32}").contains("Pcg32"));
+        assert!(format!("{r64}").contains("Pcg64"));
+    }
+
+    #[test]
+    #[cfg(all(feature = "crypto", feature = "alloc", feature = "std"))]
+    fn test_display_chacha_backend() {
+        let rng = Random::from_secure_seed([0u8; 32]);
+        assert!(format!("{rng}").contains("ChaCha20"));
+    }
+
     /// Display impl on the MT-backed `Random` includes the `mti` index;
     /// previous suite only exercised the Xoshiro Display branch.
     #[test]

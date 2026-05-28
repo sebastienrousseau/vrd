@@ -78,6 +78,23 @@ Open an issue at <https://github.com/sebastienrousseau/vrd/issues> with:
 - Expected vs. observed output.
 - Rust version (`rustc --version`) and `cargo audit` status if relevant.
 
+## Statistical validation (optional, release-only)
+
+The `crush` example pipes RNG output to PractRand's `RNG_test`
+binary for an empirical pass-count summary; results land in
+`BENCHMARKS.md` and are updated per release.
+
+```bash
+# 1. Build PractRand 0.94+ (https://pracrand.sourceforge.net/) and
+#    put `RNG_test` somewhere in PATH.
+# 2. From the vrd checkout:
+cargo run --release --example crush --features crush,pcg,crypto
+```
+
+Override the per-backend test budget with `VRD_CRUSH_BYTES=<MiB>`
+(default 256). CI does **not** run this — it's informational evidence
+for release notes, not a gate.
+
 ## License
 
 By contributing, you agree your work is dual-licensed under

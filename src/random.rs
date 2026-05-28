@@ -81,52 +81,34 @@ pub trait FloatExt {
     fn exp(self) -> Self;
 }
 
+#[cfg(feature = "std")]
 impl FloatExt for f64 {
     #[inline]
     fn ln(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::ln(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::log(self)
-        }
+        f64::ln(self)
     }
     #[inline]
     fn sqrt(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::sqrt(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::sqrt(self)
-        }
+        f64::sqrt(self)
     }
     #[inline]
     fn cos(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::cos(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::cos(self)
-        }
+        f64::cos(self)
     }
     #[inline]
     fn exp(self) -> Self {
-        #[cfg(feature = "std")]
-        {
-            f64::exp(self)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            libm::exp(self)
-        }
+        f64::exp(self)
     }
 }
+
+// The no-std libm impl lives in `float_libm.rs`. Validated by the
+// no_std embedded CI job (`cargo check --no-default-features`);
+// excluded from coverage measurement via `.tarpaulin.toml` because
+// `cargo test` always runs with `std`, leaving the libm bodies
+// unobservable on a single-feature-set coverage run.
+#[cfg(not(feature = "std"))]
+#[path = "float_libm.rs"]
+mod float_libm;
 
 // ---------------------------------------------------------------------------
 // MersenneTwister generator — relegated, available only with `alloc`.
@@ -410,7 +392,7 @@ impl SeedableRng for MersenneTwister {
 /// let backend = RngBackend::Xoshiro256PlusPlus(Xoshiro256PlusPlus::from_u64_seed(42));
 /// ```
 #[allow(variant_size_differences)]
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
 pub enum RngBackend {
@@ -444,6 +426,22 @@ pub enum RngBackend {
     /// ```
     #[cfg(feature = "alloc")]
     MersenneTwister(Box<MersenneTwister>),
+
+    /// PCG-XSH-RR-64/32 — 16-byte state, 32-bit output. Available
+    /// under the `pcg` feature.
+    #[cfg(feature = "pcg")]
+    Pcg32(crate::pcg::Pcg32),
+
+    /// PCG-XSL-RR-128/64 — 32-byte state, 64-bit output. Available
+    /// under the `pcg` feature.
+    #[cfg(feature = "pcg")]
+    Pcg64(crate::pcg::Pcg64),
+
+    /// ChaCha20 CSPRNG — crypto-quality output. Produced by
+    /// [`Random::new_secure`] / [`Random::from_secure_seed`].
+    /// Available under the `crypto` feature.
+    #[cfg(feature = "crypto")]
+    ChaCha20(Box<crate::chacha::ChaChaRng>),
 }
 
 // ---------------------------------------------------------------------------
@@ -467,7 +465,7 @@ pub enum RngBackend {
 /// let n = rng.rand();
 /// # }
 /// ```
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
 pub struct Random {
@@ -596,6 +594,145 @@ impl Random {
         }
     }
 
+    /// Creates a PCG32-backed [`Random`] seeded from the given `u64`.
+    /// Requires the `pcg` feature. 16-byte state — the smallest of
+    /// the family.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "pcg")]
+    /// # {
+    /// let mut rng = Random::new_pcg32_with_seed(42);
+    /// let _ = rng.rand();
+    /// # }
+    /// ```
+    #[cfg(feature = "pcg")]
+    pub fn new_pcg32_with_seed(seed: u64) -> Self {
+        Self {
+            backend: RngBackend::Pcg32(
+                crate::pcg::Pcg32::from_u64_seed(seed),
+            ),
+        }
+    }
+
+    /// Creates an entropy-seeded PCG32-backed [`Random`]. Requires
+    /// the `pcg` feature and `std` for the OS entropy source.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(all(feature = "pcg", feature = "std"))]
+    /// # {
+    /// let mut rng = Random::new_pcg32();
+    /// let _ = rng.rand();
+    /// # }
+    /// ```
+    #[cfg(all(feature = "pcg", feature = "std"))]
+    pub fn new_pcg32() -> Self {
+        Self::new_pcg32_with_seed(rand::random())
+    }
+
+    /// Creates a PCG64-backed [`Random`] seeded from the given
+    /// `u128`. Requires the `pcg` feature. 32-byte state with
+    /// native 64-bit output.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "pcg")]
+    /// # {
+    /// let mut rng = Random::new_pcg64_with_seed(0xCAFE_F00D);
+    /// let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(feature = "pcg")]
+    pub fn new_pcg64_with_seed(seed: u128) -> Self {
+        Self {
+            backend: RngBackend::Pcg64(
+                crate::pcg::Pcg64::from_u128_seed(seed),
+            ),
+        }
+    }
+
+    /// Creates an entropy-seeded PCG64-backed [`Random`]. Requires
+    /// the `pcg` feature and `std` for the OS entropy source.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(all(feature = "pcg", feature = "std"))]
+    /// # {
+    /// let mut rng = Random::new_pcg64();
+    /// let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(all(feature = "pcg", feature = "std"))]
+    pub fn new_pcg64() -> Self {
+        let lo: u64 = rand::random();
+        let hi: u64 = rand::random();
+        Self::new_pcg64_with_seed(
+            (u128::from(hi) << 64) | u128::from(lo),
+        )
+    }
+
+    /// Creates a ChaCha20-CSPRNG-backed [`Random`] from a
+    /// deterministic 32-byte seed. Requires the `crypto` feature.
+    /// Output is bit-for-bit equivalent to
+    /// `rand_chacha::ChaCha20Rng::from_seed(seed)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(feature = "crypto")]
+    /// # {
+    /// let mut rng = Random::from_secure_seed([42u8; 32]);
+    /// let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(feature = "crypto")]
+    pub fn from_secure_seed(seed: [u8; 32]) -> Self {
+        Self {
+            backend: RngBackend::ChaCha20(Box::new(
+                crate::chacha::ChaChaRng::from_seed(seed),
+            )),
+        }
+    }
+
+    /// Creates a ChaCha20-CSPRNG-backed [`Random`] seeded from the
+    /// OS entropy source. Requires the `crypto` feature and `std`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// # #[cfg(all(feature = "crypto", feature = "std"))]
+    /// # {
+    /// let mut rng = Random::new_secure();
+    /// // crypto-grade UUID v4 / token / etc.
+    /// # let _ = rng.u64();
+    /// # }
+    /// ```
+    #[cfg(all(feature = "crypto", feature = "std"))]
+    pub fn new_secure() -> Self {
+        Self {
+            backend: RngBackend::ChaCha20(Box::new(
+                crate::chacha::ChaChaRng::from_os_rng(),
+            )),
+        }
+    }
+
     /// Creates an entropy-seeded Mersenne-Twister-backed [`Random`].
     /// Requires `alloc` + `std`.
     ///
@@ -656,6 +793,12 @@ impl Random {
             RngBackend::Xoshiro256PlusPlus(xs) => xs.next_u32(),
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.rand(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => p.next_u32(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => p.next_u32(),
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => c.next_u32(),
         }
     }
 
@@ -678,6 +821,12 @@ impl Random {
             RngBackend::Xoshiro256PlusPlus(xs) => xs.next_u64(),
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.next_u64(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => p.next_u64(),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => p.next_u64(),
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => c.next_u64(),
         }
     }
 
@@ -719,6 +868,20 @@ impl Random {
             }
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.seed(seed),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => {
+                *p = crate::pcg::Pcg32::from_u64_seed(seed as u64);
+            }
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => {
+                *p = crate::pcg::Pcg64::from_u128_seed(seed as u128);
+            }
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => {
+                let mut s = [0u8; 32];
+                s[0..4].copy_from_slice(&seed.to_le_bytes());
+                **c = crate::chacha::ChaChaRng::from_seed(s);
+            }
         }
     }
 
@@ -737,6 +900,46 @@ impl Random {
     /// ```
     pub fn backend(&self) -> &RngBackend {
         &self.backend
+    }
+
+    /// Splits this RNG into a second instance whose stream starts
+    /// 2¹²⁸ calls ahead of `self`. Both halves remain valid and
+    /// produce non-overlapping subsequences — safe to hand to two
+    /// parallel workers without contention.
+    ///
+    /// Available only on the Xoshiro256++ backend (which has the
+    /// `jump` operation). Returns `None` on the Mersenne Twister
+    /// backend, which has no analogous fixed-distance jump.
+    ///
+    /// Cost: one `jump()` on `self`, roughly 256 scalar
+    /// `next_u64` cycles.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut parent = Random::from_u64_seed(42);
+    /// let mut child = parent.split().expect("Xoshiro backend");
+    /// // Two independent streams from a single seed.
+    /// assert_ne!(parent.u64(), child.u64());
+    /// ```
+    pub fn split(&mut self) -> Option<Random> {
+        match &mut self.backend {
+            RngBackend::Xoshiro256PlusPlus(xs) => {
+                let child = *xs;
+                xs.jump();
+                Some(Random {
+                    backend: RngBackend::Xoshiro256PlusPlus(child),
+                })
+            }
+            #[cfg(feature = "alloc")]
+            RngBackend::MersenneTwister(_) => None,
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(_) | RngBackend::Pcg64(_) => None,
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(_) => None,
+        }
     }
 
     // -------------------------- bounded sampling ---------------------------
@@ -994,6 +1197,25 @@ impl Random {
     }
 
     // -------------------------- byte / Vec output --------------------------
+
+    /// Returns `N` random bytes on the stack. Allocation-free; works
+    /// in pure `no_std` (no `alloc` feature required).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vrd::Random;
+    ///
+    /// let mut rng = Random::from_u64_seed(1);
+    /// let buf: [u8; 32] = rng.fill_array();
+    /// assert!(buf.iter().any(|&b| b != 0));
+    /// ```
+    #[inline]
+    pub fn fill_array<const N: usize>(&mut self) -> [u8; N] {
+        let mut buf = [0u8; N];
+        let _ = TryRng::try_fill_bytes(self, &mut buf);
+        buf
+    }
 
     /// Returns a fresh `Vec<u8>` of `len` random bytes. Requires the
     /// `alloc` feature.
@@ -1431,16 +1653,12 @@ impl Random {
 
     /// Standard normal sample, parameterized by `(mu, sigma)`.
     ///
-    /// Uses the **Marsaglia polar method**: rejection-sample two uniforms
-    /// inside the unit disc, then transform to a normal sample without
-    /// trigonometry. Acceptance probability is π/4 ≈ 78.5%, so the inner
-    /// loop runs ~1.27 times on average. Faster than Box-Muller (no
-    /// `cos` call) for the same statistical guarantees.
-    ///
-    /// For an even faster `normal()` based on the Ziggurat algorithm
-    /// (~3 ns/sample), see issue tracker — Ziggurat needs build-time
-    /// table generation and lives behind a `fast-distributions` feature
-    /// in a future release.
+    /// Uses the **256-strip Ziggurat method** (Marsaglia & Tsang, 2000)
+    /// with tables generated at build time. The fast path costs one
+    /// `u32` draw, one table lookup, and one `f64` multiply; the
+    /// overhang branch (~1% of calls) adds one `exp` and one `f64`
+    /// draw; the tail branch (~0.03% of calls) falls back to
+    /// exponential rejection.
     ///
     /// # Examples
     ///
@@ -1452,18 +1670,7 @@ impl Random {
     /// assert!(z.is_finite());
     /// ```
     pub fn normal(&mut self, mu: f64, sigma: f64) -> f64 {
-        loop {
-            // Map u, v from [0, 1) to (-1, 1).
-            let u = 2.0 * self.f64() - 1.0;
-            let v = 2.0 * self.f64() - 1.0;
-            let s = u * u + v * v;
-            // Reject pairs that fall outside the open unit disc, plus
-            // the (origin) case where ln would diverge.
-            if s > 0.0 && s < 1.0 {
-                let factor = FloatExt::sqrt(-2.0 * FloatExt::ln(s) / s);
-                return mu + sigma * (u * factor);
-            }
-        }
+        mu + sigma * crate::ziggurat::sample_normal(self)
     }
 
     /// Exponential sample with the given `rate` (λ). Mean of the
@@ -1602,6 +1809,18 @@ impl core::fmt::Display for Random {
                 "Random {{ backend: MersenneTwister, mti: {} }}",
                 mt.mti
             ),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(_) => {
+                write!(f, "Random {{ backend: Pcg32 }}")
+            }
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(_) => {
+                write!(f, "Random {{ backend: Pcg64 }}")
+            }
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(_) => {
+                write!(f, "Random {{ backend: ChaCha20 }}")
+            }
         }
     }
 }
@@ -1627,6 +1846,12 @@ impl TryRng for Random {
             }
             #[cfg(feature = "alloc")]
             RngBackend::MersenneTwister(mt) => mt.try_fill_bytes(dest),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg32(p) => p.try_fill_bytes(dest),
+            #[cfg(feature = "pcg")]
+            RngBackend::Pcg64(p) => p.try_fill_bytes(dest),
+            #[cfg(feature = "crypto")]
+            RngBackend::ChaCha20(c) => c.try_fill_bytes(dest),
         }
     }
 }
@@ -1636,6 +1861,18 @@ impl SeedableRng for Random {
 
     fn from_seed(seed: Self::Seed) -> Self {
         Random::from_seed(seed)
+    }
+}
+
+impl crate::ziggurat::NormalSource for Random {
+    #[inline]
+    fn next_u32(&mut self) -> u32 {
+        self.rand()
+    }
+
+    #[inline]
+    fn next_f64(&mut self) -> f64 {
+        self.double()
     }
 }
 

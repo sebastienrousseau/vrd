@@ -9,6 +9,7 @@ edition = "2021"
 exclude = ["/.git/*", "/.github/*", "/.gitignore", "/.vscode/*"]
 homepage = "https://vrdlib.com"
 include = [
+    "/BENCHMARKS.md",
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
     "/LICENSE-MIT",
@@ -26,7 +27,7 @@ name = "vrd"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/vrd"
 rust-version = "1.70"
-version = "0.0.10"
+version = "0.0.11"
 
 [[bench]]
 name = "benchmark"
@@ -41,6 +42,7 @@ rand = { version = "0.10", default-features = false }
 libm = { version = "0.2", default-features = false }
 serde = { version = "1.0.228", default-features = false, features = ["derive"], optional = true }
 serde-big-array = { version = "0.5.1", default-features = false, optional = true }
+rand_chacha = { version = "0.10", default-features = false, optional = true }
 
 [build-dependencies]
 version_check = "0.9.5"
@@ -50,7 +52,7 @@ assert_cmd = "2.2"
 criterion = "0.8.2"
 fastrand = "2"
 proptest = "1"
-serde_json = "1.0.127"
+serde_json = "1.0.150"
 
 [lib]
 crate-type = ["lib"]
@@ -74,6 +76,10 @@ path = "examples/basics.rs"
 [[example]]
 name = "seed"
 path = "examples/seed.rs"
+[[example]]
+name = "split"
+path = "examples/split.rs"
+required-features = ["alloc"]
 [[example]]
 name = "bytes"
 path = "examples/bytes.rs"
@@ -125,6 +131,26 @@ path = "examples/xoshiro.rs"
 [[example]]
 name = "mersenne"
 path = "examples/mersenne.rs"
+[[example]]
+name = "pcg"
+path = "examples/pcg.rs"
+required-features = ["pcg"]
+[[example]]
+name = "secure"
+path = "examples/secure.rs"
+required-features = ["crypto", "std"]
+[[example]]
+name = "crush"
+path = "examples/crush.rs"
+required-features = ["crush", "std"]
+[[example]]
+name = "halton"
+path = "examples/halton.rs"
+required-features = ["quasirandom"]
+[[example]]
+name = "sobol"
+path = "examples/sobol.rs"
+required-features = ["quasirandom"]
 [[example]]
 name = "backends"
 path = "examples/backends.rs"
@@ -179,7 +205,27 @@ path = "examples/all.rs"
 default = ["std"]
 std = ["alloc", "serde?/std", "rand/std", "rand/thread_rng"]
 alloc = ["rand/alloc", "serde?/alloc"]
-serde = ["dep:serde", "dep:serde-big-array"]
+serde = ["dep:serde", "dep:serde-big-array", "rand_chacha?/serde"]
+# Bulk-byte SIMD path for `fill_bytes`. Trades bit-for-bit reproducibility
+# against the scalar path for throughput (~2.5–3× on AArch64 NEON and
+# x86_64 AVX2). Off by default; see `xoshiro_simd` for the contract.
+simd = []
+# Adds PCG32 and PCG64 as third / fourth backends. Small-state,
+# fast, statistically excellent — not a CSPRNG.
+pcg = []
+# Adds a ChaCha20-based CSPRNG backend. The default Xoshiro and MT
+# backends remain non-crypto. Pulls in `rand_chacha` for the
+# audited reference implementation. Requires `alloc` because the
+# CSPRNG variant is boxed in `RngBackend` to keep the enum small.
+crypto = ["alloc", "dep:rand_chacha"]
+# Quasi-random low-discrepancy sequences (Halton, Sobol, Van der
+# Corput). For Monte Carlo integration, ray-tracing, financial
+# simulation — variance scales O((log n)^d / n).
+quasirandom = []
+# Enables the `crush` example, which pipes RNG output through an
+# external PractRand `RNG_test` binary for statistical validation.
+# Informational only — not run in CI.
+crush = []
 
 [package.metadata.docs.rs]
 all-features = true

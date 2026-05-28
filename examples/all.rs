@@ -17,6 +17,7 @@ const EXAMPLES: &[&str] = &[
     "hello",
     "basics",
     "seed",
+    "split",
     "bytes",
     "floats",
     "bools",
@@ -58,6 +59,15 @@ const EXAMPLES: &[&str] = &[
     "tokens",
 ];
 
+/// Examples that require specific feature flags. Each entry is
+/// `(example name, comma-separated features)`.
+const FEATURE_EXAMPLES: &[(&str, &str)] = &[
+    ("pcg", "pcg"),
+    ("secure", "crypto"),
+    ("halton", "quasirandom"),
+    ("sobol", "quasirandom"),
+];
+
 fn main() {
     println!("\n  \x1b[1mvrd examples\x1b[0m\n");
 
@@ -81,6 +91,34 @@ fn main() {
             }
             _ => {
                 println!("\x1b[31mfail\x1b[0m");
+                failed += 1;
+            }
+        }
+    }
+
+    for (name, features) in FEATURE_EXAMPLES {
+        print!("  \x1b[90m{name:<14}\x1b[0m");
+
+        let result = Command::new("cargo")
+            .args([
+                "run",
+                "--example",
+                name,
+                "--features",
+                features,
+                "--quiet",
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status();
+
+        match result {
+            Ok(status) if status.success() => {
+                println!("\x1b[32mdone\x1b[0m \x1b[90m(--features {features})\x1b[0m");
+                passed += 1;
+            }
+            _ => {
+                println!("\x1b[31mfail\x1b[0m \x1b[90m(--features {features})\x1b[0m");
                 failed += 1;
             }
         }
