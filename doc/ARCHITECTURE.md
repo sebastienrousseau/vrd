@@ -11,18 +11,18 @@ skim the section that matches your question otherwise.
 
 ```
 ┌───────────────────────────────────────────────────────────┐
-│  Random — facade                                          │
+│  Random - facade                                          │
 │   • dispatches over RngBackend via match                  │
 │   • implements rand 0.10 TryRng + SeedableRng             │
 │   • exposes 50+ ergonomic methods (rand, u64, int, ...)   │
 ├───────────────────────────────────────────────────────────┤
-│  RngBackend — enum                                        │
+│  RngBackend - enum                                        │
 │   ├─ Xoshiro256PlusPlus  (32 B inline, default)           │
 │   ├─ MersenneTwister     (Box, alloc-gated)               │
 │   ├─ Pcg32 / Pcg64       (inline, `pcg` feature)          │
 │   └─ ChaCha20            (Box, `crypto` feature)          │
 ├───────────────────────────────────────────────────────────┤
-│  Per-backend modules — pure-function generators           │
+│  Per-backend modules - pure-function generators           │
 │   • xoshiro::Xoshiro256PlusPlus    (src/xoshiro.rs)       │
 │   • mersenne_twister::MersenneTwister                     │
 │   • pcg::{Pcg32, Pcg64}                                   │
@@ -33,7 +33,7 @@ skim the section that matches your question otherwise.
 │   • xoshiro_simd::fill_bytes()  (`simd` feature; NEON/AVX2)│
 │   • quasirandom::{HaltonSequence, SobolSequence, ...}     │
 ├───────────────────────────────────────────────────────────┤
-│  Distribution<T> trait — pluggable sampling               │
+│  Distribution<T> trait - pluggable sampling               │
 │   • built-in: Normal / Uniform / Exponential / Poisson    │
 │   • user-defined via `impl Distribution<T> for MyDist`    │
 └───────────────────────────────────────────────────────────┘
@@ -44,7 +44,7 @@ skim the section that matches your question otherwise.
 `Random` is an `enum`-dispatched tagged union. Every method on
 the facade pattern-matches the active backend and forwards to
 its inherent method. The match arms are `#[inline]` and the
-inliner elides them entirely in release builds — verified in
+inliner elides them entirely in release builds - verified in
 `cargo bench`: the wrapped Xoshiro path is bit-identical in
 codegen to the raw `Xoshiro256PlusPlus::next_u32()` call.
 
@@ -77,12 +77,12 @@ The 256-strip Ziggurat sampler (Marsaglia & Tsang, 2000) is the
 default `Random::normal()`. Three lookup tables are computed at
 build time from the Marsaglia recurrence:
 
-- `ZIG_NORM_K[256]` — `u32` thresholds for the fast-accept path.
-- `ZIG_NORM_W[256]` — `f64` per-bin x-scale.
-- `ZIG_NORM_F[256]` — `f64` per-bin heights `exp(-x²/2)`.
+- `ZIG_NORM_K[256]` - `u32` thresholds for the fast-accept path.
+- `ZIG_NORM_W[256]` - `f64` per-bin x-scale.
+- `ZIG_NORM_F[256]` - `f64` per-bin heights `exp(-x²/2)`.
 
 Tables are generated deterministically by `build.rs` so a typo
-in any of the 768 magic constants is impossible — there are no
+in any of the 768 magic constants is impossible - there are no
 hand-written magic constants. A golden vector test in
 `src/ziggurat.rs::tests::golden_normal_vector_stable` pins 16
 bit-exact samples to detect drift if the recurrence ever changes.
@@ -118,7 +118,7 @@ then advanced by adopting lane 0's final state.
 
 **Reproducibility contract**: same seed produces a **different**
 byte stream under `simd` vs. scalar. This is fundamental to
-parallelising — there's no correctness-preserving way to
+parallelising - there's no correctness-preserving way to
 interleave K independent generators into a single-threaded
 sequence. Documented in module rustdoc and the README's
 "Squeezing more performance" section.
@@ -152,14 +152,14 @@ not CSPRNGs. Hand-rolled; no new external dependencies.
 ## ChaCha20 CSPRNG backend (`crypto` feature)
 
 Source: `src/chacha.rs`. Thin wrapper around
-`rand_chacha::ChaCha20Rng` — the rand-ecosystem reference
+`rand_chacha::ChaCha20Rng` - the rand-ecosystem reference
 implementation, audited via its upstream maintainers. vrd
 doesn't roll its own crypto; we vendor the proof.
 
 Two constructors:
 
-- `Random::new_secure()` — OS-entropy seeded; requires `std`.
-- `Random::from_secure_seed([u8; 32])` — deterministic.
+- `Random::new_secure()` - OS-entropy seeded; requires `std`.
+- `Random::from_secure_seed([u8; 32])` - deterministic.
 
 **Bit-for-bit equivalent** to `rand_chacha::ChaCha20Rng::from_seed`
 output (pinned by a test). Callers already on `rand_chacha`
@@ -173,12 +173,12 @@ small.
 
 Source: `src/quasirandom.rs`. Three constructions:
 
-- **`VanDerCorputSequence`** — 1-D, any prime base.
-- **`HaltonSequence`** — multi-dim Van der Corput across the
+- **`VanDerCorputSequence`** - 1-D, any prime base.
+- **`HaltonSequence`** - multi-dim Van der Corput across the
   first 32 primes (`HALTON_MAX_DIM = 32`).
-- **`SobolSequence`** — multi-dim with Bratley-Fox (1988)
+- **`SobolSequence`** - multi-dim with Bratley-Fox (1988)
   starter direction numbers (`SOBOL_MAX_DIM = 6`). Extending
-  beyond 6 dims needs the Joe-Kuo D6 table — deferred to
+  beyond 6 dims needs the Joe-Kuo D6 table - deferred to
   future v0.1.x.
 
 These are **not** PRNGs and live alongside (not inside)
@@ -203,8 +203,8 @@ These are **not** PRNGs and live alongside (not inside)
 ```
 
 The `FloatExt` trait abstracts the two paths. Two impls coexist
-in the source — one gated on `feature = "std"`, the other on
-`not(feature = "std")` — so the active build only compiles one.
+in the source - one gated on `feature = "std"`, the other on
+`not(feature = "std")` - so the active build only compiles one.
 
 Validated in CI on `thumbv7em-none-eabihf` (Cortex-M4F/M7F) and
 `wasm32-unknown-unknown` under both `--no-default-features` and
@@ -218,9 +218,9 @@ target floor for new code is 100 %; current score is 100 %
 (773 / 773 lines on every measured file). Two files are
 excluded via `.tarpaulin.toml`:
 
-- `src/xoshiro_simd.rs` — architecture-conditional; validated by
+- `src/xoshiro_simd.rs` - architecture-conditional; validated by
   the `simd` CI matrix job.
-- `src/float_libm.rs` — `no_std` libm impl; `cargo test` always
+- `src/float_libm.rs` - `no_std` libm impl; `cargo test` always
   runs with `std`, so these bodies never execute under
   tarpaulin. Validated by the `no_std` CI job.
 

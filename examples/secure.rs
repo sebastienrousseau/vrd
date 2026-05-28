@@ -1,7 +1,7 @@
 // Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! ChaCha20 CSPRNG backend — `Random::new_secure()` /
+//! ChaCha20 CSPRNG backend - `Random::new_secure()` /
 //! `Random::from_secure_seed`. Use for tokens, salts, session IDs:
 //! anything an attacker would benefit from predicting.
 //!
@@ -16,7 +16,7 @@ fn main() {
     support::header("vrd -- secure (ChaCha20 CSPRNG)");
 
     support::task_with_output(
-        "from_secure_seed — deterministic CSPRNG output",
+        "from_secure_seed - deterministic CSPRNG output",
         || {
             let mut rng = Random::from_secure_seed([42u8; 32]);
             (0..4)

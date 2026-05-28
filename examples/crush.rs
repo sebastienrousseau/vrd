@@ -19,7 +19,7 @@
 //! Default test budget is 256 MiB per backend (~30 s on a modern
 //! laptop); override with `VRD_CRUSH_BYTES=<MiB>`.
 //!
-//! Informational only — not a CI gate.
+//! Informational only - not a CI gate.
 
 #![cfg(feature = "crush")]
 

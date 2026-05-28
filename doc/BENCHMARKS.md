@@ -2,21 +2,21 @@
 
 Reference results for vrd's performance and statistical-quality claims.
 The numbers below are recorded on a fixed machine and updated on each
-release; the *methodology* is reproducible from this repository — re-run
+release; the *methodology* is reproducible from this repository - re-run
 `cargo bench` and `cargo run --release --example crush --features crush`
 on your own hardware to verify locally.
 
-Last updated: 2026-05-27 (vrd v0.0.11).
+Last updated: 2026-05-28 (vrd v0.0.12).
 Reference machine: Apple Silicon (M-series), macOS 25.5, rustc stable.
 Profiles: `--release` with `opt-level = 3`, `lto = true`,
 `codegen-units = 1`.
 
 ---
 
-## Performance — `cargo bench`
+## Performance - `cargo bench`
 
 Numbers from `cargo bench --features simd,pcg,quasirandom --bench benchmark`,
-recorded on the reference machine on 2026-05-27. Times are the
+recorded on the reference machine on 2026-05-28. Times are the
 criterion median; ±1 ns variance is normal.
 
 | Operation                       | Path                       | Time          | Notes |
@@ -50,7 +50,7 @@ cargo bench --features simd,pcg,quasirandom --bench benchmark
 
 ---
 
-## Statistical validation — PractRand
+## Statistical validation - PractRand
 
 [PractRand](http://pracrand.sourceforge.net/) is the de-facto modern
 statistical test battery for non-cryptographic PRNGs. We pipe 256 MiB
@@ -76,9 +76,9 @@ Reproduce: `cargo run --release --example crush --features crush,pcg,crypto`.
 
 ---
 
-## Distribution shape — empirical moments
+## Distribution shape - empirical moments
 
-`Random::normal(0, 1)` (Ziggurat) over 200 000 samples — checked in
+`Random::normal(0, 1)` (Ziggurat) over 200 000 samples - checked in
 `src/ziggurat.rs::tests::moments_match_standard_normal`:
 
 | Statistic         | Target | Tolerance | Observed |

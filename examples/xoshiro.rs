@@ -34,7 +34,7 @@ fn main() {
                     zeros.next_u64()
                 ),
                 format!("seed [1;32]: first u64 = {}", ones.next_u64()),
-                "Both non-zero — proves SplitMix64 whitening works."
+                "Both non-zero - proves SplitMix64 whitening works."
                     .into(),
             ]
         },

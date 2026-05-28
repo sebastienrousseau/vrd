@@ -6,7 +6,7 @@
 # manager-on-anywhere install.
 
 {
-  description = "Versatile Random Distributions (vrd) — Rust RNG library + CLI demo";
+  description = "Versatile Random Distributions (vrd) - Rust RNG library + CLI demo";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

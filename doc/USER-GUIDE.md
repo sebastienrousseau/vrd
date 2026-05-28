@@ -12,30 +12,30 @@ what you need.
 ```rust
 use vrd::Random;
 
-// 1. Default — Xoshiro256++, entropy-seeded from the OS.
+// 1. Default - Xoshiro256++, entropy-seeded from the OS.
 //    Requires `std`. Fastest non-crypto path.
 # #[cfg(feature = "std")]
 let mut rng = Random::new();
 
-// 2. Deterministic — same seed → same sequence forever.
+// 2. Deterministic - same seed → same sequence forever.
 //    Works in pure no_std.
 let mut rng = Random::from_u64_seed(42);
 let mut rng = Random::from_seed([0x42u8; 32]);
 
-// 3. Legacy reproducibility — MT19937 for matching old test
+// 3. Legacy reproducibility - MT19937 for matching old test
 //    vectors. Requires `alloc + std` for the entropy variant.
 # #[cfg(all(feature = "alloc", feature = "std"))]
 let mut rng = Random::new_mersenne_twister();
 # #[cfg(feature = "alloc")]
 let mut rng = Random::new_mersenne_twister_with_seed(42);
 
-// 4. Crypto-quality — ChaCha20. Requires `crypto` feature.
+// 4. Crypto-quality - ChaCha20. Requires `crypto` feature.
 # #[cfg(all(feature = "crypto", feature = "std"))]
 let mut rng = Random::new_secure();
 # #[cfg(feature = "crypto")]
 let mut rng = Random::from_secure_seed([0u8; 32]);
 
-// 5. PCG — small-state, fastest through the facade.
+// 5. PCG - small-state, fastest through the facade.
 //    Requires `pcg` feature.
 # #[cfg(all(feature = "pcg", feature = "std"))]
 let mut rng = Random::new_pcg32();          // 16-byte state
@@ -63,7 +63,7 @@ let n = rng.random_range(0, 50); // u32 in [0, 50), unbiased
 let n = rng.bounded(50);        // u32 in [0, 50), unbiased
 ```
 
-All bounded paths use Lemire's nearly-divisionless method —
+All bounded paths use Lemire's nearly-divisionless method -
 no modulo bias even when the requested range doesn't divide
 2³² cleanly.
 
@@ -138,7 +138,7 @@ let buf = rng.bytes(32);
 
 For bulk byte generation enable the `simd` feature for the
 2–3× SIMD-batched path. The same seed produces a different
-byte stream under `simd` vs. scalar — see
+byte stream under `simd` vs. scalar - see
 [`xoshiro_simd`](../src/xoshiro_simd.rs) for the contract.
 
 ## Slice operations
@@ -214,7 +214,7 @@ let mut child = parent.split().expect("Xoshiro supports split");
 assert_ne!(parent.u64(), child.u64());
 ```
 
-`split()` returns `None` on MT, PCG, and ChaCha20 backends —
+`split()` returns `None` on MT, PCG, and ChaCha20 backends -
 none have an analogous fixed-distance jump. For those backends,
 derive distinct seeds per worker manually.
 
@@ -238,7 +238,7 @@ let bytes: Vec<u8> = rng.iter_bytes().take(1024).collect();
 With the `serde` feature:
 
 ```toml
-vrd = { version = "0.0.11", features = ["serde"] }
+vrd = { version = "0.0.12", features = ["serde"] }
 ```
 
 ```rust,ignore
@@ -269,7 +269,7 @@ for _ in 0..4096 {
     if p[0] * p[0] + p[1] * p[1] < 1.0 { inside += 1; }
 }
 let pi_estimate = 4.0 * (inside as f64) / 4096.0;
-// ~3.143 — closer to π than a uniform PRNG of the same N.
+// ~3.143 - closer to π than a uniform PRNG of the same N.
 # }
 ```
 

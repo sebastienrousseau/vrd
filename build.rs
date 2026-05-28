@@ -10,8 +10,8 @@
 //!    [`vrd::ziggurat`] to sample `Random::normal()` in ~4 ns/sample.
 //!
 //! Generating at build time (rather than checking in 768 hand-written
-//! magic constants) means a single deterministic recurrence — Marsaglia
-//! & Tsang (2000), *J. Stat. Software* 5(8) — is the source of truth. A
+//! magic constants) means a single deterministic recurrence - Marsaglia
+//! & Tsang (2000), *J. Stat. Software* 5(8) - is the source of truth. A
 //! typo in the recurrence is caught immediately by the crate's golden
 //! vector test; there is no way for individual table entries to silently
 //! drift.

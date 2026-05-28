@@ -30,7 +30,7 @@ fuzz_target!(|data: &[u8]| {
     let mut buf = [0u8; 64];
     p32.fill_bytes(&mut buf);
 
-    // PCG64: 16 bytes seed + 16 bytes stream — re-using data
+    // PCG64: 16 bytes seed + 16 bytes stream - re-using data
     let mut s = [0u8; 16];
     let mut x = [0u8; 16];
     s.copy_from_slice(&data[0..16]);

@@ -5,7 +5,7 @@
 
 Drop-in mapping for the most common rand patterns. vrd
 implements `rand_core::TryRng`, `Rng`, and `SeedableRng`, so
-most code that *takes* an rng will work unchanged — only the
+most code that *takes* an rng will work unchanged - only the
 constructor lines need to change.
 
 ## Quick translation
@@ -45,7 +45,7 @@ catalogue is wider. For the four vrd covers:
 
 For distributions vrd doesn't ship, you can either:
 
-1. Continue using `rand_distr` alongside vrd — vrd's `Random`
+1. Continue using `rand_distr` alongside vrd - vrd's `Random`
    implements `rand_core::TryRng`, so any `rand_distr`
    distribution will sample from it. Pass `&mut rng` directly.
 
@@ -112,7 +112,7 @@ base64 = "0.22"
 
 # After
 [dependencies]
-vrd = { version = "0.0.11", features = ["crypto"] }
+vrd = { version = "0.0.12", features = ["crypto"] }
 ```
 
 The `crypto` feature pulls `rand_chacha` transitively; that's
@@ -131,7 +131,7 @@ For non-crypto use, vrd has no runtime dependencies beyond
 - Your codebase has hundreds of call sites referencing
   `rand::random::<T>()` and the rewrite cost outweighs the
   dep-shrinking benefit. The two crates interoperate cleanly
-  via `rand_core` — there's no need to flip the whole codebase.
+  via `rand_core` - there's no need to flip the whole codebase.
 
 ## Stable-output caveat
 

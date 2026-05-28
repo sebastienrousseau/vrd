@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2023-2026 vrd contributors -->
 <!-- SPDX-License-Identifier: Apache-2.0 OR MIT -->
 
-# `pkg/PUBLISH.md` — per-channel publish runbook
+# `pkg/PUBLISH.md` - per-channel publish runbook
 
 Step-by-step for each channel in `pkg/`. Read top-to-bottom for
 the full publish flow on a fresh release; jump to a section if
@@ -20,7 +20,7 @@ Before any publish:
    Until then it's manual:
 
    ```bash
-   VERSION=0.0.11
+   VERSION=0.0.12
    COMMIT=$(git rev-parse "v${VERSION}")
    SHA=$(curl -sL "https://crates.io/api/v1/crates/vrd/${VERSION}/download" \
          | shasum -a 256 | cut -d' ' -f1)
@@ -52,19 +52,19 @@ The future `homebrew-bump` CI job will automate steps 2–5 via
 
 ```bash
 # 1. Build both images:
-docker build -f pkg/docker/Dockerfile -t ghcr.io/sebastienrousseau/vrd:0.0.11 .
-docker build -f pkg/docker/Dockerfile.alpine -t ghcr.io/sebastienrousseau/vrd:0.0.11-alpine .
+docker build -f pkg/docker/Dockerfile -t ghcr.io/sebastienrousseau/vrd:0.0.12 .
+docker build -f pkg/docker/Dockerfile.alpine -t ghcr.io/sebastienrousseau/vrd:0.0.12-alpine .
 
 # 2. Tag the multi-arch manifest (use docker buildx for ARM64):
 docker buildx build \
     --platform linux/amd64,linux/arm64 \
     -f pkg/docker/Dockerfile \
-    -t ghcr.io/sebastienrousseau/vrd:0.0.11 \
+    -t ghcr.io/sebastienrousseau/vrd:0.0.12 \
     -t ghcr.io/sebastienrousseau/vrd:latest \
     --push .
 
 # 3. Smoke-test:
-docker run --rm ghcr.io/sebastienrousseau/vrd:0.0.11 --help
+docker run --rm ghcr.io/sebastienrousseau/vrd:0.0.12 --help
 ```
 
 The future `container-publish` CI job will use `docker buildx
@@ -81,7 +81,7 @@ nix build .#vrd             # local smoke build
 ./result/bin/vrd --help
 
 # 2. To publish, push the updated package.nix to main; the
-#    flake URL `github:sebastienrousseau/vrd?ref=v0.0.11` is
+#    flake URL `github:sebastienrousseau/vrd?ref=v0.0.12` is
 #    already addressable by users via `nix run` (no separate
 #    nixpkgs PR needed for the flake path).
 
@@ -91,7 +91,7 @@ nix build .#vrd             # local smoke build
 ```
 
 `nix run github:sebastienrousseau/vrd` works for any user
-without a NixOS install — the flake handles bootstrap.
+without a NixOS install - the flake handles bootstrap.
 
 ## Future channels (when `release-binaries.yml` activates)
 

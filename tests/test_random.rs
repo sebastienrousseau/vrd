@@ -186,7 +186,7 @@ mod tests {
         }
     }
 
-    /// `split()` is deterministic — splitting two same-seeded parents
+    /// `split()` is deterministic - splitting two same-seeded parents
     /// produces two pairs of identical sibling streams.
     #[test]
     fn test_split_is_deterministic() {
@@ -200,7 +200,7 @@ mod tests {
         }
     }
 
-    /// `split()` returns `None` on the Mersenne Twister backend —
+    /// `split()` returns `None` on the Mersenne Twister backend -
     /// MT19937 has no analogous fixed-distance jump.
     #[test]
     #[cfg(all(feature = "alloc", feature = "std"))]
@@ -256,7 +256,7 @@ mod tests {
         assert!(b.split().is_none());
     }
 
-    /// Entropy-seeded PCG constructors — covers the OS-RNG seeding
+    /// Entropy-seeded PCG constructors - covers the OS-RNG seeding
     /// branches that the deterministic constructors don't exercise.
     #[test]
     #[cfg(all(feature = "pcg", feature = "std"))]
@@ -386,7 +386,7 @@ mod tests {
     }
 
     /// Walks every public `Random` method on the Mersenne-Twister
-    /// backend end-to-end. Pure smoke coverage — asserts only that
+    /// backend end-to-end. Pure smoke coverage - asserts only that
     /// each call produces a finite/in-range result, since the
     /// statistical guarantees are tested via the Xoshiro-default suite.
     #[test]

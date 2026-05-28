@@ -1,7 +1,7 @@
 // Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! The `Distribution<T>` trait — built-in samplers and a
+//! The `Distribution<T>` trait - built-in samplers and a
 //! user-defined one. Closes the example-coverage gap for the
 //! trait surface added in issue #84.
 //!
@@ -14,7 +14,7 @@ use vrd::distribution::{Exponential, Normal, Poisson, Uniform};
 use vrd::{Distribution, Random};
 
 /// User-defined distribution: Bernoulli(p) returns true with
-/// probability `p`. Any type can be the sample target — bool
+/// probability `p`. Any type can be the sample target - bool
 /// here; could just as easily be `u8`, a struct, etc.
 struct Bernoulli {
     p: f64,

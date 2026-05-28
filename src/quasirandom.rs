@@ -4,7 +4,7 @@
 //! Quasi-random (low-discrepancy) sequences.
 //!
 //! Quasi-random sequences cover the unit cube `[0, 1)^D` more evenly
-//! than uniform PRNG draws — variance for Monte Carlo integration
+//! than uniform PRNG draws - variance for Monte Carlo integration
 //! scales `O((log n)^d / n)` rather than `O(1/√n)`. They're standard
 //! tools for ray-tracing, financial simulation, and high-dimensional
 //! numerical integration.
@@ -12,12 +12,12 @@
 //! Three constructions are shipped:
 //!
 //! - [`VanDerCorputSequence`](crate::quasirandom::VanDerCorputSequence)
-//!   — 1-D, any prime base.
+//!   - 1-D, any prime base.
 //! - [`HaltonSequence`](crate::quasirandom::HaltonSequence)
-//!   — multi-dim, Van der Corput across the first primes. Supports
+//!   - multi-dim, Van der Corput across the first primes. Supports
 //!   up to 32 dimensions.
 //! - [`SobolSequence`](crate::quasirandom::SobolSequence)
-//!   — multi-dim, uses precomputed direction numbers. Supports up
+//!   - multi-dim, uses precomputed direction numbers. Supports up
 //!   to 6 dimensions out of the box; the Joe-Kuo D6 file would
 //!   extend this past 21 000.
 //!
@@ -83,7 +83,7 @@ impl Iterator for VanDerCorputSequence {
     }
 }
 
-/// Radical inverse — reverses `n`'s digit expansion in `base`
+/// Radical inverse - reverses `n`'s digit expansion in `base`
 /// and reads it as a fraction in `[0, 1)`. Powers the Van der
 /// Corput and Halton sequences.
 #[inline]
@@ -104,7 +104,7 @@ fn radical_inverse(mut n: u64, base: u32) -> f64 {
 // Halton (multi-dim)
 // ---------------------------------------------------------------------------
 
-/// First 32 primes — bases for the Halton sequence's per-dimension
+/// First 32 primes - bases for the Halton sequence's per-dimension
 /// Van der Corput components.
 const HALTON_PRIMES: [u32; 32] = [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61,
@@ -114,7 +114,7 @@ const HALTON_PRIMES: [u32; 32] = [
 /// Maximum number of dimensions supported by [`HaltonSequence`].
 pub const HALTON_MAX_DIM: usize = HALTON_PRIMES.len();
 
-/// Multi-dimensional Halton sequence — Van der Corput across the
+/// Multi-dimensional Halton sequence - Van der Corput across the
 /// first [`HALTON_MAX_DIM`] primes. Discrepancy is excellent for
 /// dimensions up to ~10; beyond that consider [`SobolSequence`] or
 /// scrambled Halton.
@@ -531,7 +531,7 @@ impl SobolSequence {
         self.d
     }
 
-    /// Sets the internal index. Test-only — used to exercise the
+    /// Sets the internal index. Test-only - used to exercise the
     /// `bit >= 32` defensive branch in [`Self::advance`] without
     /// running 2³² actual iterations.
     #[cfg(test)]
@@ -731,7 +731,7 @@ mod tests {
         let mut b = SobolSequence::new(2);
         // a does the canonical first call.
         let _ = a.next_point::<2>();
-        // b skips one — should put it in the same state.
+        // b skips one - should put it in the same state.
         b.skip(1);
         assert_eq!(a.next_point::<2>(), b.next_point::<2>());
     }
@@ -744,7 +744,7 @@ mod tests {
     fn sobol_advance_handles_exhaustion() {
         let mut s = SobolSequence::new(2);
         s.set_i_for_test(1u64 << 32);
-        // Skip one — internally calls advance(), which hits the
+        // Skip one - internally calls advance(), which hits the
         // `bit >= 32` branch and returns without mutating x.
         let x_before = s.x;
         s.skip(1);
@@ -757,7 +757,7 @@ mod tests {
     /// Monte Carlo π convergence: Sobol's error after N points
     /// should shrink faster than Halton's, both faster than a fair
     /// uniform PRNG would. With N=4096 we're not aiming for tight
-    /// thresholds — just verifying that all three converge into
+    /// thresholds - just verifying that all three converge into
     /// the right neighbourhood.
     #[test]
     fn quasi_pi_estimates_converge() {

@@ -18,7 +18,7 @@
 //! separation per lane, but at 256 scalar `next_u64`s per call its
 //! ~256 ns setup wiped out the SIMD win for buffers under ~4 KiB. The
 //! SplitMix derivation keeps lanes uncorrelated (probability of state
-//! collision is ≤ K²/2²⁵⁶ — negligible) at a fraction of the cost.
+//! collision is ≤ K²/2²⁵⁶ - negligible) at a fraction of the cost.
 //!
 //! # Reproducibility contract
 //!
@@ -29,7 +29,7 @@
 //! would produce. Code that depends on bit-for-bit reproducibility
 //! across feature sets must use the scalar path.
 //!
-//! Statistical quality is unchanged — each lane is a full Xoshiro256++
+//! Statistical quality is unchanged - each lane is a full Xoshiro256++
 //! and inherits all of its properties.
 
 #![allow(unsafe_code)]
@@ -68,7 +68,7 @@ fn derive_lanes<const K: usize>(
     out
 }
 
-/// SplitMix64 — Stafford's variant 13. Used to whiten the
+/// SplitMix64 - Stafford's variant 13. Used to whiten the
 /// per-lane seed material derived from the scalar generator's
 /// state so the SIMD lanes are statistically independent.
 #[inline]
@@ -123,7 +123,7 @@ pub fn fill_bytes(rng: &mut Xoshiro256PlusPlus, dest: &mut [u8]) {
     rng.fill_bytes_scalar(dest);
 }
 
-/// Runtime AVX2 detection (std path) — uses
+/// Runtime AVX2 detection (std path) - uses
 /// `std::is_x86_feature_detected!`.
 #[cfg(all(target_arch = "x86_64", feature = "std"))]
 #[inline]
@@ -131,7 +131,7 @@ fn is_avx2_available() -> bool {
     std::is_x86_feature_detected!("avx2")
 }
 
-/// Compile-time AVX2 detection (no_std path) — `std` isn't
+/// Compile-time AVX2 detection (no_std path) - `std` isn't
 /// available, so we fall back to `cfg!(target_feature = "avx2")`
 /// which only reports `true` when the crate was built with
 /// `target-cpu` exposing AVX2.
@@ -166,7 +166,7 @@ mod aarch64 {
 
     impl Lanes {
         /// Build a 2-lane `Lanes` from two pre-computed Xoshiro256++
-        /// states. `rng` is **not** mutated by [`fill_bytes_neon`] —
+        /// states. `rng` is **not** mutated by [`fill_bytes_neon`] -
         /// the scalar state is advanced once after the SIMD loop by
         /// reading lane 0's final state and writing it back.
         #[inline]
@@ -233,7 +233,7 @@ mod aarch64 {
         vorrq_u64(vshlq_n_u64::<N>(x), vshrq_n_u64::<N_INV>(x))
     }
 
-    /// NEON `fill_bytes` entry point — called by the parent
+    /// NEON `fill_bytes` entry point - called by the parent
     /// module's dispatch when the buffer is ≥ `SIMD_THRESHOLD`
     /// bytes on AArch64.
     pub(super) fn fill_bytes_neon(
@@ -288,7 +288,7 @@ mod aarch64 {
             i += 16;
         }
         // Advance the scalar state by taking lanes_a's lane-0 final
-        // state — deterministic, well-randomised Xoshiro256++.
+        // state - deterministic, well-randomised Xoshiro256++.
         rng.set_state(lanes_a.lane0_state());
         if i < dest_len {
             rng.fill_bytes_scalar(&mut dest[i..]);
@@ -403,7 +403,7 @@ mod x86_64 {
         )
     }
 
-    /// AVX2 `fill_bytes` entry point — called by the parent
+    /// AVX2 `fill_bytes` entry point - called by the parent
     /// module's dispatch when the buffer is ≥ `SIMD_THRESHOLD`
     /// bytes on x86_64 and the runtime CPU advertises AVX2.
     ///
@@ -416,7 +416,7 @@ mod x86_64 {
         dest: &mut [u8],
     ) {
         // Caller (super::fill_bytes) guarantees dest.len() >= SIMD_THRESHOLD,
-        // which is well above 32 — no redundant early-return needed.
+        // which is well above 32 - no redundant early-return needed.
         let mut lanes = Lanes::from_rng(rng);
         let mut i = 0;
         while i + 32 <= dest.len() {
@@ -491,7 +491,7 @@ mod tests {
     }
 
     /// SIMD must produce a different stream than scalar from the same
-    /// seed — this is the documented contract. Only meaningful on
+    /// seed - this is the documented contract. Only meaningful on
     /// architectures with a real SIMD path.
     #[test]
     #[cfg(any(target_arch = "aarch64", target_arch = "x86_64"))]

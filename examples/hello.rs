@@ -14,7 +14,7 @@ fn main() {
     support::header("vrd -- hello");
 
     support::task_with_output(
-        "Random::new() — entropy-seeded Xoshiro",
+        "Random::new() - entropy-seeded Xoshiro",
         || {
             let mut rng = Random::new();
             vec![

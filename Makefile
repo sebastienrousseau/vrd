@@ -2,27 +2,27 @@
 # Works on macOS, Linux, and WSL without modification.
 #
 # Usage:
-#   make            — run check + clippy + test (default)
-#   make test       — run all tests under --all-features
-#   make clippy     — run clippy lints
-#   make fmt        — check formatting (cargo fmt --check)
-#   make deny       — run cargo-deny supply-chain checks
-#   make doc        — build documentation
-#   make bench      — run criterion benchmarks
-#   make coverage   — generate tarpaulin report (HTML + Lcov)
-#   make coverage-gap — list files below the workspace threshold
-#   make notice     — generate NOTICE via cargo-about
-#   make sbom       — generate software bill of materials
-#   make vendor     — `cargo vendor` for offline / FIPS builds
-#   make msrv       — verify MSRV per declared rust-version
-#   make pgo        — profile-guided optimisation build
-#   make crush      — pipe RNGs through PractRand (needs RNG_test)
-#   make fuzz-quick — 60 s per fuzz target (cargo-fuzz)
-#   make fuzz-deep  — 24 h per fuzz target
-#   make examples   — run every example with [ok]/[fail] status
-#   make wasm       — cargo check for wasm32-unknown-unknown
-#   make embedded   — cargo check for thumbv7em-none-eabihf
-#   make clean      — remove build artifacts
+#   make            - run check + clippy + test (default)
+#   make test       - run all tests under --all-features
+#   make clippy     - run clippy lints
+#   make fmt        - check formatting (cargo fmt --check)
+#   make deny       - run cargo-deny supply-chain checks
+#   make doc        - build documentation
+#   make bench      - run criterion benchmarks
+#   make coverage   - generate tarpaulin report (HTML + Lcov)
+#   make coverage-gap - list files below the workspace threshold
+#   make notice     - generate NOTICE via cargo-about
+#   make sbom       - generate software bill of materials
+#   make vendor     - `cargo vendor` for offline / FIPS builds
+#   make msrv       - verify MSRV per declared rust-version
+#   make pgo        - profile-guided optimisation build
+#   make crush      - pipe RNGs through PractRand (needs RNG_test)
+#   make fuzz-quick - 60 s per fuzz target (cargo-fuzz)
+#   make fuzz-deep  - 24 h per fuzz target
+#   make examples   - run every example with [ok]/[fail] status
+#   make wasm       - cargo check for wasm32-unknown-unknown
+#   make embedded   - cargo check for thumbv7em-none-eabihf
+#   make clean      - remove build artifacts
 
 .PHONY: all check clippy test fmt deny doc bench coverage coverage-gap \
         notice sbom vendor msrv pgo crush \
@@ -58,7 +58,7 @@ coverage:
 coverage-gap:
 	./scripts/coverage-gap-report.sh
 
-# `cargo-about generate` — produces NOTICE listing every third-
+# `cargo-about generate` - produces NOTICE listing every third-
 # party crate vrd redistributes plus its license text. Auto-
 # installs cargo-about on demand.
 notice:
@@ -89,7 +89,7 @@ pgo:
 crush:
 	./scripts/crush.sh
 
-# Quick fuzz pass — 60 s per target. Catches most regressions;
+# Quick fuzz pass - 60 s per target. Catches most regressions;
 # use fuzz-deep for proper coverage. Requires cargo-fuzz:
 # `cargo install cargo-fuzz`. cargo-fuzz needs nightly.
 fuzz-quick:

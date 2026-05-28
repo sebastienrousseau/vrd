@@ -27,7 +27,7 @@ name = "vrd"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/vrd"
 rust-version = "1.70"
-version = "0.0.11"
+version = "0.0.12"
 
 [[bench]]
 name = "benchmark"
@@ -64,7 +64,7 @@ name = "vrd"
 path = "src/main.rs"
 required-features = ["std"]
 
-# Examples — single-word names per the noyalib convention. `support.rs` is
+# Examples - single-word names per the noyalib convention. `support.rs` is
 # a shared helper module imported via `#[path = "support.rs"]` and is not
 # itself an example.
 [[example]]
@@ -214,7 +214,7 @@ serde = ["dep:serde", "dep:serde-big-array", "rand_chacha?/serde"]
 # x86_64 AVX2). Off by default; see `xoshiro_simd` for the contract.
 simd = []
 # Adds PCG32 and PCG64 as third / fourth backends. Small-state,
-# fast, statistically excellent — not a CSPRNG.
+# fast, statistically excellent - not a CSPRNG.
 pcg = []
 # Adds a ChaCha20-based CSPRNG backend. The default Xoshiro and MT
 # backends remain non-crypto. Pulls in `rand_chacha` for the
@@ -223,11 +223,11 @@ pcg = []
 crypto = ["alloc", "dep:rand_chacha"]
 # Quasi-random low-discrepancy sequences (Halton, Sobol, Van der
 # Corput). For Monte Carlo integration, ray-tracing, financial
-# simulation — variance scales O((log n)^d / n).
+# simulation - variance scales O((log n)^d / n).
 quasirandom = []
 # Enables the `crush` example, which pipes RNG output through an
 # external PractRand `RNG_test` binary for statistical validation.
-# Informational only — not run in CI.
+# Informational only - not run in CI.
 crush = []
 
 [package.metadata.docs.rs]

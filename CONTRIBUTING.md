@@ -1,7 +1,7 @@
 # Contributing to `vrd`
 
 Thanks for considering a contribution. This file documents the workflow
-that CI enforces — follow it locally and your PR clears the gates on the
+that CI enforces - follow it locally and your PR clears the gates on the
 first run.
 
 ## Before submitting a PR
@@ -92,7 +92,7 @@ cargo run --release --example crush --features crush,pcg,crypto
 ```
 
 Override the per-backend test budget with `VRD_CRUSH_BYTES=<MiB>`
-(default 256). CI does **not** run this — it's informational evidence
+(default 256). CI does **not** run this - it's informational evidence
 for release notes, not a gate.
 
 ## License

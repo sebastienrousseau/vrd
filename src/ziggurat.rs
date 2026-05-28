@@ -13,10 +13,10 @@
 //! Layout (matches Marsaglia's reference C, generalised from N=128 to
 //! N=256, with the 2³¹ signed-int scale):
 //!
-//! - `ZIG_NORM_K[256]` — `u32` thresholds. Fast-accept when
+//! - `ZIG_NORM_K[256]` - `u32` thresholds. Fast-accept when
 //!   `hz.unsigned_abs() < K[i]`.
-//! - `ZIG_NORM_W[256]` — `f64` per-bin x-scale; `x = hz as f64 * W[i]`.
-//! - `ZIG_NORM_F[256]` — `f64` heights `exp(-X[i]²/2)`. Used by the
+//! - `ZIG_NORM_W[256]` - `f64` per-bin x-scale; `x = hz as f64 * W[i]`.
+//! - `ZIG_NORM_F[256]` - `f64` heights `exp(-X[i]²/2)`. Used by the
 //!   overhang test for bins ≥ 1.
 //! - Bin 0 (`i == 0`) handles the unbounded tail (`|x| > R`) by
 //!   exponential rejection.
@@ -100,7 +100,7 @@ mod tests {
     use super::*;
     use crate::xoshiro::Xoshiro256PlusPlus;
 
-    // Golden vector — 16 bit-exact normal samples for seed
+    // Golden vector - 16 bit-exact normal samples for seed
     // `Xoshiro256PlusPlus::from_u64_seed(0xCAFE_F00D)`. Drift here
     // means either the lookup tables changed or the sampler logic
     // did. Regenerate with the `print_golden` ignored test if either
@@ -152,7 +152,7 @@ mod tests {
     }
 
     /// Forces both `u1 == 0.0` and `u2 == 0.0` guard branches in
-    /// `tail()` — these are dead-code paths in practice (probability
+    /// `tail()` - these are dead-code paths in practice (probability
     /// 2⁻⁵³) but the guards exist to avoid `ln(0) = -inf`. A custom
     /// NormalSource that returns 0.0 once then non-zero exercises
     /// the substitution to `f64::MIN_POSITIVE`.
@@ -192,7 +192,7 @@ mod tests {
     /// --nocapture` after intentional table changes to regenerate the
     /// golden vector below.
     #[test]
-    #[ignore = "regenerator — run manually after intentional table changes"]
+    #[ignore = "regenerator - run manually after intentional table changes"]
     fn print_golden() {
         let mut rng = Xoshiro256PlusPlus::from_u64_seed(0xCAFE_F00D);
         std::println!("GOLDEN_NORMAL_BITS = [");
@@ -221,7 +221,7 @@ mod tests {
         }
     }
 
-    /// Distribution shape check — mean, variance, skewness, excess
+    /// Distribution shape check - mean, variance, skewness, excess
     /// kurtosis over 200k samples must be close to 0/1/0/0 for a
     /// standard normal.
     #[test]

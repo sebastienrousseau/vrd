@@ -2,7 +2,7 @@
 #
 # Distroless multi-stage build for the `vrd` CLI demo.
 # Final image is ~10 MB; runs without a shell, package manager,
-# or libc — only the statically-linked binary.
+# or libc - only the statically-linked binary.
 
 # ─── Build stage ───────────────────────────────────────────
 FROM rust:1.85-slim AS build
@@ -19,7 +19,7 @@ RUN cargo build --release --bin vrd
 FROM gcr.io/distroless/cc-debian12:nonroot
 
 LABEL org.opencontainers.image.source="https://github.com/sebastienrousseau/vrd"
-LABEL org.opencontainers.image.description="Lightweight, no_std-friendly random number generator for Rust — CLI demo"
+LABEL org.opencontainers.image.description="Lightweight, no_std-friendly random number generator for Rust - CLI demo"
 LABEL org.opencontainers.image.licenses="Apache-2.0 OR MIT"
 LABEL org.opencontainers.image.version="__VERSION__"
 LABEL org.opencontainers.image.revision="__COMMIT__"

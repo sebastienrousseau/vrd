@@ -9,14 +9,14 @@
 coverage:
   status:
     # Project-wide coverage threshold. Allow a 1 % drop before
-    # failing — covers normal noise (e.g. a debug-only assert
+    # failing - covers normal noise (e.g. a debug-only assert
     # added that tarpaulin counts differently across runs).
     project:
       default:
         target: auto
         threshold: 1%
         if_ci_failed: error
-    # Patch coverage — the PR's own diff must be fully tested.
+    # Patch coverage - the PR's own diff must be fully tested.
     # Strict: any new line that isn't covered fails the PR.
     patch:
       default:

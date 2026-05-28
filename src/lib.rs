@@ -12,7 +12,7 @@
 #![crate_name = "vrd"]
 #![crate_type = "lib"]
 #![deny(missing_docs)]
-// Lib-scoped — examples / tests / benches stay unaffected.
+// Lib-scoped - examples / tests / benches stay unaffected.
 #![warn(clippy::missing_docs_in_private_items)]
 #![warn(rust_2018_idioms)]
 // `deny`, not `forbid`, so the optional `simd` module (which needs
@@ -31,7 +31,7 @@
 //! **Xoshiro256++**, with optional **Mersenne Twister (MT19937)** support.
 //!
 //! ## Features
-//! - **High performance:** Xoshiro256++ default — 32-byte state, period
+//! - **High performance:** Xoshiro256++ default - 32-byte state, period
 //!   2^256 - 1, SplitMix64 seed whitening.
 //! - **Legacy reproducibility:** opt-in MT19937 backend.
 //!   `Random::new_mersenne_twister()` requires `alloc + std`;
@@ -44,7 +44,7 @@
 //! - **Bit-precise floats:** `float()` carries 24 mantissa bits, `double()`
 //!   carries 53. Always `[0.0, 1.0)`.
 //! - **Distributions:** `uniform(low, high)`, `normal`, `exponential`,
-//!   `poisson` — `std`-free via `libm`.
+//!   `poisson` - `std`-free via `libm`.
 //! - **Convenience helpers:** `iter_u32` / `iter_u64` / `iter_bytes`
 //!   iterator adapters; `uuid_v4_bytes` (`no_std`) and `uuid_v4`
 //!   (`alloc`); `hex_token` and `base64_token` for URL-safe random
@@ -91,12 +91,12 @@
 //!
 //! ## Optional features
 //!
-//! - `simd` — SIMD-batched `fill_bytes` (~2–3× bulk throughput).
-//! - `pcg` — PCG32 / PCG64 backends.
-//! - `crypto` — ChaCha20 CSPRNG backend.
-//! - `quasirandom` — Halton / Sobol / Van der Corput low-discrepancy
+//! - `simd` - SIMD-batched `fill_bytes` (~2–3× bulk throughput).
+//! - `pcg` - PCG32 / PCG64 backends.
+//! - `crypto` - ChaCha20 CSPRNG backend.
+//! - `quasirandom` - Halton / Sobol / Van der Corput low-discrepancy
 //!   sequences for Monte Carlo integration.
-//! - `serde` — `Serialize` / `Deserialize` on the public types.
+//! - `serde` - `Serialize` / `Deserialize` on the public types.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

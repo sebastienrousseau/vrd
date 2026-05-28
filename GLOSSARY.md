@@ -170,7 +170,7 @@ hot path. vrd's tables are generated at build time by
 Property of an RNG where you can derive an independent child
 stream from a parent without depleting the parent's randomness.
 `Random::split()` uses Xoshiro's `jump()` to produce a child
-2¹²⁸ calls ahead — both halves remain valid forever.
+2¹²⁸ calls ahead - both halves remain valid forever.
 
 ### Tarpaulin
 
@@ -186,7 +186,7 @@ A statistical test battery for RNGs from L'Ecuyer & Simard
 (2007). Includes SmallCrush, Crush, and BigCrush. vrd's
 backends pass the published TestU01 results for their
 respective algorithms; we don't run TestU01 in CI (BigCrush
-takes hours) — see PractRand below for the per-PR proxy.
+takes hours) - see PractRand below for the per-PR proxy.
 
 ### PractRand
 

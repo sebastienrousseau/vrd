@@ -27,7 +27,7 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(buf.len(), len);
 
     // Also exercise the const-generic stack path for a fixed
-    // size — catches alignment / init regressions independent
+    // size - catches alignment / init regressions independent
     // of the alloc path.
     let _arr: [u8; 64] = rng.fill_array();
 });

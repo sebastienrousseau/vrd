@@ -1,7 +1,7 @@
 // Copyright © 2023-2026 vrd. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! Shared display helpers for `vrd` examples — animated spinner +
+//! Shared display helpers for `vrd` examples - animated spinner +
 //! checkmark output, modelled on the noyalib example suite.
 
 #![allow(dead_code)]

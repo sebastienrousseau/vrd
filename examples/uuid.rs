@@ -4,7 +4,7 @@
 //! UUID v4 generation: `uuid_v4()` (string) and `uuid_v4_bytes()`
 //! (16-byte allocation-free).
 //!
-//! `vrd` is **not** a CSPRNG — for security-sensitive UUIDs (session
+//! `vrd` is **not** a CSPRNG - for security-sensitive UUIDs (session
 //! tokens, identity), reach for `getrandom` or `rand::rngs::OsRng`.
 //! This example is for non-security identifiers (database keys,
 //! correlation IDs, log markers).
@@ -20,7 +20,7 @@ fn main() {
     support::header("vrd -- uuid");
 
     support::task_with_output(
-        "uuid_v4_bytes() — 16 bytes, no_std",
+        "uuid_v4_bytes() - 16 bytes, no_std",
         || {
             let mut rng = Random::from_u64_seed(0xCAFE);
             let b = rng.uuid_v4_bytes();
@@ -36,7 +36,7 @@ fn main() {
     );
 
     support::task_with_output(
-        "uuid_v4() — RFC 4122 hyphenated",
+        "uuid_v4() - RFC 4122 hyphenated",
         || {
             let mut rng = Random::from_u64_seed(0xCAFE);
             (0..6).map(|_| rng.uuid_v4()).collect()

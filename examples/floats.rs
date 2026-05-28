@@ -14,7 +14,7 @@ fn main() {
     support::header("vrd -- floats");
 
     support::task_with_output(
-        "float() — 24-bit f32 in [0.0, 1.0)",
+        "float() - 24-bit f32 in [0.0, 1.0)",
         || {
             let mut rng = Random::from_u64_seed(11);
             let samples: Vec<f32> =
@@ -30,7 +30,7 @@ fn main() {
     );
 
     support::task_with_output(
-        "double() — 53-bit f64 in [0.0, 1.0)",
+        "double() - 53-bit f64 in [0.0, 1.0)",
         || {
             let mut rng = Random::from_u64_seed(11);
             let samples: Vec<f64> =

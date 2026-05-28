@@ -2,9 +2,9 @@
 # runs `cargo audit` and `cargo deny check` per PR; this file
 # adds:
 #
-# * Trivy filesystem scan — catches secrets, misconfigured
+# * Trivy filesystem scan - catches secrets, misconfigured
 #   files, and CVEs in any vendored dependency.
-# * cargo-vet attestation check — once we wire supply-chain/.
+# * cargo-vet attestation check - once we wire supply-chain/.
 #
 # Scheduled weekly so CVE feeds catch up.
 
@@ -46,7 +46,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           format: 'sarif'
           output: 'trivy.sarif'
-          # Don't fail the build on findings — the SARIF
+          # Don't fail the build on findings - the SARIF
           # upload makes them visible in code-scanning UI.
           exit-code: '0'
           ignore-unfixed: true

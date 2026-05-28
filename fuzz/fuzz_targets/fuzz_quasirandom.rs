@@ -29,7 +29,7 @@ fuzz_target!(|data: &[u8]| {
         assert!((0.0..1.0).contains(&p), "VdC produced {p}");
     }
 
-    // Halton — drop into next_point_vec for runtime-dim.
+    // Halton - drop into next_point_vec for runtime-dim.
     let mut h = HaltonSequence::new(halton_dim);
     h.skip(skip);
     for _ in 0..n {
@@ -40,7 +40,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
 
-    // Sobol — same pattern, runtime dim.
+    // Sobol - same pattern, runtime dim.
     let mut s = SobolSequence::new(sobol_dim);
     s.skip(skip);
     for _ in 0..n {

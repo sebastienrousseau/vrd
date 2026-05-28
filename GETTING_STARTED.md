@@ -15,7 +15,7 @@ Or in `Cargo.toml`:
 
 ```toml
 [dependencies]
-vrd = "0.0.11"
+vrd = "0.0.12"
 ```
 
 Requires Rust 1.70.0 or later.
@@ -60,12 +60,12 @@ Full backend table and selection guidance in
 
 ## What next?
 
-- [`doc/USER-GUIDE.md`](doc/USER-GUIDE.md) — the full walkthrough.
-- [`doc/MIGRATION-FROM-RAND.md`](doc/MIGRATION-FROM-RAND.md) — if
+- [`doc/USER-GUIDE.md`](doc/USER-GUIDE.md) - the full walkthrough.
+- [`doc/MIGRATION-FROM-RAND.md`](doc/MIGRATION-FROM-RAND.md) - if
   you're coming from `rand`.
 - [`doc/MIGRATION-FROM-FASTRAND.md`](doc/MIGRATION-FROM-FASTRAND.md)
-  — if you're coming from `fastrand`.
-- [`docs.rs/vrd`](https://docs.rs/vrd) — every public method
+  - if you're coming from `fastrand`.
+- [`docs.rs/vrd`](https://docs.rs/vrd) - every public method
   has a worked example.
-- [`examples/`](examples/) — 44 runnable examples; `cargo run
+- [`examples/`](examples/) - 44 runnable examples; `cargo run
   --example all` runs every one with `[ok]`/`[fail]` status.

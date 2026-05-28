@@ -1,11 +1,11 @@
 # Builds the rustdoc bundle and deploys it to GitHub Pages.
 # Runs:
-#   * on every push to `main` (continuous rebuild — every merge
+#   * on every push to `main` (continuous rebuild - every merge
 #     refreshes https://doc.vrdlib.com),
 #   * on every published release (rebuild against the tagged
 #     source so a downloader sees docs that match the published
 #     crate),
-#   * on every pull request (build only — doesn't deploy; the
+#   * on every pull request (build only - doesn't deploy; the
 #     job is the gate for broken intra-doc links).
 #
 # Pages must be configured to "Build and deployment → Source:

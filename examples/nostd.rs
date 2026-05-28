@@ -6,7 +6,7 @@
 //! Even though this example is itself a `std` binary (cargo runs
 //! examples against the default feature set), every API it calls is
 //! `no_std`-safe: it uses only `Random::from_seed` / `Random::rand`
-//! / `Random::float` / `Random::bounded` — all of which compile under
+//! / `Random::float` / `Random::bounded` - all of which compile under
 //! `--no-default-features` against `thumbv7em-none-eabihf`.
 //!
 //! Run: `cargo run --example nostd`
@@ -37,7 +37,7 @@ fn main() {
         || {
             vec![
             "[dependencies]".into(),
-            "vrd = { version = \"0.0.11\", default-features = false }".into(),
+            "vrd = { version = \"0.0.12\", default-features = false }".into(),
             "".into(),
             "// In your lib.rs:".into(),
             "#![no_std]".into(),
@@ -52,7 +52,7 @@ fn main() {
         || {
             vec![
                 "Add the `alloc` feature:".into(),
-                "vrd = { version = \"0.0.11\", default-features = false, features = [\"alloc\"] }"
+                "vrd = { version = \"0.0.12\", default-features = false, features = [\"alloc\"] }"
                     .into(),
                 "".into(),
                 "Then `Random::bytes`, `Random::string`,".into(),

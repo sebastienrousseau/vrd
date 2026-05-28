@@ -1,4 +1,4 @@
-# cargo-about config — drives `make notice` to produce
+# cargo-about config - drives `make notice` to produce
 # NOTICE listing every redistributed third-party crate +
 # its license text.
 
@@ -17,7 +17,7 @@ accepted = [
     "MPL-2.0",
 ]
 
-# Targets we care about — anything compiled for the host
+# Targets we care about - anything compiled for the host
 # platform plus the no_std embedded + WASM targets we ship to.
 targets = [
     { triple = "x86_64-unknown-linux-gnu" },
@@ -30,7 +30,7 @@ targets = [
     { triple = "thumbv7em-none-eabihf" },
 ]
 
-# Exclude dev-deps from the NOTICE — they're test-only, not
+# Exclude dev-deps from the NOTICE - they're test-only, not
 # redistributed in the published binary.
 no-clearly-defined = true
 private = { ignore = true }

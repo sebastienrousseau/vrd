@@ -1,4 +1,4 @@
-# OpenSSF Security Scorecard — weekly scan + on every push
+# OpenSSF Security Scorecard - weekly scan + on every push
 # to main. Posts the score back to the README badge. Score
 # floor: 8/10 (we aim for 9; below 7 triggers an investigation).
 #

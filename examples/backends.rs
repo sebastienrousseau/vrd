@@ -21,7 +21,7 @@ fn main() {
             vec![
                 format!("Xoshiro256++  : {}", xs.rand()),
                 format!("MersenneTwister: {}", mt.rand()),
-                "(streams differ — they are different algorithms)"
+                "(streams differ - they are different algorithms)"
                     .into(),
             ]
         },

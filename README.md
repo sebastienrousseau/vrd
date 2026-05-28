@@ -9,7 +9,7 @@
 
 <p align="center">
   A lightweight, <code>no_std</code>-friendly random number
-  generator for Rust — Xoshiro256++ by default, with optional
+  generator for Rust - Xoshiro256++ by default, with optional
   Mersenne&nbsp;Twister, PCG, ChaCha20&nbsp;CSPRNG, SIMD
   bulk-byte, and quasi-random backends.
 </p>
@@ -28,27 +28,27 @@
 
 **Getting started**
 
-- [Install](#install) — Cargo, MSRV, targets
-- [Quick Start](#quick-start) — entropy-seeded, deterministic, `no_std`
-- [Choosing a backend](#choosing-a-backend) — Xoshiro / MT / PCG / ChaCha20
+- [Install](#install) - Cargo, MSRV, targets
+- [Quick Start](#quick-start) - entropy-seeded, deterministic, `no_std`
+- [Choosing a backend](#choosing-a-backend) - Xoshiro / MT / PCG / ChaCha20
 
 **Library reference**
 
-- [Cargo features](#cargo-features) — feature-flag matrix
-- [Library Usage](#library-usage) — common idioms
-- [Statistical validation](#statistical-validation) — PractRand harness
-- [Quasi-random sequences](#quasi-random-sequences) — Halton, Sobol, VdC
-- [Examples](#examples) — runnable example index
-- [How vrd compares](#how-vrd-compares) — feature matrix vs `rand`, `fastrand`, `oorandom`
+- [Cargo features](#cargo-features) - feature-flag matrix
+- [Library Usage](#library-usage) - common idioms
+- [Statistical validation](#statistical-validation) - PractRand harness
+- [Quasi-random sequences](#quasi-random-sequences) - Halton, Sobol, VdC
+- [Examples](#examples) - runnable example index
+- [How vrd compares](#how-vrd-compares) - feature matrix vs `rand`, `fastrand`, `oorandom`
 
 **Operational**
 
-- [When not to use vrd](#when-not-to-use-vrd) — limitations
-- [Migrating from `rand`](#migrating-from-rand) — name-for-name mapping
-- [Migrating from earlier `0.0.x`](#migrating-from-earlier-00x) — breaking changes
-- [Development](#development) — make targets, CI, performance knobs
-- [FAQ](#faq) — common questions
-- [Documentation](#documentation) — extended reading
+- [When not to use vrd](#when-not-to-use-vrd) - limitations
+- [Migrating from `rand`](#migrating-from-rand) - name-for-name mapping
+- [Migrating from earlier `0.0.x`](#migrating-from-earlier-00x) - breaking changes
+- [Development](#development) - make targets, CI, performance knobs
+- [FAQ](#faq) - common questions
+- [Documentation](#documentation) - extended reading
 - [License](#license)
 
 ---
@@ -63,10 +63,10 @@ Or in `Cargo.toml`:
 
 ```toml
 [dependencies]
-vrd = "0.0.11"
+vrd = "0.0.12"
 ```
 
-Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, `no_std` embedded targets (Cortex-M, `thumbv7em-none-eabihf`), and `wasm32-unknown-unknown` — all validated in CI.
+Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, `no_std` embedded targets (Cortex-M, `thumbv7em-none-eabihf`), and `wasm32-unknown-unknown` - all validated in CI.
 
 ---
 
@@ -101,7 +101,7 @@ let b = rng.rand();
 ```rust
 use vrd::Random;
 
-// Allocation-free; works on any target — including Cortex-M.
+// Allocation-free; works on any target - including Cortex-M.
 let mut rng = Random::from_seed([0x42u8; 32]);
 let n = rng.rand();
 ```
@@ -164,8 +164,8 @@ Times measured through the `Random` facade on Apple Silicon. PCG32 is the fastes
 Disable defaults to ship into `no_std`:
 
 ```toml
-vrd = { version = "0.0.11", default-features = false }            # core only
-vrd = { version = "0.0.11", default-features = false, features = ["alloc"] }  # core + alloc
+vrd = { version = "0.0.12", default-features = false }            # core only
+vrd = { version = "0.0.12", default-features = false, features = ["alloc"] }  # core + alloc
 ```
 
 ---
@@ -214,7 +214,7 @@ For **security-sensitive** tokens (API keys, session IDs, password-reset links, 
 **Save and restore state** (with the `serde` feature):
 
 ```toml
-vrd = { version = "0.0.11", features = ["serde"] }
+vrd = { version = "0.0.12", features = ["serde"] }
 ```
 
 ```rust,ignore
@@ -249,7 +249,7 @@ let coin = Bernoulli { p: 0.5 }.sample(&mut rng);
 
 ## Statistical validation
 
-Beyond Xoshiro256++ and MT19937's published academic pedigree, vrd ships a reproducible PractRand harness. See [BENCHMARKS.md](BENCHMARKS.md) for the latest pass-count table per backend; reproduce locally with `cargo run --release --example crush --features crush`. The example is informational — CI does **not** gate on it.
+Beyond Xoshiro256++ and MT19937's published academic pedigree, vrd ships a reproducible PractRand harness. See [BENCHMARKS.md](BENCHMARKS.md) for the latest pass-count table per backend; reproduce locally with `cargo run --release --example crush --features crush`. The example is informational - CI does **not** gate on it.
 
 ---
 
@@ -258,7 +258,7 @@ Beyond Xoshiro256++ and MT19937's published academic pedigree, vrd ships a repro
 Low-discrepancy sequences for Monte Carlo integration, ray-tracing, and high-dimensional optimisation. Variance scales `O((log n)^d / n)` rather than `O(1/√n)` for a uniform PRNG. Behind the `quasirandom` feature:
 
 ```toml
-vrd = { version = "0.0.11", features = ["quasirandom"] }
+vrd = { version = "0.0.12", features = ["quasirandom"] }
 ```
 
 ```rust
@@ -307,22 +307,22 @@ Three constructions cover the standard ground; see [`examples/halton.rs`](exampl
 |  | `vrd` | `rand` 0.10 | `fastrand` 2.x | `oorandom` 11.x |
 | :-- | :-: | :-: | :-: | :-: |
 | Default backend | Xoshiro256++ | ChaCha12 / SmallRng | Wyrand | PCG family |
-| MT19937 backend | ✓ (built-in) | external (`rand_mt`) | — | — |
-| PCG32 / PCG64 | ✓ (`pcg` feature) | external (`pcg_rand`) | — | ✓ (default) |
-| ChaCha20 CSPRNG | ✓ (`crypto` feature) | ✓ (`rand_chacha`) | — | — |
-| Quasi-random (Halton / Sobol / VdC) | ✓ (`quasirandom` feature) | — | — | — |
-| Pluggable `Distribution<T>` trait | ✓ | ✓ (via `rand_distr`) | — | — |
-| SIMD-batched `fill_bytes` | ✓ (`simd` feature) | — | — | — |
+| MT19937 backend | ✓ (built-in) | external (`rand_mt`) | - | - |
+| PCG32 / PCG64 | ✓ (`pcg` feature) | external (`pcg_rand`) | - | ✓ (default) |
+| ChaCha20 CSPRNG | ✓ (`crypto` feature) | ✓ (`rand_chacha`) | - | - |
+| Quasi-random (Halton / Sobol / VdC) | ✓ (`quasirandom` feature) | - | - | - |
+| Pluggable `Distribution<T>` trait | ✓ | ✓ (via `rand_distr`) | - | - |
+| SIMD-batched `fill_bytes` | ✓ (`simd` feature) | - | - | - |
 | Pure `no_std` core | ✓ | partial | ✓ | ✓ |
-| Cortex-M + WASM CI gated | ✓ | — | — | — |
-| Unbiased bounded sampling (Lemire) | ✓ | ✓ | ✓ | — |
+| Cortex-M + WASM CI gated | ✓ | - | - | - |
+| Unbiased bounded sampling (Lemire) | ✓ | ✓ | ✓ | - |
 | Bit-precise floats (24-bit `f32` / 53-bit `f64`) | ✓ | ✓ | partial | ✓ |
-| Built-in `uuid_v4` / `uuid_v4_bytes` | ✓ | needs `uuid` | — | — |
-| Built-in `hex_token` / `base64_token` | ✓ | needs `hex` + `base64` | — | — |
-| Output stability commitment | ✓ (patch) | explicitly **none** | — | — |
-| `rand` 0.10 traits (`TryRng`, `SeedableRng`) | ✓ | (native) | — | — |
+| Built-in `uuid_v4` / `uuid_v4_bytes` | ✓ | needs `uuid` | - | - |
+| Built-in `hex_token` / `base64_token` | ✓ | needs `hex` + `base64` | - | - |
+| Output stability commitment | ✓ (patch) | explicitly **none** | - | - |
+| `rand` 0.10 traits (`TryRng`, `SeedableRng`) | ✓ | (native) | - | - |
 
-**Reach for `vrd`** when you want one small crate that covers fast non-cryptographic RNG, MT19937 for legacy reproducibility, PCG for scientific computing, ChaCha20 for crypto-quality tokens, and quasi-random sequences for Monte Carlo — across `std`, `no_std + alloc`, embedded (Cortex-M), and WebAssembly — without stitching together five other crates.
+**Reach for `vrd`** when you want one small crate that covers fast non-cryptographic RNG, MT19937 for legacy reproducibility, PCG for scientific computing, ChaCha20 for crypto-quality tokens, and quasi-random sequences for Monte Carlo - across `std`, `no_std + alloc`, embedded (Cortex-M), and WebAssembly - without stitching together five other crates.
 
 **Reach for `rand` + `rand_distr`** when you need the full statistical-distribution catalogue or are already deep in the rand-ecosystem trait stack.
 
@@ -330,12 +330,12 @@ Three constructions cover the standard ground; see [`examples/halton.rs`](exampl
 
 Pulling `vrd` in instead of `rand` + companion crates typically lets you drop these from your dependency tree:
 
-- `uuid` — covered by `Random::uuid_v4` / `uuid_v4_bytes`
-- `hex` or `data-encoding` — covered by `Random::hex_token`
-- `base64` — covered by `Random::base64_token`
-- `rand_distr` — if `uniform` / `normal` / `exponential` / `poisson` cover your needs
-- `rand_chacha` — covered by the `crypto` feature
-- `pcg_rand` — covered by the `pcg` feature
+- `uuid` - covered by `Random::uuid_v4` / `uuid_v4_bytes`
+- `hex` or `data-encoding` - covered by `Random::hex_token`
+- `base64` - covered by `Random::base64_token`
+- `rand_distr` - if `uniform` / `normal` / `exponential` / `poisson` cover your needs
+- `rand_chacha` - covered by the `crypto` feature
+- `pcg_rand` - covered by the `pcg` feature
 
 Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 
@@ -345,7 +345,7 @@ Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 
 - **You need the rand-distr catalogue.** vrd ships four built-in distributions (`uniform`, `normal`, `exponential`, `poisson`) plus a pluggable `Distribution<T>` trait. If you need the full 20+ rand_distr set (binomial, gamma, log-normal, Cauchy, etc.) reach for `rand` + `rand_distr` until vrd ports the missing few.
 - **You need fork-safe parallel deterministic streams beyond Xoshiro.** `Random::split()` works on the default backend; the MT / PCG / ChaCha20 backends return `None`. For massive Rayon-style fan-out across non-Xoshiro backends, derive distinct seeds per worker.
-- **You're already deep in the rand-ecosystem trait stack.** vrd implements rand 0.10's `TryRng` / `Rng` / `SeedableRng`, so it interoperates — but if your codebase passes `rand::rngs::ThreadRng` everywhere, the migration cost may not be worth it.
+- **You're already deep in the rand-ecosystem trait stack.** vrd implements rand 0.10's `TryRng` / `Rng` / `SeedableRng`, so it interoperates - but if your codebase passes `rand::rngs::ThreadRng` everywhere, the migration cost may not be worth it.
 - **You need cryptographic randomness without enabling a feature flag.** vrd's default backend is non-cryptographic. Enable the `crypto` feature and use `Random::new_secure()` for CSPRNG output.
 
 ---
@@ -366,7 +366,7 @@ Fewer transitive crates, less compiled code, fewer audit boundaries to track.
 | `rand_chacha::ChaCha20Rng::from_seed(s)` | `Random::from_secure_seed(s)` (`crypto`) |
 | `rand_chacha::ChaCha20Rng::from_os_rng()` | `Random::new_secure()` (`crypto`) |
 
-Or pass a `Random` directly to any crate that takes a `rand_core::TryRng`, `Rng`, or `SeedableRng` — vrd implements all three.
+Or pass a `Random` directly to any crate that takes a `rand_core::TryRng`, `Rng`, or `SeedableRng` - vrd implements all three.
 
 ---
 
@@ -375,11 +375,11 @@ Or pass a `Random` directly to any crate that takes a `rand_core::TryRng`, `Rng`
 The 0.0.10 release modernised the architecture. Breaking changes carried into 0.0.11:
 
 - `Random` defaults to **Xoshiro256++**, not Mersenne Twister. Use `Random::new_mersenne_twister()` if you need MT.
-- The generic `fill()` method is gone — use `Random::try_fill_bytes(&mut [u8])` from the `rand_core::TryRng` trait, or build types from `rand()` / `u64()`.
+- The generic `fill()` method is gone - use `Random::try_fill_bytes(&mut [u8])` from the `rand_core::TryRng` trait, or build types from `rand()` / `u64()`.
 - `int`, `uint`, `random_range` are **unbiased** (Lemire's nearly-divisionless method). Outputs differ from pre-0.0.10 versions for the same seed.
-- `MersenneTwisterError` lost its `IoError` and `SerializationError` variants — direct `serde_json` / `serde_yml` / `toml` helpers were removed. Use `serde` directly with the `serde` feature for that.
-- `VrdError::GeneralError` carries `&'static str` instead of `String` — `no_std`-friendly.
-- The `logging` feature and `create_log_entry` helper are gone — vrd is no longer a log-formatting library.
+- `MersenneTwisterError` lost its `IoError` and `SerializationError` variants - direct `serde_json` / `serde_yml` / `toml` helpers were removed. Use `serde` directly with the `serde` feature for that.
+- `VrdError::GeneralError` carries `&'static str` instead of `String` - `no_std`-friendly.
+- The `logging` feature and `create_log_entry` helper are gone - vrd is no longer a log-formatting library.
 
 0.0.11-specific:
 
@@ -408,7 +408,7 @@ cargo check --target wasm32-unknown-unknown --no-default-features    # WebAssemb
 
 The default release profile (`opt-level = 3`, `lto = true`, `codegen-units = 1`) gets vrd to ~1.1 ns per `u32` on Apple Silicon. Three knobs are available to downstream consumers who want every cycle:
 
-**Native CPU targeting** — enables AArch64 NEON or x86 AVX/AVX-512 codegen for whichever host you're running on:
+**Native CPU targeting** - enables AArch64 NEON or x86 AVX/AVX-512 codegen for whichever host you're running on:
 
 ```toml
 # .cargo/config.toml in your binary crate
@@ -418,15 +418,15 @@ rustflags = ["-C", "target-cpu=native"]
 
 `target-cpu=native` is **not** baked into vrd's release profile because it would break `cargo install` for users on machines that download crates as binaries. Set it in the consuming crate.
 
-**`simd` feature for bulk byte generation** — opts into SIMD-batched `fill_bytes` that holds K independent Xoshiro256++ states in vector registers (K = 2 on AArch64 NEON, K = 4 on x86_64 AVX2). ~2.2× faster on 1 KiB and ~3× on 16 KiB:
+**`simd` feature for bulk byte generation** - opts into SIMD-batched `fill_bytes` that holds K independent Xoshiro256++ states in vector registers (K = 2 on AArch64 NEON, K = 4 on x86_64 AVX2). ~2.2× faster on 1 KiB and ~3× on 16 KiB:
 
 ```toml
-vrd = { version = "0.0.11", features = ["simd"] }
+vrd = { version = "0.0.12", features = ["simd"] }
 ```
 
-The SIMD path produces a **different byte stream** than the scalar path for the same seed — see [`xoshiro_simd`](https://docs.rs/vrd/latest/vrd/xoshiro_simd/) for the contract. Reproducibility-sensitive code must stay on the scalar default.
+The SIMD path produces a **different byte stream** than the scalar path for the same seed - see [`xoshiro_simd`](https://docs.rs/vrd/latest/vrd/xoshiro_simd/) for the contract. Reproducibility-sensitive code must stay on the scalar default.
 
-**Profile-Guided Optimization (PGO)** — typically yields 5–15% on hot loops:
+**Profile-Guided Optimization (PGO)** - typically yields 5–15% on hot loops:
 
 ```bash
 # 1. Instrumented build that emits .profraw counters
@@ -457,15 +457,15 @@ let mut rng = Random::from_u64_seed(thread_id);   // distinct per thread
 let _ = rng.rand();
 ```
 
-For parallel deterministic streams that don't drift, use `Random::split()` on the default Xoshiro backend — returns `Some(Random)` with a stream 2¹²⁸ calls ahead.
+For parallel deterministic streams that don't drift, use `Random::split()` on the default Xoshiro backend - returns `Some(Random)` with a stream 2¹²⁸ calls ahead.
 
 ### Does vrd work without `std`?
 
-Yes. With `default-features = false`, vrd compiles for pure `no_std` targets — Cortex-M is gated in CI on every PR. The `alloc` feature unlocks `Vec` / `String` / `Box`-backed APIs (`bytes`, `string`, `sample`, `shuffle`, `uuid_v4`, `hex_token`, `base64_token`, the Mersenne Twister backend). Without `alloc`, `Random::from_seed([u8; 32])` and `Random::from_u64_seed(u64)` give you a fully-functional Xoshiro256++ on bare metal.
+Yes. With `default-features = false`, vrd compiles for pure `no_std` targets - Cortex-M is gated in CI on every PR. The `alloc` feature unlocks `Vec` / `String` / `Box`-backed APIs (`bytes`, `string`, `sample`, `shuffle`, `uuid_v4`, `hex_token`, `base64_token`, the Mersenne Twister backend). Without `alloc`, `Random::from_seed([u8; 32])` and `Random::from_u64_seed(u64)` give you a fully-functional Xoshiro256++ on bare metal.
 
 ### Does vrd work in WebAssembly?
 
-Yes. `wasm32-unknown-unknown` is gated in CI under both `--no-default-features` and `--features alloc`. Default WebAssembly has no entropy source, so seed manually with `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)` rather than `Random::new()`. If you want OS-level entropy in the browser, enable `getrandom`'s `js` feature in your binary crate — that's downstream's choice, not vrd's.
+Yes. `wasm32-unknown-unknown` is gated in CI under both `--no-default-features` and `--features alloc`. Default WebAssembly has no entropy source, so seed manually with `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)` rather than `Random::new()`. If you want OS-level entropy in the browser, enable `getrandom`'s `js` feature in your binary crate - that's downstream's choice, not vrd's.
 
 ### Why ship Mersenne Twister at all if Xoshiro is the default?
 
@@ -473,7 +473,7 @@ Reproducibility against existing MT-generated test vectors. Numerical-simulation
 
 ### Can I get the same sequence on two machines?
 
-Yes — use `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)`. Both are deterministic and allocation-free. The output is byte-identical across architectures (x86, ARM, RISC-V, WebAssembly) — only floating-point operations *downstream* of the RNG (your code's arithmetic) may differ across targets.
+Yes - use `Random::from_seed([u8; 32])` or `Random::from_u64_seed(u64)`. Both are deterministic and allocation-free. The output is byte-identical across architectures (x86, ARM, RISC-V, WebAssembly) - only floating-point operations *downstream* of the RNG (your code's arithmetic) may differ across targets.
 
 ### Is the output stable across vrd versions?
 
@@ -486,22 +486,23 @@ For a given seed and method, vrd commits to bit-stable output across **patch** r
 - `Pcg64`: **32 bytes** (state + increment).
 - `MersenneTwister`: **~2.5 KB** (624 × `u32` + index). Heap-stored when wrapped in `Random` to keep the enum discriminant small.
 - `ChaCha20Rng` (via `crypto` feature): **~256 bytes**. Heap-stored in `Random`.
-- `Random`: a tagged enum sized for the largest inline variant. The wrapper-vs-direct dispatch overhead is **zero** — the inliner elides the match completely (verified in `cargo bench`).
+- `Random`: a tagged enum sized for the largest inline variant. The wrapper-vs-direct dispatch overhead is **zero** - the inliner elides the match completely (verified in `cargo bench`).
 
 ### How fast is it?
 
-`cargo bench` runs head-to-head against `fastrand` 2.x and `rand::rng()` on `u32`, `u64`, byte fills, bounded sampling, and distribution sampling. On Apple Silicon, Xoshiro vrd produces a `u32` in ~3.1 ns through the `Random` facade (~1.1 ns inline); PCG32 is ~2.7 ns; the Ziggurat `normal()` is ~3.7 ns. Run them locally — absolute numbers are workload- and platform-dependent.
+`cargo bench` runs head-to-head against `fastrand` 2.x and `rand::rng()` on `u32`, `u64`, byte fills, bounded sampling, and distribution sampling. On Apple Silicon, Xoshiro vrd produces a `u32` in ~3.1 ns through the `Random` facade (~1.1 ns inline); PCG32 is ~2.7 ns; the Ziggurat `normal()` is ~3.7 ns. Run them locally - absolute numbers are workload- and platform-dependent.
 
 ---
 
 ## Documentation
 
-- [`README.md`](README.md) — this file.
-- [`CHANGELOG.md`](CHANGELOG.md) — per-version diff.
-- [`BENCHMARKS.md`](BENCHMARKS.md) — full benchmark tables.
-- [`RELEASE-NOTES-v0.0.11.md`](RELEASE-NOTES-v0.0.11.md) — current release notes.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — pre-submit checklist and PractRand install pointers.
-- [`docs.rs/vrd`](https://docs.rs/vrd) — full API documentation, every public method worked.
+- [`README.md`](README.md) - this file.
+- [`CHANGELOG.md`](CHANGELOG.md) - per-version diff.
+- [`BENCHMARKS.md`](BENCHMARKS.md) - full benchmark tables.
+- [`RELEASE-NOTES-v0.0.12.md`](RELEASE-NOTES-v0.0.12.md) - current release notes.
+- [`RELEASE-NOTES-v0.0.11.md`](RELEASE-NOTES-v0.0.11.md) - prior release.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) - pre-submit checklist and PractRand install pointers.
+- [`docs.rs/vrd`](https://docs.rs/vrd) - full API documentation, every public method worked.
 
 ---
 

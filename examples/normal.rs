@@ -13,15 +13,12 @@ use vrd::Random;
 fn main() {
     support::header("vrd -- normal");
 
-    support::task_with_output(
-        "normal(0, 1) — first 8 samples",
-        || {
-            let mut rng = Random::from_u64_seed(0xBE11);
-            (0..8)
-                .map(|_| format!("{:.6}", rng.normal(0.0, 1.0)))
-                .collect()
-        },
-    );
+    support::task_with_output("normal(0, 1) - first 8 samples", || {
+        let mut rng = Random::from_u64_seed(0xBE11);
+        (0..8)
+            .map(|_| format!("{:.6}", rng.normal(0.0, 1.0)))
+            .collect()
+    });
 
     support::task_with_output(
         "Bulk mean and stddev approach the parameters",

@@ -21,7 +21,7 @@ assignment follows.
 
 vrd is a non-cryptographic PRNG by default. Treat the default
 backends (`Xoshiro256++`, `MT19937`, `PCG32`, `PCG64`) as
-deterministic functions of their seeds — **predictable** to
+deterministic functions of their seeds - **predictable** to
 anyone who observes enough output. They are unsuitable for:
 
 - session tokens, API keys, password reset links
@@ -41,7 +41,7 @@ let token = rng.base64_token(32);            // 256 bits CSPRNG
 # }
 ```
 
-The `crypto` backend wraps `rand_chacha::ChaCha20Rng` — the
+The `crypto` backend wraps `rand_chacha::ChaCha20Rng` - the
 rand-ecosystem reference ChaCha20 implementation. vrd does
 not roll its own crypto; we vendor the audited proof.
 
@@ -61,7 +61,7 @@ not roll its own crypto; we vendor the audited proof.
   runs under `debug-assertions = false` and `overflow-checks =
   false`; the same code runs cleanly under `debug-assertions =
   true` in `cargo test`.
-- **Output stability across patch releases** — see
+- **Output stability across patch releases** - see
   [`doc/POLICIES.md`](doc/POLICIES.md). Algorithm swaps bump
   the minor version with a changelog flag.
 - **Supply chain**: `cargo deny check` runs on every PR
@@ -91,20 +91,20 @@ and receive no fixes.
 
 | Version | Status |
 | :-- | :-- |
-| 0.0.11 | ✓ supported |
-| 0.0.10 | ✓ supported (until 0.0.12 ships) |
-| 0.0.9 and earlier | ✗ end-of-life |
+| 0.0.12 | ✓ supported |
+| 0.0.11 | ✓ supported (until 0.0.13 ships) |
+| 0.0.10 and earlier | ✗ end-of-life |
 
 ## Compliance & supply chain
 
-- **REUSE 3.0** — every source file carries an SPDX header.
+- **REUSE 3.0** - every source file carries an SPDX header.
   See [`REUSE.toml`](REUSE.toml).
-- **NOTICE** — generated from `about.toml` + `about.hbs` by
+- **NOTICE** - generated from `about.toml` + `about.hbs` by
   `cargo about generate` (run `make notice`). Lists every
   third-party crate vrd redistributes with its license text.
-- **SBOM** — `make sbom` writes `SBOM.txt` (CycloneDX-style
+- **SBOM** - `make sbom` writes `SBOM.txt` (CycloneDX-style
   dependency tree). Ship inside every release tarball.
-- **OpenSSF Security Scorecard** — weekly scan, results badge
+- **OpenSSF Security Scorecard** - weekly scan, results badge
   in README. Aim is to keep the score above 8/10.
 
 ## Disclosure timeline policy

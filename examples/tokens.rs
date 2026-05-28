@@ -5,7 +5,7 @@
 //!
 //! **Not a CSPRNG.** For security-sensitive tokens (session IDs,
 //! credentials), use `rand::rngs::OsRng` or `getrandom`. This example
-//! covers non-security tokens — log correlation IDs, debug trace
+//! covers non-security tokens - log correlation IDs, debug trace
 //! markers, ephemeral test fixtures.
 //!
 //! Run: `cargo run --example tokens`
@@ -19,7 +19,7 @@ fn main() {
     support::header("vrd -- tokens");
 
     support::task_with_output(
-        "hex_token(16) — 32 lowercase hex chars",
+        "hex_token(16) - 32 lowercase hex chars",
         || {
             let mut rng = Random::from_u64_seed(0x70CE);
             (0..5).map(|_| rng.hex_token(16)).collect()
@@ -27,7 +27,7 @@ fn main() {
     );
 
     support::task_with_output(
-        "base64_token(15) — 20 URL-safe base64 chars (no padding)",
+        "base64_token(15) - 20 URL-safe base64 chars (no padding)",
         || {
             let mut rng = Random::from_u64_seed(0x70CE);
             (0..5).map(|_| rng.base64_token(15)).collect()

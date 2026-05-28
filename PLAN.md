@@ -5,7 +5,7 @@
 
 Where we are, what's next. Treat dates as targets, not promises.
 
-## Phase 1 — Core RNG ✅ (shipped in v0.0.10, 2026-04-29)
+## Phase 1 - Core RNG ✅ (shipped in v0.0.10, 2026-04-29)
 
 - [x] Xoshiro256++ as default backend
 - [x] MT19937 as legacy backend
@@ -17,7 +17,7 @@ Where we are, what's next. Treat dates as targets, not promises.
 - [x] UUID v4, hex / base64 tokens
 - [x] `rand 0.10` trait surface (`TryRng`, `Rng`, `SeedableRng`)
 
-## Phase 2 — Performance follow-ups + v0.1.0 differentiators ✅ (shipped in v0.0.11, 2026-05-28)
+## Phase 2 - Performance follow-ups + v0.1.0 differentiators ✅ (shipped in v0.0.11, 2026-05-28)
 
 - [x] Ziggurat `normal()` with build-time tables (#89)
 - [x] SIMD `fill_bytes` (NEON / AVX2) behind `simd` feature (#88)
@@ -32,25 +32,30 @@ Where we are, what's next. Treat dates as targets, not promises.
 - [x] `Distribution<T>` trait for pluggable distributions (#84)
 - [x] 100 % line coverage gate (Codecov)
 
-## Phase 3 — Repo template alignment ⏳ (in progress, on `feat/repo-template`)
+## Phase 3 - Repo template alignment + 100% doc coverage ✅ (shipped in v0.0.12, 2026-05-28)
 
-Mirrors noyalib's repo conventions inside vrd's single-crate layout.
+Mirrored noyalib's repo conventions inside vrd's single-crate layout.
 
-- [x] README front matter + Contents nav (Phase 1)
-- [x] Makefile + `scripts/` (Phase 2)
-- [x] `doc/` directory with ARCHITECTURE, TESTING, COMPARISON,
-      POLICIES, USER-GUIDE, MIGRATION-FROM-* (Phase 3)
-- [ ] Governance files: SECURITY, GETTING_STARTED, GLOSSARY,
+- [x] README front matter + Contents nav
+- [x] Makefile + `scripts/`
+- [x] `doc/` directory: ARCHITECTURE, TESTING, COMPARISON,
+      POLICIES, USER-GUIDE, MIGRATION-FROM-RAND,
+      MIGRATION-FROM-FASTRAND, BENCHMARKS
+- [x] Governance: SECURITY, GETTING_STARTED, GLOSSARY,
       PLAN (this file), `rust-toolchain.toml`, REUSE.toml,
-      `about.toml` + `about.hbs`, generated NOTICE (Phase 4)
-- [ ] `fuzz/` with 6 libFuzzer targets (Phase 5)
-- [ ] `pkg/` subset: homebrew + docker + nix (Phase 6)
-- [ ] `examples/distribution.rs` to close the trait-coverage
-      gap (Phase 7)
-- [ ] CI workflows: docs.yml, scorecard.yml, security.yml
-      (Phase 8)
+      `about.toml` + `about.hbs`
+- [x] `fuzz/` with 6 libFuzzer targets
+- [x] `pkg/` subset: homebrew + docker + nix
+- [x] `examples/distribution.rs`
+- [x] CI: docs.yml (Pages build+deploy), scorecard.yml,
+      security.yml
+- [x] 100% public doc coverage via `#![deny(missing_docs)]`;
+      100% private doc coverage via clippy lint
+- [x] GitHub Pages migrated from `gh-pages` branch to Actions
+      workflow; custom domain `doc.vrdlib.com` preserved
+- [x] Repo description + 20 topics refreshed
 
-## Phase 4 — v0.0.12 (target: 2026-Q3)
+## Phase 4 - v0.0.12 (target: 2026-Q3)
 
 Post-launch bug roll-up + the SIMD micro-optimisation that
 v0.0.11 left on the table.
@@ -62,7 +67,7 @@ v0.0.11 left on the table.
 - [ ] Any bug reports from v0.0.11 in-the-wild adoption
 - [ ] PractRand SmallCrush baseline numbers in `doc/BENCHMARKS.md`
 
-## Phase 5 — v0.0.13: expanded distribution catalogue (target: 2026-Q4)
+## Phase 5 - v0.0.13: expanded distribution catalogue (target: 2026-Q4)
 
 Close the gap with `rand_distr`. Each distribution lands as a
 new `impl Distribution<f64> for FooDist` in `src/distribution.rs`.
@@ -75,7 +80,7 @@ new `impl Distribution<f64> for FooDist` in `src/distribution.rs`.
 - [ ] Triangular
 - [ ] Discrete distributions: `Bernoulli`, `Geometric`
 
-## Phase 6 — v0.1.0: binary distribution (target: 2027-Q1)
+## Phase 6 - v0.1.0: binary distribution (target: 2027-Q1)
 
 Activate the `pkg/` channels with a `release-binaries.yml`
 workflow.
@@ -88,7 +93,7 @@ workflow.
       demand surfaces (current `pkg/` ships only the subset:
       homebrew + docker + nix)
 
-## Phase 7 — v0.2.0: Sobol direction-number expansion (no target)
+## Phase 7 - v0.2.0: Sobol direction-number expansion (no target)
 
 Currently `SobolSequence` supports 6 dimensions (Bratley-Fox
 1988 starter set). Extending to higher dimensions requires
@@ -101,7 +106,7 @@ shipping the Joe-Kuo D6 direction-number tables (~5 MB at
       asset
 - [ ] Update README and `doc/COMPARISON.md`
 
-## Phase 8 — v1.0.0: stability commitment (no target)
+## Phase 8 - v1.0.0: stability commitment (no target)
 
 The 1.0 release locks the public API and extends the
 output-stability commitment from patch-releases-only to

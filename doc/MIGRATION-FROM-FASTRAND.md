@@ -55,7 +55,7 @@ and UUIDs/tokens in a single crate.
 - **Distributions**. Normal, Exponential, Uniform, Poisson
   + pluggable `Distribution<T>` trait. fastrand has none.
 - **UUIDs and tokens**. `uuid_v4`, `hex_token`, `base64_token`
-  inline — no separate `uuid`/`hex`/`base64` deps.
+  inline - no separate `uuid`/`hex`/`base64` deps.
 - **`no_std` with explicit `alloc` gating**. fastrand requires
   `std` for its default thread-local; vrd's pure no_std path
   runs on Cortex-M and WebAssembly.
@@ -74,7 +74,7 @@ and UUIDs/tokens in a single crate.
 
 - You want output-stability commitments for golden-file tests.
 - You're already pulling in `uuid` or `hex` or `base64`
-  alongside `fastrand` — vrd consolidates the three.
+  alongside `fastrand` - vrd consolidates the three.
 - You need crypto-grade output somewhere in the codebase.
 - You're doing bulk byte fills and the SIMD win is meaningful.
 - You need quasi-random for Monte Carlo / financial / graphics.
@@ -98,4 +98,4 @@ let f = rng.double();
 
 The line count is similar; vrd's version is explicit about
 where the RNG lives (which makes thread-safety reasoning
-straightforward — see [`POLICIES.md`](POLICIES.md)).
+straightforward - see [`POLICIES.md`](POLICIES.md)).

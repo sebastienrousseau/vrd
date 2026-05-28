@@ -20,7 +20,7 @@ RUN rustup target add x86_64-unknown-linux-musl && \
 FROM alpine:3.21
 
 LABEL org.opencontainers.image.source="https://github.com/sebastienrousseau/vrd"
-LABEL org.opencontainers.image.description="Lightweight, no_std-friendly random number generator for Rust — CLI demo, musl-static"
+LABEL org.opencontainers.image.description="Lightweight, no_std-friendly random number generator for Rust - CLI demo, musl-static"
 LABEL org.opencontainers.image.licenses="Apache-2.0 OR MIT"
 LABEL org.opencontainers.image.version="__VERSION__"
 LABEL org.opencontainers.image.revision="__COMMIT__"

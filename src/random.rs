@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 
 // ---------------------------------------------------------------------------
-// FloatExt — abstraction over std vs libm for no_std math.
+// FloatExt - abstraction over std vs libm for no_std math.
 // ---------------------------------------------------------------------------
 
 /// Floating-point math operations bridged across `std` / `libm`.
@@ -111,12 +111,12 @@ impl FloatExt for f64 {
 mod float_libm;
 
 // ---------------------------------------------------------------------------
-// MersenneTwister generator — relegated, available only with `alloc`.
+// MersenneTwister generator - relegated, available only with `alloc`.
 // ---------------------------------------------------------------------------
 
 /// Canonical MT19937 generator (`N = 624`, `M = 397`).
 ///
-/// 2496-byte state — kept behind `alloc` because [`RngBackend`] always
+/// 2496-byte state - kept behind `alloc` because [`RngBackend`] always
 /// boxes it.
 ///
 /// # Examples
@@ -131,7 +131,7 @@ mod float_libm;
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MersenneTwister {
-    /// Internal MT19937 state vector — 624 32-bit words.
+    /// Internal MT19937 state vector - 624 32-bit words.
     ///
     /// # Examples
     ///
@@ -374,7 +374,7 @@ impl SeedableRng for MersenneTwister {
 }
 
 // ---------------------------------------------------------------------------
-// RngBackend — Xoshiro inline (always), MT boxed (alloc-gated).
+// RngBackend - Xoshiro inline (always), MT boxed (alloc-gated).
 // ---------------------------------------------------------------------------
 
 /// Available backends for [`Random`].
@@ -396,7 +396,7 @@ impl SeedableRng for MersenneTwister {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
 pub enum RngBackend {
-    /// Xoshiro256++ — fast, small-state, statistically strong.
+    /// Xoshiro256++ - fast, small-state, statistically strong.
     /// Default backend produced by [`Random::new`].
     ///
     /// # Examples
@@ -409,7 +409,7 @@ pub enum RngBackend {
     /// ```
     Xoshiro256PlusPlus(Xoshiro256PlusPlus),
 
-    /// Mersenne Twister (MT19937) — for callers needing legacy
+    /// Mersenne Twister (MT19937) - for callers needing legacy
     /// reproducibility. Requires the `alloc` feature; produced by
     /// [`Random::new_mersenne_twister_with_seed`].
     ///
@@ -427,17 +427,17 @@ pub enum RngBackend {
     #[cfg(feature = "alloc")]
     MersenneTwister(Box<MersenneTwister>),
 
-    /// PCG-XSH-RR-64/32 — 16-byte state, 32-bit output. Available
+    /// PCG-XSH-RR-64/32 - 16-byte state, 32-bit output. Available
     /// under the `pcg` feature.
     #[cfg(feature = "pcg")]
     Pcg32(crate::pcg::Pcg32),
 
-    /// PCG-XSL-RR-128/64 — 32-byte state, 64-bit output. Available
+    /// PCG-XSL-RR-128/64 - 32-byte state, 64-bit output. Available
     /// under the `pcg` feature.
     #[cfg(feature = "pcg")]
     Pcg64(crate::pcg::Pcg64),
 
-    /// ChaCha20 CSPRNG — crypto-quality output. Produced by
+    /// ChaCha20 CSPRNG - crypto-quality output. Produced by
     /// [`Random::new_secure`] / [`Random::from_secure_seed`].
     /// Available under the `crypto` feature.
     #[cfg(feature = "crypto")]
@@ -445,7 +445,7 @@ pub enum RngBackend {
 }
 
 // ---------------------------------------------------------------------------
-// Random — the user-facing facade.
+// Random - the user-facing facade.
 // ---------------------------------------------------------------------------
 
 /// Random number generator dispatched over [`RngBackend`].
@@ -471,7 +471,7 @@ pub enum RngBackend {
 pub struct Random {
     /// The active generator backend. Tagged enum dispatch via
     /// `match` in every method; the inliner elides the match
-    /// in release builds — verified in `cargo bench`.
+    /// in release builds - verified in `cargo bench`.
     backend: RngBackend,
 }
 
@@ -602,7 +602,7 @@ impl Random {
     }
 
     /// Creates a PCG32-backed [`Random`] seeded from the given `u64`.
-    /// Requires the `pcg` feature. 16-byte state — the smallest of
+    /// Requires the `pcg` feature. 16-byte state - the smallest of
     /// the family.
     ///
     /// # Examples
@@ -911,7 +911,7 @@ impl Random {
 
     /// Splits this RNG into a second instance whose stream starts
     /// 2¹²⁸ calls ahead of `self`. Both halves remain valid and
-    /// produce non-overlapping subsequences — safe to hand to two
+    /// produce non-overlapping subsequences - safe to hand to two
     /// parallel workers without contention.
     ///
     /// Available only on the Xoshiro256++ backend (which has the
@@ -1310,7 +1310,7 @@ impl Random {
 
     /// Returns an unbounded iterator yielding random bytes.
     ///
-    /// Internally buffers a `u64` per 8 bytes — the same throughput as
+    /// Internally buffers a `u64` per 8 bytes - the same throughput as
     /// [`Self::try_fill_bytes`], but ergonomic for `take`/`collect` use.
     ///
     /// # Examples
@@ -1546,7 +1546,7 @@ impl Random {
     }
 
     /// Sample `amount` references without replacement via partial
-    /// Fisher-Yates with `swap_remove` — O(amount) draws, each O(1).
+    /// Fisher-Yates with `swap_remove` - O(amount) draws, each O(1).
     /// Requires the `alloc` feature.
     ///
     /// # Examples

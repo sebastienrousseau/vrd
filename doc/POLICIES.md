@@ -19,26 +19,26 @@ you're using; loosen at major versions.
 
 ## SemVer
 
-- **Patch releases (`0.0.x → 0.0.x+1`)** — bit-stable output
+- **Patch releases (`0.0.x → 0.0.x+1`)** - bit-stable output
   for every public method, given the same seed. Bug fixes,
   internal refactors, doc-only changes, dev-dep bumps.
-- **Minor releases (`0.x → 0.x+1` while pre-1.0)** — may change
+- **Minor releases (`0.x → 0.x+1` while pre-1.0)** - may change
   algorithm (Ziggurat replacing polar in v0.0.11 was a minor
   bump; we treated it as one because we were already pinning
   v0.0.11 for the broader differentiator set). MSRV bumps,
   feature additions, behavioural changes are clearly flagged.
-- **Major releases (`x → x+1` post-1.0)** — breaking. Removals,
+- **Major releases (`x → x+1` post-1.0)** - breaking. Removals,
   trait surface changes, default-feature shifts.
 
 ## Output stability
 
 For a given seed and method:
 
-- **Patch releases** — bit-exact output guarantee.
-- **Minor releases** — output may change if an algorithm is
+- **Patch releases** - bit-exact output guarantee.
+- **Minor releases** - output may change if an algorithm is
   swapped. Affected methods are listed in the changelog's
   "Migration" subsection by name.
-- **Major releases** — no output-stability guarantee across
+- **Major releases** - no output-stability guarantee across
   major boundaries.
 
 The `rand` crate explicitly does not provide either guarantee.
@@ -119,7 +119,7 @@ for the disclosure address and the full threat model.
 - Module-level rustdoc explains *why* the module exists, not
   just *what* it does.
 - Intra-doc links use full crate paths
-  (`[`crate::pcg::Pcg32`]`) — the linter on `cargo doc
+  (`[`crate::pcg::Pcg32`]`) - the linter on `cargo doc
   --no-deps --all-features` is gated in CI.
 - Doc tests are part of the normal test count (~122 currently)
   and must all pass under `--all-features`.
