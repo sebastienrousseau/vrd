@@ -123,16 +123,21 @@ pub fn fill_bytes(rng: &mut Xoshiro256PlusPlus, dest: &mut [u8]) {
     rng.fill_bytes_scalar(dest);
 }
 
+/// Runtime AVX2 detection (std path) — uses
+/// `std::is_x86_feature_detected!`.
 #[cfg(all(target_arch = "x86_64", feature = "std"))]
 #[inline]
 fn is_avx2_available() -> bool {
     std::is_x86_feature_detected!("avx2")
 }
 
+/// Compile-time AVX2 detection (no_std path) — `std` isn't
+/// available, so we fall back to `cfg!(target_feature = "avx2")`
+/// which only reports `true` when the crate was built with
+/// `target-cpu` exposing AVX2.
 #[cfg(all(target_arch = "x86_64", not(feature = "std")))]
 #[inline]
 fn is_avx2_available() -> bool {
-    // Without std we can't runtime-detect, so fall back to compile-time.
     cfg!(target_feature = "avx2")
 }
 
