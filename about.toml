@@ -1,0 +1,36 @@
+# cargo-about config — drives `make notice` to produce
+# NOTICE listing every redistributed third-party crate +
+# its license text.
+
+# Licenses we accept in our dependency tree. Anything outside
+# this list triggers a `cargo about generate` failure.
+accepted = [
+    "Apache-2.0",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "Zlib",
+    "CC0-1.0",
+    "MPL-2.0",
+]
+
+# Targets we care about — anything compiled for the host
+# platform plus the no_std embedded + WASM targets we ship to.
+targets = [
+    { triple = "x86_64-unknown-linux-gnu" },
+    { triple = "aarch64-unknown-linux-gnu" },
+    { triple = "x86_64-apple-darwin" },
+    { triple = "aarch64-apple-darwin" },
+    { triple = "x86_64-pc-windows-msvc" },
+    { triple = "aarch64-pc-windows-msvc" },
+    { triple = "wasm32-unknown-unknown" },
+    { triple = "thumbv7em-none-eabihf" },
+]
+
+# Exclude dev-deps from the NOTICE — they're test-only, not
+# redistributed in the published binary.
+no-clearly-defined = true
+private = { ignore = true }

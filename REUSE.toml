@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+#
+# REUSE 3.0 configuration: every source file in vrd carries an
+# SPDX-License-Identifier header except a small set of generated
+# / data files that this file annotates centrally.
+
+version = 1
+
+[[annotations]]
+path = ["Cargo.lock", "Cargo.toml"]
+SPDX-FileCopyrightText = "2023-2026 vrd contributors"
+SPDX-License-Identifier = "Apache-2.0 OR MIT"
+
+[[annotations]]
+path = ["AUTHORS.md", "LICENSE-APACHE", "LICENSE-MIT"]
+SPDX-FileCopyrightText = "2023-2026 vrd contributors"
+SPDX-License-Identifier = "Apache-2.0 OR MIT"
+
+[[annotations]]
+path = "TEMPLATE.md"
+SPDX-FileCopyrightText = "2023-2026 vrd contributors"
+SPDX-License-Identifier = "Apache-2.0 OR MIT"
+
+[[annotations]]
+path = "config.json"
+SPDX-FileCopyrightText = "2023-2026 vrd contributors"
+SPDX-License-Identifier = "Apache-2.0 OR MIT"
+
+[[annotations]]
+path = ".tarpaulin.toml"
+SPDX-FileCopyrightText = "2023-2026 vrd contributors"
+SPDX-License-Identifier = "Apache-2.0 OR MIT"
