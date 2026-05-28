@@ -43,6 +43,8 @@ use rand_chacha::ChaCha20Rng;
     derive(serde::Serialize, serde::Deserialize)
 )]
 pub struct ChaChaRng {
+    /// Wrapped `rand_chacha::ChaCha20Rng` — vrd doesn't roll its
+    /// own crypto, this is the audited reference implementation.
     inner: ChaCha20Rng,
 }
 

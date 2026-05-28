@@ -29,7 +29,11 @@ include!(concat!(env!("OUT_DIR"), "/ziggurat_tables.rs"));
 /// for the bin draw and one uniform `[0, 1)` `f64` for the overhang /
 /// tail branches.
 pub(crate) trait NormalSource {
+    /// Draws an arbitrary `u32`. Used for the bin index +
+    /// signed magnitude in the Ziggurat fast path.
     fn next_u32(&mut self) -> u32;
+    /// Draws a uniform `f64` in `[0, 1)`. Used by the overhang
+    /// and tail rejection branches.
     fn next_f64(&mut self) -> f64;
 }
 

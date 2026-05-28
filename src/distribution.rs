@@ -66,8 +66,11 @@ pub trait Distribution<T> {
 /// Iterator returned by [`Distribution::samples`].
 #[derive(Debug)]
 pub struct Iter<'a, D: Distribution<T> + ?Sized, T> {
+    /// The distribution being sampled.
     dist: &'a D,
+    /// The RNG `dist` draws from on each `next()` call.
     rng: &'a mut Random,
+    /// Anchors the unconstrained type parameter `T`.
     _t: core::marker::PhantomData<T>,
 }
 

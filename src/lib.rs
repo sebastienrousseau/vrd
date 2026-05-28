@@ -11,7 +11,9 @@
 )]
 #![crate_name = "vrd"]
 #![crate_type = "lib"]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
+// Lib-scoped — examples / tests / benches stay unaffected.
+#![warn(clippy::missing_docs_in_private_items)]
 #![warn(rust_2018_idioms)]
 // `deny`, not `forbid`, so the optional `simd` module (which needs
 // architecture intrinsics) can lift it with a module-local `#[allow]`.

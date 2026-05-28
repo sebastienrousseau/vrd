@@ -29,6 +29,9 @@ use rand::rand_core::{SeedableRng, TryRng};
     derive(serde::Serialize, serde::Deserialize)
 )]
 pub struct Xoshiro256PlusPlus {
+    /// 256-bit state, four 64-bit words. Combined via XOR /
+    /// shift / rotate to produce each output. Never observed
+    /// directly except via `jump()` derivatives.
     state: [u64; 4],
 }
 

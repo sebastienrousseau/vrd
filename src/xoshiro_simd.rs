@@ -68,6 +68,9 @@ fn derive_lanes<const K: usize>(
     out
 }
 
+/// SplitMix64 — Stafford's variant 13. Used to whiten the
+/// per-lane seed material derived from the scalar generator's
+/// state so the SIMD lanes are statistically independent.
 #[inline]
 fn splitmix64(state: &mut u64) -> u64 {
     *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
@@ -140,6 +143,9 @@ fn is_avx2_available() -> bool {
 // `u64`. Throughput target on Apple M-series: ~20 GB/s (vs. 7.5 GB/s
 // scalar baseline).
 
+/// AArch64 NEON 2-lane implementation. K = 2 Xoshiro256++
+/// states held in `uint64x2_t` registers; 16 bytes emitted per
+/// inner step.
 #[cfg(target_arch = "aarch64")]
 mod aarch64 {
     use super::Xoshiro256PlusPlus;
@@ -148,6 +154,8 @@ mod aarch64 {
     /// Two independent Xoshiro256++ states packed into 4 × `uint64x2_t`
     /// registers. Lane i of register `s[j]` is word j of state i.
     struct Lanes {
+        /// Four 128-bit registers. Each holds the i-th word of
+        /// both lanes' Xoshiro256++ state.
         s: [uint64x2_t; 4],
     }
 
@@ -206,6 +214,13 @@ mod aarch64 {
         }
     }
 
+    /// Vector rotate-left for two lanes. NEON has no native
+    /// rotate; emulate via shift + or. `N_INV` must equal
+    /// `64 - N` (the call sites use 23/41 and 45/19).
+    ///
+    /// # Safety
+    /// Sound for any `N` and `N_INV` in `0..64`. Const-generic
+    /// arguments are checked at compile time.
     #[inline]
     unsafe fn rotl<const N: i32, const N_INV: i32>(
         x: uint64x2_t,
@@ -213,6 +228,9 @@ mod aarch64 {
         vorrq_u64(vshlq_n_u64::<N>(x), vshrq_n_u64::<N_INV>(x))
     }
 
+    /// NEON `fill_bytes` entry point — called by the parent
+    /// module's dispatch when the buffer is ≥ `SIMD_THRESHOLD`
+    /// bytes on AArch64.
     pub(super) fn fill_bytes_neon(
         rng: &mut Xoshiro256PlusPlus,
         dest: &mut [u8],

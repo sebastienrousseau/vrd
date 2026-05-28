@@ -47,7 +47,9 @@ use alloc::vec::Vec;
 /// ```
 #[derive(Clone, Copy, Debug)]
 pub struct VanDerCorputSequence {
+    /// Prime base; typically 2 or 3.
     base: u32,
+    /// 1-indexed position in the sequence.
     i: u64,
 }
 
@@ -81,6 +83,9 @@ impl Iterator for VanDerCorputSequence {
     }
 }
 
+/// Radical inverse — reverses `n`'s digit expansion in `base`
+/// and reads it as a fraction in `[0, 1)`. Powers the Van der
+/// Corput and Halton sequences.
 #[inline]
 fn radical_inverse(mut n: u64, base: u32) -> f64 {
     let b = u64::from(base);
@@ -126,7 +131,9 @@ pub const HALTON_MAX_DIM: usize = HALTON_PRIMES.len();
 /// ```
 #[derive(Clone, Copy, Debug)]
 pub struct HaltonSequence {
+    /// Number of dimensions; `1..=HALTON_MAX_DIM`.
     d: usize,
+    /// 1-indexed position in the sequence.
     i: u64,
 }
 
@@ -422,8 +429,14 @@ const SOBOL_DIRECTIONS: [[u32; 32]; SOBOL_MAX_DIM] = [
 /// ```
 #[derive(Clone, Copy, Debug)]
 pub struct SobolSequence {
+    /// Number of dimensions; `1..=SOBOL_MAX_DIM`.
     d: usize,
+    /// 0-indexed position. `i == 0` returns the canonical
+    /// origin point `(0, 0, ..., 0)`; later steps XOR into `x`.
     i: u64,
+    /// Per-dimension running state. XOR'd with the appropriate
+    /// direction number on every step; converted to `f64` via
+    /// the 2³² scale to yield the output point.
     x: [u32; SOBOL_MAX_DIM],
 }
 
@@ -494,6 +507,9 @@ impl SobolSequence {
         out
     }
 
+    /// Steps the internal state forward by one position
+    /// without producing an output point. Used by
+    /// [`Self::skip`] to amortise long forward jumps.
     fn advance(&mut self) {
         if self.i == 0 {
             self.i = 1;
@@ -524,6 +540,9 @@ impl SobolSequence {
     }
 }
 
+/// Returns the number of trailing zero bits in `n`. Sobol's
+/// next-bit-to-toggle is `trailing_zeros(i + 1)`; this is the
+/// well-known O(1) closed form.
 #[inline]
 fn trailing_zero_bit(n: u64) -> usize {
     n.trailing_zeros() as usize
