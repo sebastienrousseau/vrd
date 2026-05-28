@@ -1,0 +1,39 @@
+# Docs build — catches broken intra-doc links + ensures
+# docs.rs will render cleanly when the next version publishes.
+# `cargo doc --no-deps --all-features` is run with `-D warnings`
+# so any unresolved link, private-item leak, or missing-docs
+# warning fails the build.
+
+name: docs
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main, "feat/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: cargo doc --all-features
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo doc --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps --all-features
