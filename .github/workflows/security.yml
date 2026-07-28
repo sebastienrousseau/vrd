@@ -32,7 +32,7 @@ jobs:
     name: Trivy filesystem scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # aquasecurity/trivy-action@0.28.0 carried a CRITICAL
       # supply-chain compromise advisory; pin to a clean

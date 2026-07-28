@@ -50,7 +50,7 @@ jobs:
     name: WebAssembly (wasm32-unknown-unknown)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust stable + wasm32-unknown-unknown
         uses: dtolnay/rust-toolchain@stable
@@ -71,7 +71,7 @@ jobs:
     name: no_std (thumbv7em-none-eabihf)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust stable + thumbv7em-none-eabihf
         uses: dtolnay/rust-toolchain@stable
@@ -93,7 +93,7 @@ jobs:
     name: Optional features (pcg, crypto, quasirandom)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -130,7 +130,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -151,7 +151,7 @@ jobs:
     name: Bench (compile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust nightly
         uses: dtolnay/rust-toolchain@nightly
