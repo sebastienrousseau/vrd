@@ -27,7 +27,7 @@ name = "vrd"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/vrd"
 rust-version = "1.70"
-version = "0.0.13"
+version = "0.0.14"
 
 [[bench]]
 name = "benchmark"
