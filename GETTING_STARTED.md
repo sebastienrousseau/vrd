@@ -18,7 +18,7 @@ Or in `Cargo.toml`:
 vrd = "0.0.12"
 ```
 
-Requires Rust 1.70.0 or later.
+Requires Rust 1.89.0 or later.
 
 ## 2. Generate a number
 
