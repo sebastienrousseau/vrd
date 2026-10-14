@@ -95,7 +95,7 @@ quality unless permuted (PCG) or combined with other steps.
 ### MSRV (Minimum Supported Rust Version)
 
 The oldest Rust toolchain vrd commits to compile under.
-Currently 1.70. Verified by `make msrv`. See
+Currently 1.89. Verified by `make msrv`. See
 [`doc/POLICIES.md`](doc/POLICIES.md).
 
 ### MT19937 (Mersenne Twister)

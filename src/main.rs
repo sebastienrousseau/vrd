@@ -79,7 +79,7 @@ mod tests {
     struct FailingWriter;
     impl Write for FailingWriter {
         fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
-            Err(io::Error::new(io::ErrorKind::Other, "write fail"))
+            Err(io::Error::other("write fail"))
         }
         fn flush(&mut self) -> io::Result<()> {
             Ok(())

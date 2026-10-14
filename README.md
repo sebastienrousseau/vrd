@@ -66,7 +66,7 @@ Or in `Cargo.toml`:
 vrd = "0.0.12"
 ```
 
-Requires [Rust](https://rustup.rs/) 1.70.0 or later. Builds for macOS, Linux, Windows, `no_std` embedded targets (Cortex-M, `thumbv7em-none-eabihf`), and `wasm32-unknown-unknown` - all validated in CI.
+Requires [Rust](https://rustup.rs/) 1.89.0 or later. Builds for macOS, Linux, Windows, `no_std` embedded targets (Cortex-M, `thumbv7em-none-eabihf`), and `wasm32-unknown-unknown` - all validated in CI.
 
 ---
 
