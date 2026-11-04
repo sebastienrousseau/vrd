@@ -34,7 +34,7 @@ ships are highlighted with **bold**.
 | External fuzzing harness | ✓ (cargo-fuzz, 6 targets) | partial | - | - | - | - |
 | PractRand validation harness | ✓ (`crush` feature) | - | - | - | - | - |
 | Built-in benchmarks | ✓ (criterion vs all of these) | partial | - | - | - | - |
-| MSRV declared | 1.70 | varies | 1.61 | 1.36 | 1.51 | 1.70 |
+| MSRV declared | 1.89 | varies | 1.61 | 1.36 | 1.51 | 1.70 |
 | Audited supply chain | ✓ (`cargo deny`, `cargo audit`) | partial | partial | - | - | - |
 | Coverage gate | **100 %** | partial | - | - | - | - |
 | GitHub Security Scorecard | ✓ | ✓ | - | - | - | - |

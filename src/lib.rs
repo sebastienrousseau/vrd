@@ -19,7 +19,7 @@
 // architecture intrinsics) can lift it with a module-local `#[allow]`.
 // All other modules must remain free of `unsafe`.
 #![deny(unsafe_code)]
-#![doc = "Minimum supported Rust version: 1.70.0"]
+#![doc = "Minimum supported Rust version: 1.89.0"]
 
 //! # Versatile Random Distributions (VRD)
 //!

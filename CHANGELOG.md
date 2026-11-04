@@ -5,6 +5,20 @@ All notable changes to `vrd` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.15] - Unreleased
+
+### Changed
+
+- **Breaking: the MSRV is now Rust 1.89** (was 1.70), one floor shared
+  with the maintainer's other Rust crates. `Cargo.toml`, the crate
+  docs, README, GETTING_STARTED, GLOSSARY, `doc/POLICIES.md` and the
+  comparison table state it; `make msrv` reads it from `Cargo.toml`.
+- With the floor above 1.88, clippy asks for `as_chunks`,
+  `as_chunks_mut`, `is_multiple_of`, `div_ceil` and `io::Error::other`;
+  the five sites use them. Each is an equivalent rewrite (the chunk
+  loops visit the same bytes in the same order over arrays with no
+  remainder), so seeded output does not change.
+
 ## [0.0.14] - 2026-10-11
 
 ### Changed

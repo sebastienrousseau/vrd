@@ -202,7 +202,7 @@ impl MersenneTwister {
     /// ```
     pub fn from_seed(seed: [u8; 32]) -> Self {
         let mut s = 0u32;
-        for chunk in seed.chunks_exact(4) {
+        for chunk in seed.as_chunks::<4>().0 {
             s ^= u32::from_le_bytes([
                 chunk[0], chunk[1], chunk[2], chunk[3],
             ]);
@@ -253,7 +253,7 @@ impl MersenneTwister {
             let x = (self.mt[i] & config.params.upper_mask)
                 + (self.mt[(i + 1) % N] & config.params.lower_mask);
             let x_a = x >> 1;
-            self.mt[i] = if x % 2 != 0 {
+            self.mt[i] = if !x.is_multiple_of(2) {
                 self.mt[(i + M) % N] ^ x_a ^ config.params.matrix_a
             } else {
                 self.mt[(i + M) % N] ^ x_a
@@ -534,7 +534,7 @@ impl Random {
     pub fn new() -> Self {
         let mut seed = [0u8; 32];
         let mut sm: u64 = rand::random();
-        for chunk in seed.chunks_exact_mut(8) {
+        for chunk in seed.as_chunks_mut::<8>().0 {
             sm = sm.wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(1);
             let v: u64 = rand::random::<u64>() ^ sm;
             chunk.copy_from_slice(&v.to_le_bytes());
@@ -1459,7 +1459,7 @@ impl Random {
         let n = bytes.len();
         let chunks = n / 3;
         let rem = n % 3;
-        let mut out = String::with_capacity(((n + 2) / 3) * 4);
+        let mut out = String::with_capacity(n.div_ceil(3) * 4);
         for i in 0..chunks {
             let a = bytes[i * 3];
             let b = bytes[i * 3 + 1];

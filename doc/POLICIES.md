@@ -9,7 +9,7 @@ you're using; loosen at major versions.
 
 ## MSRV (Minimum Supported Rust Version)
 
-- **Declared**: 1.70.
+- **Declared**: 1.89.
 - **Verified**: `make msrv` runs `cargo check` on the declared
   toolchain across `--no-default-features`, `--features alloc`,
   and `--all-features`.
